@@ -7,6 +7,7 @@ test('browser clients parse as JavaScript', () => {
   const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8').replace(/^import[^\n]+\n/gm, '');
   const map = fs.readFileSync(new URL('../public/map.js', import.meta.url), 'utf8');
   const phaser = fs.readFileSync(new URL('../public/phaser-world.js', import.meta.url), 'utf8');
+  const styles = fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8');
   const html = fs.readFileSync(new URL('../public/observer.html', import.meta.url), 'utf8');
   assert.doesNotThrow(() => new vm.Script(app, { filename: 'public/app.js' }));
   assert.match(html, /id="game-panel"/);
@@ -19,6 +20,10 @@ test('browser clients parse as JavaScript', () => {
   assert.match(app, /data-direction="up"/);
   assert.match(app, /pointermove/);
   assert.match(app, /elementFromPoint/);
+  assert.equal(/setPointerCapture/.test(app), false);
+  assert.match(styles, /\.controller\{[\s\S]*user-select:none/);
+  assert.match(styles, /\.controller\{[\s\S]*touch-action:none/);
+  assert.match(styles, /\.dpad button,\.dpad span\{[\s\S]*user-select:none/);
   assert.doesNotThrow(() => new vm.Script(map.replace(/^export /gm, ''), { filename: 'public/map.js' }));
   assert.match(app, /const MOVE_REPEAT_MS=125/);
   assert.match(app, /pointerdown/);
