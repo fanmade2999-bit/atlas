@@ -158,7 +158,54 @@ export function rootSelfTest(seed = 'atlas-root') {
 
 export const TERRAIN_TRANSFORMS = Object.freeze([{landform:'Ocean',min:0,max:0.30,waterform:'Ocean'},{landform:'Coast',min:0.30,max:0.38,waterform:'Shallows'},{landform:'Plains',min:0.38,max:0.55,waterform:'None'},{landform:'Hills',min:0.55,max:0.65,waterform:'None'},{landform:'Valley/Plateau',min:0.65,max:0.80,waterform:'None'},{landform:'Mountain',min:0.80,max:0.92,waterform:'None'},{landform:'Peak',min:0.92,max:1.01,waterform:'None'}]);
 
-export function classifyLandform(elevation){if(elevation<0.30)return 'Ocean';if(elevation<0.38)return 'Coast';if(elevation<0.55)return 'Plains';if(elevation<0.65)return 'Hills';if(elevation<0.80)return 'Valley/Plateau';if(elevation<0.92)return 'Mountain';return 'Peak';}
-
-export function classifyTerrain(seed='atlas-root',x=0,y=0){const c=sampleClimate(seed,x,y);const landform=classifyLandform(c.elevation);let waterform='None';if(landform==='Ocean')waterform='Ocean';else if(landform==='Coast')waterform='Shallows';else if(c.elevation<0.44&&c.moisture>0.78)waterform='Swamp';else if(c.moisture>0.62&&c.elevation>0.45)waterform='River';const surface=landform==='Peak'?'Snow/Alpine':(waterform==='Ocean'||waterform==='Shallows'?waterform:c.biome);return {...c,landform,waterform,surface};}
+function terrainLocalVariance(seed,x,y){
+  const center=sampleElevation(seed,x,y);
+  let sum=0,count=0;
+  for(const [dx,dy] of [[-4,0],[4,0],[0,-4],[0,4],[-4,-4],[4,-4],[-4,4],[4,4]]){sum+=sampleElevation(seed,x+dx,y+dy);count++}
+  const mean=sum/count;
+  return {center,mean,variance:Math.abs(center-mean)};
+}
+export function classifyLandform(seed='atlas-root',x=0,y=0,elevation=sampleElevation(seed,x,y)){
+  if(elevation<0.30)return 'Ocean';
+  if(elevation<0.38)return 'Coast';
+  if(elevation<0.55)return 'Plains';
+  if(elevation<0.65)return 'Hills';
+  if(elevation<0.80){const v=terrainLocalVariance(seed,x,y);return v.variance<0.018?'Plateau':(v.center<v.mean?'Valley':'Plateau');}
+  if(elevation<0.92)return 'Mountain';
+  return 'Peak';
+}
+function downhillStep(seed,x,y,elevation){
+  let best=null;
+  for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]){
+    const p=normalizeCoordinates(x+dx,y+dy);
+    const e=sampleElevation(seed,p.x,p.y);
+    if(e<elevation-0.000001&&(!best||e<best.elevation))best={x:p.x,y:p.y,elevation:e};
+  }
+  return best;
+}
+export function flowToOcean(seed,x,y,elevation,maxSteps=64){
+  let cx=normalizeCoordinates(x,y).x,cy=normalizeCoordinates(x,y).y,ce=elevation;
+  const visited=new Set();
+  for(let step=0;step<maxSteps;step++){
+    if(ce<0.30)return {reachesOcean:true,steps:step};
+    const key=cx+','+cy;
+    if(visited.has(key))break;
+    visited.add(key);
+    const next=downhillStep(seed,cx,cy,ce);
+    if(!next)break;
+    cx=next.x;cy=next.y;ce=next.elevation;
+  }
+  return {reachesOcean:false,steps:visited.size};
+}
+export function classifyTerrain(seed='atlas-root',x=0,y=0){
+  const c=sampleClimate(seed,x,y);
+  const landform=classifyLandform(seed,x,y,c.elevation);
+  let waterform='None';
+  if(landform==='Ocean')waterform='Ocean';
+  else if(landform==='Coast')waterform='Shallows';
+  else if(c.elevation<0.44&&c.moisture>0.78)waterform='Swamp';
+  else if(c.moisture>0.62&&c.elevation>0.45&&flowToOcean(seed,x,y,c.elevation).reachesOcean)waterform='River';
+  const surface=landform==='Peak'?'Snow/Alpine':(waterform==='Ocean'||waterform==='Shallows'?waterform:c.biome);
+  return {...c,landform,waterform,surface};
+}
 export function terrainTransformSignature(seed='atlas-root',x=0,y=0){const t=classifyTerrain(seed,x,y);return JSON.stringify({biome:t.biome,landform:t.landform,waterform:t.waterform,surface:t.surface});}
