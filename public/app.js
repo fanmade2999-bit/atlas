@@ -8,7 +8,21 @@ const val=v=>v==null?'<span class="value unknown">???</span>':`<span class="valu
 const coord=v=>{const n=Number(v);const a=Math.abs(n);if(a>=1000000)return (n/1000000).toFixed(3)+'M';if(a>=1000)return (n/1000).toFixed(1)+'k';return String(n)};
 const slot=(s,id)=>s.slots[id]?.value??null;
 function shell(id){state.site=id;if(address)address.textContent=`atlas://${id}`;tabs.forEach(t=>t.classList.toggle('active',t.dataset.site===id));}
-function mode(m){state.mode=m;document.querySelector('#app')?.classList.toggle('game-mode',m==='game');document.querySelector('#app-mode-label').textContent=m==='game'?'GAME':'OBSERVER';if(address)address.textContent=m==='game'?'atlas://game':`atlas://${state.site}`;document.querySelector('#game-panel')?.classList.toggle('game-active',m==='game');render();}
+function applyScreenMode(m){
+  const gameIds=['#game-panel','#game-vision','#game-info'];
+  const observerIds=['#site','#cartridge-dock'];
+  gameIds.forEach(sel=>{const el=document.querySelector(sel);if(el)el.hidden=m!=='game'});
+  observerIds.forEach(sel=>{const el=document.querySelector(sel);if(el)el.hidden=m==='game'});
+  document.querySelector('#app')?.classList.toggle('game-mode',m==='game');
+  document.querySelector('#app-mode-label').textContent=m==='game'?'GAME':'OBSERVER';
+}
+function mode(m){
+  state.mode=m;
+  applyScreenMode(m);
+  if(address)address.textContent=m==='game'?'atlas://game':`atlas://${state.site}`;
+  document.querySelector('#game-panel')?.classList.toggle('game-active',m==='game');
+  render();
+}
 async function snapshot(showLoad=true){if(showLoad)loadProgress(18,'Loading Observer plugs…');const p=new URLSearchParams({seed:state.seed,x:state.x,y:state.y,playerId:state.playerId}),r=await fetch('/api/observer?'+p);if(!r.ok)throw Error('Observer API '+r.status);state.snapshot=await r.json();render();}
 async function game(showLoad=false){
   if(showLoad)loadProgress(12,'Preparing world stream…');
@@ -41,8 +55,8 @@ async function game(showLoad=false){
     render();
   }
 }
-function enterGame(){state.gameX=state.x;state.gameY=state.y;state.mode='game';document.querySelector('#app')?.classList.add('game-mode');if(address)address.textContent='atlas://game';document.querySelector('#app-mode-label').textContent='GAME';if(state.gameSnapshot)render();else game(true).catch(error);}
-function enterObserver(){state.x=state.gameX;state.y=state.gameY;state.mode='observer';document.querySelector('#app')?.classList.remove('game-mode');if(address)address.textContent='atlas://'+state.site;document.querySelector('#app-mode-label').textContent='OBSERVER';snapshot().catch(error)}
+function enterGame(){state.gameX=state.x;state.gameY=state.y;mode('game');if(state.gameSnapshot)render();else game(true).catch(error);}
+function enterObserver(){state.x=state.gameX;state.y=state.gameY;mode('observer');snapshot().catch(error)}
 function loadProgress(progress,message){state.boot={active:true,progress,message};const el=document.querySelector('#game-status');if(el)el.textContent=message;const board=document.querySelector('#game-board');if(board&&!state.gameSnapshot)board.innerHTML='<div class="world-loading"><div class="loader-icon">◆</div><strong>GENERATING WORLD</strong><span>'+esc(message)+'</span><div class="progress"><i style="width:'+progress+'%"></i></div><small>'+progress+'%</small></div>';}
 function finishLoading(){state.boot={active:false,progress:100,message:'World ready'};const el=document.querySelector('#game-status');if(el)el.textContent='WORLD READY';}
 function statusDetails(text){const el=document.querySelector('#game-status');if(el)el.textContent=text;}
@@ -178,6 +192,7 @@ document.onkeydown=e=>{const d={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',A
 if(refreshButton)refreshButton.onclick=()=>Promise.all([snapshot(),game()]).catch(error);
 shell('world');
 const initialMode=new URLSearchParams(location.search).get('app')==='observer'?'observer':'game';
+applyScreenMode(initialMode);
 mode(initialMode);
 if(initialMode==='game')game(true).catch(error);
 else snapshot().catch(error);
