@@ -65,7 +65,7 @@ export function applyTileTransform({
 } = {}) {
   const position = normalizeCoordinates(x, y);
   const baseline = getBaselineTile(seed, position.x, position.y, overrides);
-  return applyTransform({
+  const result = applyTransform({
     store: terrainTransformStore,
     seed,
     x: position.x,
@@ -77,10 +77,15 @@ export function applyTileTransform({
     at,
     recovery
   });
+  if (result.ok) invalidateChunkForTile(seed, position.x, position.y);
+  return result;
 }
 
 export function recoverTileTransform(seed, x, y, context = {}) {
-  return recoverTransform(terrainTransformStore, seed, x, y, context);
+  const position = normalizeCoordinates(x, y);
+  const result = recoverTransform(terrainTransformStore, seed, position.x, position.y, context);
+  if (result.recovered) invalidateChunkForTile(seed, position.x, position.y);
+  return result;
 }
 
 export function getTileTransform(seed, x, y) {
@@ -136,6 +141,13 @@ export function rootTileSelfTest(seed = 'atlas-root') {
 const CHUNK_CACHE_LIMIT = 128;
 const chunkCache = new Map();
 const tileSelfTestCache = new Map();
+
+function invalidateChunkForTile(seed, x, y) {
+  const p = normalizeCoordinates(x, y);
+  const chunkX = Math.floor(p.x / CHUNK_SIZE);
+  const chunkY = Math.floor(p.y / CHUNK_SIZE);
+  chunkCache.delete(chunkCacheKey(seed, chunkX, chunkY));
+}
 
 function chunkCacheKey(seed, chunkX, chunkY) {
   return String(seed) + '|' + String(chunkX) + '|' + String(chunkY);
