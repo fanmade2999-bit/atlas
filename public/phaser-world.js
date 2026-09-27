@@ -16,6 +16,11 @@ function tileColor(t,mode){
   const e=clamp(Number(t.elevation)||0),m=clamp(Number(t.moisture)||0),temp=clamp(Number(t.temperature)||0);
   const water=t.waterform||t.hydrology?.waterform||'None';
   const biome=t.biome||'???',land=t.landform||'Plains';
+  const surface=t.surface||t.detail?.surface||'';
+  if(mode==='normal'&&surface==='scorched-dirt')return 0x514235;
+  if(mode==='normal'&&surface==='stone-wall')return 0x72777b;
+  if(mode==='normal'&&surface==='water-pond')return 0x258ac2;
+  if(mode==='normal'&&surface==='ice')return 0xdceff5;
   if(mode==='elevation'){
     const stops=[0x1c4c2d,0x6e9641,0xcdbf64,0x966941,0xebebeb],p=e*(stops.length-1),i=Math.min(stops.length-2,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
     return (lerp(a.r,b.r,f)<<16)|(lerp(a.g,b.g,f)<<8)|lerp(a.b,b.b,f);
@@ -62,6 +67,37 @@ function drawDetail(g,d,ox,oy,size){
   }
 }
 
+function drawTransform(g,t,x,y,size){
+  const tr=t.transform;
+  if(!tr)return;
+  const surface=t.surface||'';
+  if(surface==='scorched-dirt'){
+    g.lineStyle(Math.max(1,size*.035),0x241b15,.8);
+    for(let i=0;i<3;i++)g.lineBetween(x+size*(.18+i*.22),y+size*.78,x+size*(.25+i*.18),y+size*.35);
+  }else if(surface==='stone-wall'){
+    g.lineStyle(Math.max(1,size*.025),0x303438,.85);
+    for(let i=1;i<3;i++)g.lineBetween(x+size*.06,y+size*(i/3),x+size*.94,y+size*(i/3));
+    g.lineBetween(x+size*.5,y+size*.06,x+size*.5,y+size*.33);
+    g.lineBetween(x+size*.25,y+size*.33,x+size*.25,y+size*.66);
+    g.lineBetween(x+size*.75,y+size*.66,x+size*.75,y+size*.94);
+  }else if(surface==='water-pond'){
+    g.lineStyle(Math.max(1,size*.025),0xb7ecff,.8);
+    g.arc(x+size*.5,y+size*.5,size*.3,Math.PI*.1,Math.PI*.9,false);
+  }else if(surface==='ice'){
+    g.lineStyle(Math.max(1,size*.025),0xffffff,.8);
+    g.lineBetween(x+size*.2,y+size*.7,x+size*.75,y+size*.25);
+    g.lineBetween(x+size*.45,y+size*.85,x+size*.85,y+size*.45);
+  }
+  if(t.transform?.result?.object?.type==='BerryTree'){
+    g.fillStyle(0x244c27,1);
+    g.fillCircle(x+size*.5,y+size*.32,size*.2);
+    g.fillCircle(x+size*.34,y+size*.43,size*.16);
+    g.fillCircle(x+size*.66,y+size*.43,size*.16);
+    g.fillStyle(0x714b2d,1);
+    g.fillRect(x+size*.46,y+size*.48,size*.08,size*.35);
+  }
+}
+
 function drawTile(scene,t,dx,dy,size,mode){
   const x=dx*size,y=dy*size;
   const g=scene.g;
@@ -72,6 +108,7 @@ function drawTile(scene,t,dx,dy,size,mode){
     g.fillStyle(0xffffff,0.035+e*.08);g.fillRect(x,y,size-1,size*.18);
   }
   (t.detail?.details||[]).forEach(d=>drawDetail(g,d,x,y,size));
+  if(mode==='normal')drawTransform(g,t,x,y,size);
   if(Number(t.x)%16===0)g.lineStyle(2,0xd8df68,.8),g.lineBetween(x,y,x,y+size);
   if(Number(t.y)%16===0)g.lineStyle(2,0xd8df68,.8),g.lineBetween(x,y,x+size,y);
 }
