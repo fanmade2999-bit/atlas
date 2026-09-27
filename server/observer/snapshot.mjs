@@ -2,7 +2,7 @@ import { sampleClimate, sampleGrid, rootSelfTest, WORLD_HEIGHT, WORLD_WIDTH, nor
 import { makePlaceholderSlots } from './manifest.mjs';
 import { CHUNK_SIZE, getCachedChunk, getTile, rootTileSelfTest, worldCacheStats } from '../root/tile.mjs';
 import { getPlayerState } from '../systems-state.mjs';
-import { getLocationNames } from '../root/naming.mjs';
+import { getLocationNames, namingSelfTest, namingSignature } from '../root/naming.mjs';
 import { ecsSelfTest, ecsStats } from '../root/ecs.mjs';
 
 export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WORLD_HEIGHT / 2), playerId = 'local-player' } = {}) {
@@ -13,6 +13,7 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
   const root = rootSelfTest(seed);
   const tileRoot = rootTileSelfTest(seed);
   const terrainRoot = terrainSelfTest(seed);
+  const namingRoot = namingSelfTest(seed);
   const chunkX = Math.floor(climate.x / CHUNK_SIZE);
   const chunkY = Math.floor(climate.y / CHUNK_SIZE);
   const chunk = getCachedChunk(seed, chunkX, chunkY).chunk;
@@ -37,10 +38,13 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
     player: { id: player.id, position: player.position, tick: player.tick, simulationTime: player.simulationTime, tickRate: player.tickRate, lastAction: player.lastAction, lastInspection: player.lastInspection },
     focus: { ...climate, terrain }, grid, slots, location,
     tile: { layer: 2, chunkSize: CHUNK_SIZE, chunkX, chunkY, origin: chunk.origin, tileCount: chunk.tiles.length, source: chunk.tiles[0]?.source || '???', status: tileRoot.passed ? 'PASS' : 'FAIL', checks: tileRoot.checks },
-    root: { layer: 1, name: 'Root Climate', status: root.passed ? 'PASS' : 'FAIL', checks: root.checks, samples: root.samples }, terrain: { layer: 4, status: terrainRoot.passed ? 'PASS' : 'FAIL', signature: terrainTransformSignature(seed, climate.x, climate.y), checks: terrainRoot.checks }, cache: worldCacheStats(),
+    root: { layer: 1, name: 'Root Climate', status: root.passed ? 'PASS' : 'FAIL', checks: root.checks, samples: root.samples },
+    naming: { layer: 3, status: namingRoot.passed ? 'PASS' : 'FAIL', signature: namingSignature(seed, climate.x, climate.y), checks: namingRoot.checks },
+    terrain: { layer: 4, status: terrainRoot.passed ? 'PASS' : 'FAIL', signature: terrainTransformSignature(seed, climate.x, climate.y), checks: terrainRoot.checks },
+    cache: worldCacheStats(),
     branches: [
       { layer: 2, name: 'Tile & chunk generation', status: 'PASS' },
-      { layer: 3, name: 'Naming hierarchy', status: 'PARTIAL' },
+      { layer: 3, name: 'Naming hierarchy', status: namingRoot.passed ? 'PASS' : 'FAIL' },
       { layer: 4, name: 'Terrain transform + hydrology', status: terrainRoot.passed ? 'PASS' : 'FAIL' },
       { layer: 5, name: 'Interaction & Move system', status: 'PASS' },
       { layer: 6, name: 'Pokémon ECS', status: 'PASS' },
