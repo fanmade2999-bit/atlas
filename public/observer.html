@@ -17,15 +17,15 @@
       </section>
 
       <section id="game-vision" class="game-vision" aria-label="Vision"></section>
-      <section id="game-info" class="game-info" aria-label="World information"></section>
-      <section id="site" class="site"></section>
-
-      <nav class="cartridge-dock">
-        <button class="tab active" data-site="world"><span>◎</span><b>World</b></button>
-        <button class="tab" data-site="map"><span>◇</span><b>Map</b></button>
-        <button class="tab" data-site="inspector"><span>⌖</span><b>Inspect</b></button>
-        <button class="tab" data-site="systems"><span>≋</span><b>Systems</b></button>
-      </nav>
+      <section id="info-panel" class="info-panel" aria-label="Observer information">
+        <div id="site" class="site"></div>
+        <nav class="cartridge-dock">
+          <button class="tab active" data-site="world"><span>◎</span><b>World</b></button>
+          <button class="tab" data-site="map"><span>◇</span><b>Map</b></button>
+          <button class="tab" data-site="inspector"><span>⌖</span><b>Inspect</b></button>
+          <button class="tab" data-site="systems"><span>≋</span><b>Systems</b></button>
+        </nav>
+      </section>
     </div>
   </div>
 </main>
@@ -33,7 +33,7 @@
 <section class="controller">
   <div class="dpad"><button class="dpad-up" data-direction="up">▲</button><button class="dpad-left" data-direction="left">◀</button><span></span><button class="dpad-right" data-direction="right">▶</button><button class="dpad-down" data-direction="down">▼</button></div>
   <div class="console-center"><div class="system-buttons"><button data-action="select">SELECT</button><button data-action="start">START</button></div><span id="app-mode-label" class="small">OBSERVER</span><strong>DEV UNIT</strong></div>
-  <div class="action-buttons"><button data-action="a">A</button><button data-action="b">B</button></div>
+  <div class="action-buttons"><button type="button" aria-label="A button">A</button><button type="button" aria-label="B button">B</button></div>
 </section>
 </div>
 <script type="module" src="/app.js"></script>
