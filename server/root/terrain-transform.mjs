@@ -149,13 +149,22 @@ export function applyTransform({
   if (!tile) throw new TypeError('tile is required');
 
   const normalized = normalizeCoordinates(x, y);
+  const existing = getActiveTransform(store, seed, normalized.x, normalized.y);
+  if (existing) {
+    const existingDefinition = getTransformDefinition(existing.transformId);
+    return {
+      ok: false,
+      reason: 'active-transform-exists',
+      transform: existingDefinition,
+      active: existing
+    };
+  }
+
   const effectiveTile = getEffectiveTile(store, seed, normalized.x, normalized.y, tile);
   const allowed = canTransform({ tile: effectiveTile, moveType, transformId });
   if (!allowed.ok) return { ok: false, reason: allowed.reason, transform: allowed.transform || null };
 
   const definition = allowed.transform;
-  const existing = getActiveTransform(store, seed, normalized.x, normalized.y);
-  if (existing) return { ok: false, reason: 'active-transform-exists', transform: definition, active: existing };
   const selectedRecovery = recovery || definition.recovery;
   if (!TRANSFORM_RECOVERY_TYPES.includes(selectedRecovery.type)) {
     throw new TypeError('unknown recovery type: ' + selectedRecovery.type);
