@@ -53,6 +53,7 @@ test('game snapshot exposes persistent player state', () => {
 
 
 import { teleportPlayer } from '../server/systems-state.mjs';
+import { applyTileTransform, recoverTileTransform } from '../server/root/tile.mjs';
 
 test('teleport is explicit and normalizes destination coordinates', () => {
   const result = teleportPlayer({ playerId: 'teleport-test', seed: 'game-test', x: WORLD_WIDTH, y: WORLD_HEIGHT + 99 });
@@ -67,4 +68,29 @@ test('game and map use the same deterministic world vocabulary', () => {
   assert.equal(typeof a.center.x, 'number');
   assert.equal(typeof a.center.y, 'number');
   assert.ok(a.tiles.some(t => t.biome === a.center.biome));
+});
+
+
+test('game snapshot carries an active Layer 4 transform to the graphical renderer', () => {
+  const seed = 'l4-graphics-link';
+  const base = makeGameSnapshot({ seed, x: 0, y: 10001500, playerId: 'l4-graphics' });
+  const target = base.tiles.find(tile => tile.surface === 'grass');
+  assert.ok(target, 'expected a generated grass tile in the visible field');
+
+  const applied = applyTileTransform({
+    seed,
+    x: target.x,
+    y: target.y,
+    moveType: 'fire',
+    sourceEntityId: 'l4-graphics',
+    recovery: { type: 'timer', durationMs: 10000 }
+  });
+  assert.equal(applied.ok, true);
+
+  const next = makeGameSnapshot({ seed, x: 0, y: 10001500, playerId: 'l4-graphics' });
+  const transformed = next.tiles.find(tile => tile.x === target.x && tile.y === target.y);
+  assert.equal(transformed?.surface, 'scorched-dirt');
+  assert.equal(transformed?.transform?.id, 'fire-grass-scorch');
+
+  recoverTileTransform(seed, target.x, target.y, { tile: transformed, now: Date.now() + 10001 });
 });
