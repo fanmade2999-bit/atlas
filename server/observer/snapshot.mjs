@@ -42,7 +42,7 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
     tile: { layer: 2, chunkSize: CHUNK_SIZE, chunkX, chunkY, origin: chunk.origin, tileCount: chunk.tiles.length, source: chunk.tiles[0]?.source || '???', status: tileRoot.passed ? 'PASS' : 'FAIL', checks: tileRoot.checks },
     root: { layer: 1, name: 'Root Climate', status: root.passed ? 'PASS' : 'FAIL', checks: root.checks, samples: root.samples },
     naming: { layer: 3, status: namingRoot.passed ? 'PASS' : 'FAIL', signature: namingSignature(seed, climate.x, climate.y), checks: namingRoot.checks },
-    terrain: { layer: 4, status: terrainRoot.passed ? 'PASS' : 'FAIL', signature: terrainTransformSignature(seed, climate.x, climate.y), checks: terrainRoot.checks, transform: { active: transformState.active?.transformId || null, record: transformState.active } },
+    terrain: { layer: 4, status: terrainRoot.passed ? 'PASS' : 'FAIL', signature: terrainTransformSignature(seed, climate.x, climate.y), checks: terrainRoot.checks, transform: { active: transformState.active?.transformId || null, record: transformState.active, activeCount: transformState.stats.active } },
     cache: worldCacheStats(),
     branches: [
       { layer: 2, name: 'Tile & chunk generation', status: 'PASS' },
