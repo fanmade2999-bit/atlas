@@ -42,7 +42,7 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
   };
 }
 
-export function makeGameSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WORLD_HEIGHT / 2), radiusX = 5, radiusY = 4, playerId = 'local-player' } = {}) {
+export function makeGameSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WORLD_HEIGHT / 2), radiusX = 7, radiusY = 5, playerId = 'local-player' } = {}) {
   const player = getPlayerState({ playerId, seed, x, y });
   const center = sampleClimate(seed, player.position.x, player.position.y);
   const tiles = [];
