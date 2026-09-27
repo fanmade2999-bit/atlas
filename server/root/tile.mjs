@@ -43,6 +43,7 @@ function getBaselineTile(seed, x, y, overrides = null) {
 export function getTile(seed, x, y, overrides = null) {
   const position = normalizeCoordinates(x, y);
   const baseline = getBaselineTile(seed, position.x, position.y, overrides);
+  recoverTileTransform(seed, position.x, position.y, { tile: baseline, now: Date.now() });
   return getEffectiveTile(
     terrainTransformStore,
     seed,
