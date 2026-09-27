@@ -2,6 +2,7 @@
  * introduced until the database branch is implemented. */
 import { normalizeCoordinates } from './root/climate.mjs';
 import { movePosition, inspectPosition } from './root/move.mjs';
+import { applyTileTransform, getTile, getTileTransform, recoverTileTransform } from './root/tile.mjs';
 
 const players = new Map();
 export const TICK_RATE = 20;
@@ -44,6 +45,41 @@ export function teleportPlayer({ playerId, seed, x, y }) {
   player.lastAction = { type: 'teleport', from, to, tick: player.tick };
   player.lastInspection = null;
   return { player, result: { ok: true, type: 'teleport', from, to } };
+}
+
+export function transformTile({ playerId, seed, x, y, moveType, transformId = null, recovery = null } = {}) {
+  const player = getPlayerState({ playerId, seed, x, y });
+  const result = applyTileTransform({
+    seed,
+    x,
+    y,
+    moveType,
+    transformId,
+    sourceEntityId: player.id,
+    recovery
+  });
+  if (result.ok) {
+    player.lastAction = {
+      type: 'terrain-transform',
+      transformId: result.record.transformId,
+      position: result.record.position,
+      tick: player.tick
+    };
+  }
+  return { player, result };
+}
+
+export function getTileState({ seed, x, y } = {}) {
+  const tile = getTile(seed, x, y);
+  return {
+    tile,
+    transform: getTileTransform(seed, x, y)
+  };
+}
+
+export function recoverTile({ seed, x, y, now = Date.now() } = {}) {
+  const tile = getTile(seed, x, y);
+  return recoverTileTransform(seed, x, y, { tile, now });
 }
 
 export function inspectPlayer({ playerId, seed, x, y }) {
