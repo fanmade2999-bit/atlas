@@ -50,6 +50,28 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
   };
 }
 
+export function makeRealtimeSnapshot({ seed='atlas-root', playerId='local-player', x=0, y=Math.floor(WORLD_HEIGHT/2) }={}) {
+  const player=getPlayerState({playerId,seed,x,y});
+  const focus=sampleClimate(seed,player.position.x,player.position.y);
+  const terrain=classifyTerrain(seed,focus.x,focus.y);
+  const location=getLocationNames(seed,focus.x,focus.y);
+  const grid=sampleGrid(seed,focus.x,focus.y,4);
+  const chunkX=Math.floor(focus.x/CHUNK_SIZE),chunkY=Math.floor(focus.y/CHUNK_SIZE);
+  const chunk=getCachedChunk(seed,chunkX,chunkY).chunk;
+  const tileRoot=rootTileSelfTest(seed);
+  const slots=makePlaceholderSlots({
+    'world.seed':seed,'world.tick':player.tick,'world.time':player.simulationTime,
+    'player.position':player.position.x+', '+player.position.y+', z???','player.area':location.area.name,
+    'climate.elevation':focus.elevation,'climate.temperature':focus.temperature,'climate.moisture':focus.moisture,
+    'terrain.biome':focus.biome,'terrain.landform':terrain.landform,'terrain.waterform':terrain.waterform,
+    'system.socket':'not plugged','system.database':'not plugged','system.tickRate':player.tickRate,
+    'interaction.lastAction':player.lastAction?player.lastAction.type:'???',
+    'location.continent':location.continent.name,'location.territory':location.territory.name,
+    'location.region':location.region.name,'location.tract':location.tract.name,'location.area':location.area.name
+  });
+  return {serverTime:Date.now(),world:{width:WORLD_WIDTH,height:WORLD_HEIGHT,xWraps:true,yWraps:false},player:{id:player.id,position:player.position,tick:player.tick,simulationTime:player.simulationTime,tickRate:player.tickRate,lastAction:player.lastAction,lastInspection:player.lastInspection},focus:{...focus,terrain},grid,slots,location,tile:{layer:2,chunkSize:CHUNK_SIZE,chunkX,chunkY,origin:chunk.origin,tileCount:chunk.tiles.length,source:chunk.tiles[0]?.source||'???',status:tileRoot.passed?'PASS':'FAIL'},cache:worldCacheStats()};
+}
+
 export function makeGameSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WORLD_HEIGHT / 2), radiusX = 7, radiusY = 5, playerId = 'local-player' } = {}) {
   const player = getPlayerState({ playerId, seed, x, y });
   const center = sampleClimate(seed, player.position.x, player.position.y);
