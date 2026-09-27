@@ -154,6 +154,8 @@ export function applyTransform({
   if (!allowed.ok) return { ok: false, reason: allowed.reason, transform: allowed.transform || null };
 
   const definition = allowed.transform;
+  const existing = getActiveTransform(store, seed, normalized.x, normalized.y);
+  if (existing) return { ok: false, reason: 'active-transform-exists', transform: definition, active: existing };
   const selectedRecovery = recovery || definition.recovery;
   if (!TRANSFORM_RECOVERY_TYPES.includes(selectedRecovery.type)) {
     throw new TypeError('unknown recovery type: ' + selectedRecovery.type);
@@ -204,6 +206,16 @@ export function isRecoveryDue(record, { tile, now = Date.now() } = {}) {
     return compareCondition(tile[condition.field], condition.op, condition.value);
   }
   return false;
+}
+
+export function listActiveTransforms(store, seed = null) {
+  if (!store) return [];
+  const prefix = seed == null ? null : String(seed) + '|';
+  return [...store.values()].filter(record => prefix == null || record.key.startsWith(prefix));
+}
+
+export function transformStoreStats(store, seed = null) {
+  return { active: listActiveTransforms(store, seed).length };
 }
 
 export function recoverTransform(store, seed, x, y, context = {}) {
