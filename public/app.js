@@ -172,8 +172,9 @@ document.querySelectorAll('[data-direction]').forEach(b=>b.onclick=()=>{const v=
 document.onkeydown=e=>{const d={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(d){e.preventDefault();const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[d];move(...v).catch(error)}else if(e.key==='Enter'){e.preventDefault();action('a')}else if(e.key==='Escape'){e.preventDefault();action('b')}else if(e.key==='Tab'){e.preventDefault();action('start')}};
 if(refreshButton)refreshButton.onclick=()=>Promise.all([snapshot(),game()]).catch(error);
 shell('world');
-const initialMode=new URLSearchParams(location.search).get('app')==='game'?'game':'observer';
+const initialMode=new URLSearchParams(location.search).get('app')==='observer'?'observer':'game';
 mode(initialMode);
-snapshot().then(()=>{if(state.mode==='game')return game(true)}).catch(error);
+if(initialMode==='game')game(true).catch(error);
+else snapshot().catch(error);
 pollGamepad();
 setInterval(realtime,500);
