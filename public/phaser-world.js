@@ -84,7 +84,7 @@ function drawPlayer(scene,x,y,size){
 
 class AtlasScene extends PhaserLib.Scene{
   constructor(){super('AtlasWorld')}
-  create(){this.g=this.add.graphics();this.player=this.add.graphics();this.snapshot=null;this.mode='normal';this.onTap=null}
+  create(){this.g=this.add.graphics();this.player=this.add.graphics();this.snapshot=null;this.mode='normal';this.onTap=null;scene=this;if(lastSnapshot)this.updateWorld(lastSnapshot,lastMode,lastTap)}
   updateWorld(snapshot,mode,onTap){
     this.snapshot=snapshot;this.mode=mode||'normal';this.onTap=onTap||null;
     const cols=snapshot.width,rows=snapshot.height;
@@ -99,11 +99,11 @@ class AtlasScene extends PhaserLib.Scene{
   }
   resize(){if(this.snapshot)this.updateWorld(this.snapshot,this.mode,this.onTap)}
 }
-let game=null,scene=null,container=null,lastSnapshot=null,lastMode='normal',phaserError=null;
+let game=null,scene=null,container=null,lastSnapshot=null,lastMode='normal',lastTap=null,phaserError=null;
 
 export function mountPhaserWorld(host,snapshot,mode='normal',onTap=null){
   if(!PhaserLib)throw new Error('Phaser 3 failed to load (CDN unavailable or script blocked)');
-  container=host;lastSnapshot=snapshot;lastMode=mode;
+  container=host;lastSnapshot=snapshot;lastMode=mode;lastTap=onTap;
   if(!game){
     game=new PhaserLib.Game({
       type:PhaserLib.CANVAS,
@@ -117,9 +117,8 @@ export function mountPhaserWorld(host,snapshot,mode='normal',onTap=null){
       scene:AtlasScene
     });
     scene=game.scene.getScene('AtlasWorld');
-    if(!scene)throw new Error('Phaser AtlasWorld scene failed to initialize');
-    scene.events.once('create',()=>scene.updateWorld(lastSnapshot,lastMode,onTap));
-  }else scene.updateWorld(snapshot,mode,onTap);
+  }
+  if(scene)scene.updateWorld(snapshot,mode,onTap);
   return game;
 }
 export function destroyPhaserWorld(){if(game){game.destroy(true);game=null;scene=null;container=null}}
