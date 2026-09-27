@@ -60,3 +60,15 @@
   .handheld.game-mode .console-top{display:none}
   .handheld.game-mode .controller{min-height:76px}
 }
+
+
+/* Game information stays inside the screen, between Vision and the physical controller. */
+.handheld.game-mode .site{display:block;min-height:0;overflow:hidden;background:#050708;border-top:1px solid var(--border);padding:0 6px}
+.handheld.game-mode .game-info-panel{display:grid;gap:4px;padding:5px 2px 6px}
+.handheld.game-mode .game-info-title{font-size:7px;font-weight:900;letter-spacing:.14em;color:var(--accent)}
+.handheld.game-mode .game-info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.handheld.game-mode .game-info-grid>div{min-width:0;border:1px solid var(--border);border-radius:6px;padding:4px 5px;background:var(--surface-2)}
+.handheld.game-mode .game-info-grid span{display:block;font-size:5px;color:var(--muted);letter-spacing:.08em}
+.handheld.game-mode .game-info-grid b{display:block;margin-top:2px;font-size:7px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.handheld.game-mode .screen-glow{grid-template-rows:minmax(0,1fr) auto auto}
+.handheld.game-mode .game-panel{height:auto;min-height:0}
