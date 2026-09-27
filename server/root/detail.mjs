@@ -13,7 +13,15 @@ const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 export function getTileDetail(seed='atlas-root',x=0,y=0){
   const p=normalizeCoordinates(x,y),c=sampleClimate(seed,p.x,p.y),t=classifyTerrain(seed,p.x,p.y);
   const n=salt=>hash(seed,p.x,p.y,salt),land=t.landform,water=t.waterform;
-  const surface=water==='Ocean'?'water-deep':water==='Shallows'?'water-shallow':water==='Lake'?'water-lake':water==='River'?'water-river':water==='Swamp'?'swamp':c.biome==='Desert'?'sand':c.biome==='Alpine'||land==='Peak'?'snow':c.biome==='Tundra'?'tundra':c.biome==='Cold Steppe'?'cold-grass':c.biome==='Wetland'?'wet-ground':c.biome==='Grassland'?'grass':land==='Mountain'?'rocky-grass':land==='Hills'?'meadow':'forest-floor';
+  const baseSurface=water==='Ocean'?'water-deep':water==='Shallows'?'water-shallow':water==='Lake'?'water-lake':water==='River'?'water-river':water==='Swamp'?'swamp':c.biome==='Desert'?'sand':c.biome==='Alpine'||land==='Peak'?'snow':c.biome==='Tundra'?'tundra':c.biome==='Cold Steppe'?'cold-grass':c.biome==='Wetland'?'wet-ground':c.biome==='Grassland'?'grass':land==='Mountain'?'rocky-grass':land==='Hills'?'meadow':'forest-floor';
+  // "dirt" and "grass" are natural ground states, not synthetic fixtures. Keep
+  // their placement deterministic and limited to ordinary dry forest/meadow
+  // ground so Layer 4 construction/destruction transforms have real targets.
+  const groundSurface=['forest-floor','meadow'].includes(baseSurface);
+  const groundRoll=n('ground-surface');
+  const surface=groundSurface
+    ? (groundRoll<0.12?'grass':groundRoll<0.34?'dirt':baseSurface)
+    : baseSurface;
   const forest=c.biome==='Temperate Forest'||c.biome==='Tropical Forest',wet=c.biome==='Wetland'||water==='Swamp';
   const treeBase=forest?(0.36+c.moisture*0.30):0,treeCount=forest&&n('tree-density')<treeBase?1+pick(n('tree-count')*3.5):0;
   const details=[];
