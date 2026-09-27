@@ -109,6 +109,14 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
     root.querySelector('#map-teleport')?.addEventListener('click',()=>confirmTeleport(map.target));
   };
 
+  const ensureModal=()=>{
+    let modal=document.querySelector('#teleport-modal');
+    if(modal)return modal;
+    modal=document.createElement('div');modal.id='teleport-modal';modal.className='modal-backdrop';modal.hidden=true;
+    modal.innerHTML='<div class="teleport-dialog" role="dialog" aria-modal="true"><div class="modal-kicker">WORLD MAP · DESTINATION</div><h2>Teleport here?</h2><div id="teleport-details" class="teleport-details"></div><div class="modal-actions"><button id="teleport-cancel" class="modal-button secondary">CANCEL</button><button id="teleport-confirm" class="modal-button primary">TELEPORT</button></div></div>';
+    document.body.appendChild(modal);return modal;
+  };
+
   const confirmTeleport=async target=>{
     if(!target)return;
     const details=[
@@ -116,7 +124,7 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
       ['Biome',target.biome],['Landform',target.terrain?.landform||'???'],['Waterform',target.terrain?.waterform||'???'],
       ['Elevation',Number(target.climate?.elevation??0).toFixed(4)],['Moisture',Number(target.climate?.moisture??0).toFixed(4)]
     ];
-    const modal=document.querySelector('#teleport-modal'),body=document.querySelector('#teleport-details');
+    const modal=ensureModal(),body=modal.querySelector('#teleport-details');
     body.innerHTML=details.map(x=>'<div class="teleport-row"><span>'+x[0]+'</span><strong>'+esc(x[1])+'</strong></div>').join('');
     modal.hidden=false;
     const cancel=document.querySelector('#teleport-cancel'),ok=document.querySelector('#teleport-confirm');
