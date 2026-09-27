@@ -1,5 +1,5 @@
 const siteRoot=document.querySelector('#site'),address=document.querySelector('#address'),refreshButton=document.querySelector('#refresh'),tabs=[...document.querySelectorAll('.tab')];
-const state={mode:'observer',site:'overview',seed:'atlas-root',x:0,y:10001500,gameX:0,gameY:10001500,snapshot:null,gameSnapshot:null,playerId:'local-player',motion:null,realtimeBusy:false,moveBusy:false,boot:{active:true,progress:0,message:'Initializing Atlas world…'}};
+const state={mode:'observer',site:'overview',seed:'atlas-root',x:0,y:10001500,gameX:0,gameY:10001500,snapshot:null,gameSnapshot:null,playerId:'local-player',vision:'normal',motion:null,realtimeBusy:false,moveBusy:false,boot:{active:true,progress:0,message:'Initializing Atlas world…'}};
 const sites={overview:renderOverview,world:renderWorld,climate:renderClimate,systems:renderSystems,inspector:renderInspector},order=Object.keys(sites);
 const esc=v=>String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const val=v=>v==null?'<span class="value unknown">???</span>':`<span class="value">${typeof v==='number'?v.toFixed(4):esc(v)}</span>`;
@@ -9,7 +9,7 @@ function shell(id){state.site=id;address.textContent=`atlas://${id}`;tabs.forEac
 function mode(m){state.mode=m;document.querySelector('#app-mode-label').textContent=m==='game'?'GAME':'OBSERVER';address.textContent=m==='game'?'atlas://game':`atlas://${state.site}`;document.querySelector('#game-panel')?.classList.toggle('game-active',m==='game');render();}
 async function snapshot(showLoad=true){if(showLoad)loadProgress(18,'Loading Observer plugs…');const p=new URLSearchParams({seed:state.seed,x:state.x,y:state.y,playerId:state.playerId}),r=await fetch('/api/observer?'+p);if(!r.ok)throw Error('Observer API '+r.status);state.snapshot=await r.json();render();}
 async function game(showLoad=false){if(showLoad)loadProgress(12,'Preparing world stream…');const started=performance.now();const p=new URLSearchParams({seed:state.seed,x:state.gameX,y:state.gameY,playerId:state.playerId}),r=await fetch('/api/game?'+p);if(!r.ok)throw Error('Game API '+r.status);if(showLoad)loadProgress(42,'Generating root climate…');state.gameSnapshot=await r.json();if(showLoad)loadProgress(78,'Building visible tile field…');state.gameX=state.gameSnapshot.center.x;state.gameY=state.gameSnapshot.center.y;state.x=state.gameX;state.y=state.gameY;render();if(showLoad){const elapsed=performance.now()-started;if(elapsed<320)await new Promise(resolve=>setTimeout(resolve,320-elapsed));finishLoading();render();}}
-function enterGame(){state.gameX=state.x;state.gameY=state.y;state.mode='game';address.textContent='atlas://game';document.querySelector('#app-mode-label').textContent='GAME';if(state.gameSnapshot)render();else game(true).catch(error)}
+function enterGame(){state.gameX=state.x;state.gameY=state.y;state.mode='game';address.textContent='atlas://game';document.querySelector('#app-mode-label').textContent='GAME';if(state.gameSnapshot)render();else game(true).catch(error);}
 function enterObserver(){state.x=state.gameX;state.y=state.gameY;state.mode='observer';address.textContent='atlas://'+state.site;document.querySelector('#app-mode-label').textContent='OBSERVER';snapshot().catch(error)}
 function loadProgress(progress,message){state.boot={active:true,progress,message};const el=document.querySelector('#game-status');if(el)el.textContent=message;const board=document.querySelector('#game-board');if(board&&!state.gameSnapshot)board.innerHTML='<div class="world-loading"><div class="loader-icon">◆</div><strong>GENERATING WORLD</strong><span>'+esc(message)+'</span><div class="progress"><i style="width:'+progress+'%"></i></div><small>'+progress+'%</small></div>';}
 function finishLoading(){state.boot={active:false,progress:100,message:'World ready'};const el=document.querySelector('#game-status');if(el)el.textContent='WORLD READY';}
@@ -106,18 +106,21 @@ async function move(dx,dy){
     game(false).catch(error);
   }finally{state.moveBusy=false}
 }
-function animateMotion(){
-  const motion=state.motion;if(!motion)return;
-  const marker=document.querySelector('.player-marker');if(!marker)return;
-  const board=document.querySelector('#game-board');
-  const tile=parseFloat(getComputedStyle(board).getPropertyValue('--tile-size'))||20;
-  const dx=motion.direction==='right'?1:motion.direction==='left'?-1:0,dy=motion.direction==='down'?1:motion.direction==='up'?-1:0;
-  marker.style.setProperty('--move-x',(dx*tile)+'px');marker.style.setProperty('--move-y',(dy*tile)+'px');
-  marker.classList.remove('player-marker-step');void marker.offsetWidth;marker.classList.add('player-marker-step');
-  setTimeout(()=>{if(marker)marker.classList.remove('player-marker-step');state.motion=null},150);
-}
 async function inspect(){const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY}),r=await fetch('/api/game/inspect?'+p);if(!r.ok)throw Error('Inspect API '+r.status);const z=await r.json();state.gameSnapshot.player=z.player;render()}
-function action(a){if(a==='a'){if(state.mode==='game')inspect().catch(error);else enterGame()}else if(a==='b'){if(state.mode==='game')enterObserver();else nav(-1)}else if(a==='start'||a==='select'){if(state.mode==='game')enterObserver();else enterGame()}}function animateMotion(){const started=state.motion?.startedAt;if(!started)return;const frame=()=>{if(!state.motion)return;const p=Math.min(1,(performance.now()-started)/state.motion.duration);document.querySelectorAll('.player-step').forEach(el=>el.style.setProperty('--step-progress',p));if(p<1)requestAnimationFrame(frame);else{state.motion=null;document.querySelectorAll('.player-step').forEach(el=>el.style.removeProperty('--step-progress'))}};requestAnimationFrame(frame)}
+function action(a){if(a==='a'){if(state.mode==='game')inspect().catch(error);else enterGame()}else if(a==='b'){if(state.mode==='game')enterObserver();else nav(-1)}else if(a==='start'||a==='select'){if(state.mode==='game')enterObserver();else enterGame()}}function animateMotion(){
+  const motion=state.motion;if(!motion)return;
+  const marker=document.querySelector('.player-marker'),board=document.querySelector('#game-board');
+  if(!marker||!board)return;
+  const tile=parseFloat(getComputedStyle(board).getPropertyValue('--tile-size'))||20;
+  const dx=motion.direction==='right'?1:motion.direction==='left'?-1:0;
+  const dy=motion.direction==='down'?1:motion.direction==='up'?-1:0;
+  marker.style.setProperty('--move-x',(dx*tile)+'px');
+  marker.style.setProperty('--move-y',(dy*tile)+'px');
+  marker.classList.remove('player-marker-step');
+  void marker.offsetWidth;
+  marker.classList.add('player-marker-step');
+  setTimeout(()=>{marker.classList.remove('player-marker-step');if(state.motion===motion)state.motion=null},150);
+}
 async function realtime(){if(state.realtimeBusy)return;state.realtimeBusy=true;try{const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY}),r=await fetch('/api/realtime?'+p,{cache:'no-store'});if(!r.ok)throw Error('Realtime API '+r.status);const z=await r.json();if(z.player){const changed=state.gameX!==z.player.position.x||state.gameY!==z.player.position.y;state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;if(state.snapshot){state.snapshot.player=z.player;state.snapshot.focus=z.focus;state.snapshot.grid=z.grid;state.snapshot.location=z.location;state.snapshot.cache=z.cache;state.snapshot.tile=z.tile;state.snapshot.slots=z.slots;state.snapshot.world=z.world}if(state.gameSnapshot){state.gameSnapshot.player=z.player;state.gameSnapshot.center=z.player.position;if(state.mode==='game'&&changed)game(false).catch(error);else if(state.mode==='game')renderGamePanel()}}if(state.mode==='observer'&&state.snapshot)render()}catch(e){console.warn(e)}finally{state.realtimeBusy=false}}
 
 function pressed(g,i){return !!g.buttons?.[i]?.pressed}
