@@ -100,5 +100,24 @@ export function makeGameSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WO
       tiles.push({ ...tile, dx, dy });
     }
   }
-  return { seed, center: { x: center.x, y: center.y }, player: { id: player.id, position: player.position, tick: player.tick, lastAction: player.lastAction }, radiusX, radiusY, width: radiusX * 2 + 1, height: radiusY * 2 + 1, tiles, stream: { generated: [...generated], reused: [...reused] } };
+  const location = getLocationNames(seed, center.x, center.y);
+  const centerTerrain = classifyTerrain(seed, center.x, center.y);
+  return {
+    seed,
+    center: { x: center.x, y: center.y },
+    focus: { ...center, terrain: centerTerrain },
+    location,
+    player: {
+      id: player.id,
+      position: player.position,
+      tick: player.tick,
+      simulationTime: player.simulationTime,
+      tickRate: player.tickRate,
+      lastAction: player.lastAction,
+      lastInspection: player.lastInspection
+    },
+    radiusX, radiusY, width: radiusX * 2 + 1, height: radiusY * 2 + 1,
+    tiles,
+    stream: { generated: [...generated], reused: [...reused] }
+  };
 }
