@@ -3,6 +3,7 @@ import { makePlaceholderSlots } from './manifest.mjs';
 import { CHUNK_SIZE, getCachedChunk, getTile, rootTileSelfTest, worldCacheStats } from '../root/tile.mjs';
 import { getPlayerState } from '../systems-state.mjs';
 import { getLocationNames } from '../root/naming.mjs';
+import { ecsSelfTest, ecsStats } from '../root/ecs.mjs';
 
 export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WORLD_HEIGHT / 2), playerId = 'local-player' } = {}) {
   const player = getPlayerState({ playerId, seed, x, y });
