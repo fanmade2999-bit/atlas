@@ -38,3 +38,25 @@
 .map-glyph{position:absolute;inset:0;display:grid;place-items:center;color:#ffffffcc;font-size:clamp(8px,1.7vw,15px);font-weight:900;line-height:1;text-shadow:0 1px 3px #0008;pointer-events:none}.world-map-cell{overflow:hidden}.game-tile{position:relative;display:grid;place-items:center;overflow:hidden}.terrain-glyph{position:absolute;inset:0;display:grid;place-items:center;color:#ffffffb8;font-size:clamp(8px,2.1vw,16px);font-weight:900;line-height:1;text-shadow:0 1px 3px #0009;pointer-events:none}.terrain-glyph.water{color:#dff8ffcc}
 .td{position:absolute;z-index:3;transform:translate(-50%,-50%);width:var(--s);height:var(--s);pointer-events:none}.td:before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-shadow:0 1px 2px #000b;font-weight:900}.td-tree:before{content:'♣';font-size:calc(var(--s)*.72);color:#184d22}.td-shrub:before{content:'♣';font-size:calc(var(--s)*.48);color:#397c39}.td-grass:before{content:'˄';font-size:calc(var(--s)*.40);color:#d6e86d}.td-rock:before{content:'◆';font-size:calc(var(--s)*.38);color:#9ba19d}.td-flower:before{content:'✦';font-size:calc(var(--s)*.32);color:#f0d5e8}.td-shore:before{content:'≈';font-size:calc(var(--s)*.65);color:#d9f6ff}.td-dune:before{content:'⌁';font-size:calc(var(--s)*.58);color:#f0d08a}.td-snowcap:before{content:'△';font-size:calc(var(--s)*.62);color:#fff}
 .game-board{position:relative;display:block;overflow:hidden;touch-action:none;background:#10161a}.game-board canvas{display:block!important;width:100%!important;height:100%!important;image-rendering:pixelated}.game-board .td{display:none}
+
+/* Fullscreen handheld game mode: no fake browser chrome, no observer scrolling. */
+.handheld.game-mode .screen-frame{padding:0}
+.handheld.game-mode .screen-bezel{width:100%;height:100%;padding:0;border:0;border-radius:0}
+.handheld.game-mode .screen-glow{border:0;border-radius:0;grid-template-rows:minmax(0,1fr);overflow:hidden}
+.handheld.game-mode .game-panel{height:100%;min-height:0;border:0;border-radius:0;box-shadow:none;padding:4px 5px 5px;grid-template-rows:auto minmax(0,1fr) auto}
+.handheld.game-mode .game-panel-head{margin:0 2px 4px;min-height:16px}
+.handheld.game-mode .game-panel-head strong{font-size:8px}
+.handheld.game-mode .game-panel-head span{font-size:5px}
+.handheld.game-mode .game-status{font-size:6px}
+.handheld.game-mode .game-board-wrap{min-height:0;width:100%;height:100%;padding:0;border:0;border-radius:0}
+.handheld.game-mode .game-board{width:100%;height:100%;max-width:none;max-height:none}
+.handheld.game-mode .game-panel-stats{top:5px;left:5px}
+.handheld.game-mode .game-action{position:relative;z-index:20;margin:4px 0 0;padding:5px 2px 2px;background:#05070bcc;border-top:1px solid #ffffff1c}
+.handheld.game-mode .vision-box{margin:0;padding:5px 6px;border-radius:7px}
+.handheld.game-mode .site,.handheld.game-mode .cartridge-dock{display:none}
+.handheld.game-mode .screen-frame{overflow:hidden}
+.handheld.game-mode .game-board canvas{width:100%!important;height:100%!important}
+@media(max-width:699px){
+  .handheld.game-mode .console-top{display:none}
+  .handheld.game-mode .controller{min-height:76px}
+}
