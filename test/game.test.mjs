@@ -101,6 +101,7 @@ test('game snapshot exposes isolated Layer 4 test fixtures separately from natur
   assert.ok(Array.isArray(snapshot.testFixtures));
   assert.equal(snapshot.testFixtures.length, 5);
   assert.ok(snapshot.testFixtures.every(fixture => fixture.testOnly === true && fixture.natural === false));
+  assert.ok(snapshot.testFixtures.every(fixture => fixture.naturalTarget === fixture.available));
   assert.ok(snapshot.tiles.every(tile => tile.source !== 'test-fixture'));
 });
 
