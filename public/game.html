@@ -1,54 +1,13 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Atlas — Game</title>
-<style>
-:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#020604;color:#eef7ee}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#020604}body{display:grid;place-items:center;min-height:100svh;padding:12px}
-.handheld{width:min(760px,100%);display:grid;gap:12px}
-.screen{background:#07100b;border:10px solid #111;border-radius:24px;padding:12px;box-shadow:0 18px 50px #000,inset 0 0 30px #000}
-.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.title{font-weight:900;letter-spacing:.14em}.sub{font-size:9px;opacity:.55;letter-spacing:.18em}
-.board{display:grid;grid-template-columns:repeat(11,1fr);gap:2px;aspect-ratio:11/9;background:#000;padding:4px;border-radius:12px}
-.tile{position:relative;border-radius:3px;background:hsl(var(--h) var(--s)% var(--l)%);display:grid;place-items:center;color:#ffffff2f;font-size:clamp(9px,2vw,15px);font-weight:900}
-.tile.player{outline:3px solid white;outline-offset:-3px;color:#fff;box-shadow:0 0 14px #fff5;z-index:2}
-.info{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}.stat{background:#ffffff08;border:1px solid #fff2;border-radius:9px;padding:8px}.label{font-size:8px;opacity:.55}.value{font-size:12px;font-weight:800;margin-top:3px}
-.controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;background:#111;padding:12px 18px;border-radius:18px}
-.dpad{display:grid;grid-template-columns:repeat(3,32px);grid-template-rows:repeat(3,32px)}button{border:1px solid #ffffff1c;background:#20252a;color:#eee;cursor:pointer;font-weight:800}.dpad button{border-radius:5px}.u{grid-column:2}.l{grid-column:1;grid-row:2}.r{grid-column:3;grid-row:2}.d{grid-column:2;grid-row:3}
-.ab{display:flex;gap:10px;justify-self:end}.ab button{width:42px;height:42px;border-radius:50%}.center{text-align:center;font-size:8px;opacity:.6;line-height:1.5}
-.help{font-size:10px;opacity:.65;text-align:center}.observer{display:block;margin:0 auto;padding:7px 11px;border-radius:999px}
-</style>
-</head>
-<body>
-<div class="handheld">
-  <main class="screen">
-    <div class="top"><div><div class="title">ATLAS WORLD</div><div class="sub">LIVE SIMULATION</div></div><button class="observer" id="observer">OBSERVER</button></div>
-    <div id="board" class="board"></div>
-    <div id="info" class="info"></div>
-    <div class="help">D-pad / arrow keys move one tile · A / Enter inspect · B / Esc observer</div>
-  </main>
-  <section class="controls">
-    <div class="dpad">
-      <button class="u" data-dir="up">▲</button><button class="l" data-dir="left">◀</button><button class="r" data-dir="right">▶</button><button class="d" data-dir="down">▼</button>
-    </div>
-    <div class="center">ATLAS<br>DEV UNIT</div>
-    <div class="ab"><button id="a">A</button><button id="b">B</button></div>
-  </section>
-</div>
-<script>
-const state={x:0,y:10001500,seed:'atlas-root',id:'local-player'};
-const board=document.querySelector('#board'),info=document.querySelector('#info');
-const tileStyle=t=>`--h:${Math.round(205-t.temperature*170)};--s:${Math.round(42+t.moisture*45)};--l:${Math.round(20+t.elevation*44)}`;
-const glyph=t=>t.elevation>.82?'▲':t.moisture>.78&&t.elevation<.35?'≈':t.moisture>.55?'♣':t.elevation<.25?'·':'•';
-async function load(){const q=new URLSearchParams(state);const r=await fetch('/api/game?'+q);if(!r.ok)throw Error('Game API '+r.status);const g=await r.json();state.x=g.center.x;state.y=g.center.y;board.innerHTML=g.tiles.map(t=>`<div class="tile ${t.dx===0&&t.dy===0?'player':''}" style="${tileStyle(t)}">${t.dx===0&&t.dy===0?'◆':glyph(t)}</div>`).join('');info.innerHTML=`<div class="stat"><div class="label">X</div><div class="value">${g.center.x}</div></div><div class="stat"><div class="label">Y</div><div class="value">${g.center.y}</div></div><div class="stat"><div class="label">TICK</div><div class="value">${g.player?.tick??'???'}</div></div>`}
-async function move(d){const q=new URLSearchParams({...state,direction:d});const r=await fetch('/api/game/move?'+q);if(!r.ok)throw Error('Move API '+r.status);const j=await r.json();state.x=j.player.position.x;state.y=j.player.position.y;await load()}
-const dirs={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
-document.addEventListener('keydown',e=>{if(dirs[e.key]){e.preventDefault();move(dirs[e.key]).catch(console.error)}if(e.key==='Escape')location.href='/';});
-document.querySelectorAll('[data-dir]').forEach(b=>b.onclick=()=>move(b.dataset.dir).catch(console.error));
-document.querySelector('#b').onclick=()=>location.href='/';document.querySelector('#observer').onclick=()=>location.href='/';
-document.querySelector('#a').onclick=async()=>{const q=new URLSearchParams(state);await fetch('/api/game/inspect?'+q);await load()};
-load().catch(e=>{board.textContent=e.message});
-</script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Atlas — Game</title><style>:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#020604;color:#eef7ee}*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#020604}body{display:grid;place-items:center;min-height:100svh;padding:12px}.handheld{width:min(760px,100%);display:grid;gap:12px}.screen{background:#07100b;border:10px solid #111;border-radius:24px;padding:12px;box-shadow:0 18px 50px #000,inset 0 0 30px #000}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.title{font-weight:900;letter-spacing:.14em}.sub{font-size:9px;opacity:.55;letter-spacing:.18em}.board{display:grid;grid-template-columns:repeat(11,1fr);gap:2px;aspect-ratio:11/9;background:#000;padding:4px;border-radius:12px}.tile{position:relative;border-radius:3px;background:hsl(var(--h) var(--s)% var(--l)%);display:grid;place-items:center;color:#ffffff2f;font-size:clamp(9px,2vw,15px);font-weight:900}.tile.player{outline:3px solid white;outline-offset:-3px;color:#fff;box-shadow:0 0 14px #fff5;z-index:2}.info{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}.stat{background:#ffffff08;border:1px solid #fff2;border-radius:9px;padding:8px}.label{font-size:8px;opacity:.55}.value{font-size:12px;font-weight:800;margin-top:3px}.controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;background:#111;padding:12px 18px;border-radius:18px}.dpad{display:grid;grid-template-columns:repeat(3,32px);grid-template-rows:repeat(3,32px)}button{border:1px solid #ffffff1c;background:#20252a;color:#eee;cursor:pointer;font-weight:800}.dpad button{border-radius:5px}.u{grid-column:2}.l{grid-column:1;grid-row:2}.r{grid-column:3;grid-row:2}.d{grid-column:2;grid-row:3}.ab{display:flex;gap:10px;justify-self:end}.ab button{width:42px;height:42px;border-radius:50%}.center{text-align:center;font-size:8px;opacity:.6;line-height:1.5}.help{font-size:10px;opacity:.65;text-align:center}.observer{display:block;margin:0 auto;padding:7px 11px;border-radius:999px}.status{font-size:9px;opacity:.65;text-align:center;margin-top:6px;min-height:14px}</style></head><body><div class="handheld"><main class="screen"><div class="top"><div><div class="title">ATLAS WORLD</div><div class="sub">LIVE SIMULATION · GAME APP</div></div><button class="observer" id="observer">OBSERVER</button></div><div id="board" class="board"></div><div id="info" class="info"></div><div id="status" class="status">GAMEPAD: waiting for controller</div><div class="help">D-pad / arrows move · A / Enter inspect · B / Esc Observer · START/SELECT Observer</div></main><section class="controls"><div class="dpad"><button class="u" data-dir="up">▲</button><button class="l" data-dir="left">◀</button><button class="r" data-dir="right">▶</button><button class="d" data-dir="down">▼</button></div><div class="center">ATLAS<br>GAME APP</div><div class="ab"><button id="a">A</button><button id="b">B</button></div></section></div><script>
+const state={x:0,y:10001500,seed:'atlas-root',playerId:'local-player'};const board=document.querySelector('#board'),info=document.querySelector('#info'),status=document.querySelector('#status');let busy=false,lastPad=null,prev={};
+const tileStyle=t=>`--h:${Math.round(205-t.temperature*170)};--s:${Math.round(42+t.moisture*45)};--l:${Math.round(20+t.elevation*44)}`;const glyph=t=>t.elevation>.82?'▲':t.moisture>.78&&t.elevation<.35?'≈':t.moisture>.55?'♣':t.elevation<.25?'·':'•';
+async function load(){const q=new URLSearchParams(state),r=await fetch('/api/game?'+q);if(!r.ok)throw Error('Game API '+r.status);const g=await r.json();state.x=g.center.x;state.y=g.center.y;board.innerHTML=g.tiles.map(t=>`<div class="tile ${t.dx===0&&t.dy===0?'player':''}" style="${tileStyle(t)}">${t.dx===0&&t.dy===0?'◆':glyph(t)}</div>`).join('');info.innerHTML=`<div class="stat"><div class="label">X</div><div class="value">${g.center.x}</div></div><div class="stat"><div class="label">Y</div><div class="value">${g.center.y}</div></div><div class="stat"><div class="label">TICK</div><div class="value">${g.player?.tick??'???'}</div></div><div class="stat"><div class="label">ACTION</div><div class="value">${g.player?.lastAction?.type??'???'}</div></div>`}
+async function move(d){if(busy)return;busy=true;try{const q=new URLSearchParams({...state,direction:d}),r=await fetch('/api/game/move?'+q);if(!r.ok)throw Error('Move API '+r.status);const j=await r.json();state.x=j.player.position.x;state.y=j.player.position.y;await load()}finally{busy=false}}
+async function inspect(){if(busy)return;busy=true;try{const q=new URLSearchParams(state),r=await fetch('/api/game/inspect?'+q);if(!r.ok)throw Error('Inspect API '+r.status);await load()}finally{busy=false}}
+const dirs={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};addEventListener('keydown',e=>{if(dirs[e.key]){e.preventDefault();move(dirs[e.key]).catch(showError)}else if(e.key==='Enter'){e.preventDefault();inspect().catch(showError)}else if(e.key==='Escape'){e.preventDefault();location.href='/index.html'}else if(e.key==='Tab'){e.preventDefault();location.href='/index.html'}});
+document.querySelectorAll('[data-dir]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();move(b.dataset.dir).catch(showError)})});document.querySelector('#a').onclick=()=>inspect().catch(showError);document.querySelector('#b').onclick=()=>location.href='/index.html';document.querySelector('#observer').onclick=()=>location.href='/index.html';
+function showError(e){status.textContent='ERROR: '+e.message}
+function pressed(g,i){return !!g.buttons[i]?.pressed}function edge(g,i){const k='b'+i,v=pressed(g,i),was=!!prev[k];prev[k]=v;return v&&!was}function axis(v,neg,pos){return v<neg?'neg':v>pos?'pos':null}
+function pollGamepad(){const pads=navigator.getGamepads?.()||[];const g=[...pads].find(Boolean);if(!g){status.textContent='GAMEPAD: waiting for controller';requestAnimationFrame(pollGamepad);return}if(g!==lastPad){lastPad=g;prev={};status.textContent='GAMEPAD: '+(g.id||'connected')}const h=g.hat;if(h===undefined){}const axX=g.axes?.[0]??0,axY=g.axes?.[1]??0;const dpadX=pressed(g,14)?'neg':pressed(g,15)?'pos':axis(axX,-.5,.5);const dpadY=pressed(g,12)?'neg':pressed(g,13)?'pos':axis(axY,-.5,.5);if(!busy){if(dpadX==='neg'&&edge(g,'left'))move('left').catch(showError);if(dpadX==='pos'&&edge(g,'right'))move('right').catch(showError);if(dpadY==='neg'&&edge(g,'up'))move('up').catch(showError);if(dpadY==='pos'&&edge(g,'down'))move('down').catch(showError);if(edge(g,0))inspect().catch(showError);if(edge(g,1))location.href='/index.html';if(edge(g,9)||edge(g,8))location.href='/index.html'}requestAnimationFrame(pollGamepad)}
+addEventListener('gamepadconnected',e=>{lastPad=e.gamepad;prev={};status.textContent='GAMEPAD: '+e.gamepad.id});addEventListener('gamepaddisconnected',()=>{lastPad=null;status.textContent='GAMEPAD: disconnected'});load().catch(showError);pollGamepad();
+</script></body></html>
