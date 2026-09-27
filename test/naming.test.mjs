@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {getLocationNames,namingSignature} from '../server/root/naming.mjs';
+test('naming is deterministic',()=>assert.equal(namingSignature('atlas-root',123,456),namingSignature('atlas-root',123,456)));
+test('different coordinates can produce different deterministic names',()=>assert.notEqual(namingSignature('atlas-root',0,0),namingSignature('atlas-root',4096,4096)));
+test('hierarchy is physical and chunk/tile remain unnamed',()=>{const n=getLocationNames('atlas-root',123,456);assert.deepEqual(Object.keys(n),['continent','territory','region','tract','area','chunk','tile']);assert.equal(n.chunk.x,Math.floor(123/16));assert.equal(n.tile.x,123);for(const k of ['territory','region','tract','area'])assert.ok(n[k].name.length>0)});
