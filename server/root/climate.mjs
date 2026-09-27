@@ -92,19 +92,17 @@ export function normalizeCoordinates(x, y) {
 
 export function sampleElevation(seed, x, y) {
   ({ x, y } = normalizeCoordinates(x, y));
-  return fractalNoise(seed, x, y, { baseXCells: 48, baseYCells: 24, octaves: 5, salt: 'elevation' });
+  return cached(elevationCache,sampleKey(seed,x,y),()=>fractalNoise(seed, x, y, { baseXCells: 48, baseYCells: 24, octaves: 5, salt: 'elevation' }));
 }
 
 export function sampleMoisture(seed, x, y) {
   ({ x, y } = normalizeCoordinates(x, y));
-  return fractalNoise(seed, x, y, { baseXCells: 64, baseYCells: 32, octaves: 5, salt: 'moisture' });
+  return cached(moistureCache,sampleKey(seed,x,y),()=>fractalNoise(seed, x, y, { baseXCells: 64, baseYCells: 32, octaves: 5, salt: 'moisture' }));
 }
 
 export function sampleTemperature(seed, x, y) {
   ({ x, y } = normalizeCoordinates(x, y));
-  const latitude = latitudeHeat(y);
-  const localNoise = fractalNoise(seed, x, y, { baseXCells: 96, baseYCells: 48, octaves: 4, salt: 'temperature' });
-  return clamp01(latitude * 0.78 + localNoise * 0.22);
+  return cached(temperatureCache,sampleKey(seed,x,y),()=>{const latitude=latitudeHeat(y);const localNoise=fractalNoise(seed,x,y,{baseXCells:96,baseYCells:48,octaves:4,salt:'temperature'});return clamp01(latitude*0.78+localNoise*0.22);});
 }
 
 export function classifyBiome(elevation, temperature, moisture) {
@@ -119,17 +117,8 @@ export function classifyBiome(elevation, temperature, moisture) {
 }
 
 export function sampleClimate(seed, x, y) {
-  const normalized = normalizeCoordinates(x, y);
-  const elevation = sampleElevation(seed, normalized.x, normalized.y);
-  const temperature = sampleTemperature(seed, normalized.x, normalized.y);
-  const moisture = sampleMoisture(seed, normalized.x, normalized.y);
-  return {
-    ...normalized,
-    elevation,
-    temperature,
-    moisture,
-    biome: classifyBiome(elevation, temperature, moisture)
-  };
+  const normalized=normalizeCoordinates(x,y),key=sampleKey(seed,normalized.x,normalized.y);
+  return cached(climateCache,key,()=>{const elevation=sampleElevation(seed,normalized.x,normalized.y),temperature=sampleTemperature(seed,normalized.x,normalized.y),moisture=sampleMoisture(seed,normalized.x,normalized.y);return Object.freeze({...normalized,elevation,temperature,moisture,biome:classifyBiome(elevation,temperature,moisture)});});
 }
 
 export function sampleGrid(seed, centerX, centerY, radius = 4) {
@@ -198,7 +187,8 @@ export function flowToOcean(seed,x,y,elevation,maxSteps=64){
   return {reachesOcean:false,steps:visited.size};
 }
 export function classifyTerrain(seed='atlas-root',x=0,y=0){
-  const c=sampleClimate(seed,x,y);
+  const normalized=normalizeCoordinates(x,y),key=sampleKey(seed,normalized.x,normalized.y);const hit=terrainCache.get(key);if(hit!==undefined){terrainCache.delete(key);terrainCache.set(key,hit);return hit;}
+  const c=sampleClimate(seed,normalized.x,normalized.y);
   const landform=classifyLandform(seed,x,y,c.elevation);
   let waterform='None';
   if(landform==='Ocean')waterform='Ocean';
@@ -206,6 +196,6 @@ export function classifyTerrain(seed='atlas-root',x=0,y=0){
   else if(c.elevation<0.44&&c.moisture>0.78)waterform='Swamp';
   else if(c.moisture>0.62&&c.elevation>0.45&&flowToOcean(seed,x,y,c.elevation).reachesOcean)waterform='River';
   const surface=landform==='Peak'?'Snow/Alpine':(waterform==='Ocean'||waterform==='Shallows'?waterform:c.biome);
-  return {...c,landform,waterform,surface};
+  const result=Object.freeze({...c,landform,waterform,surface});terrainCache.set(key,result);while(terrainCache.size>CLIMATE_CACHE_LIMIT)terrainCache.delete(terrainCache.keys().next().value);return result;
 }
 export function terrainTransformSignature(seed='atlas-root',x=0,y=0){const t=classifyTerrain(seed,x,y);return JSON.stringify({biome:t.biome,landform:t.landform,waterform:t.waterform,surface:t.surface});}
