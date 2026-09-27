@@ -86,3 +86,7 @@ export function getCachedChunk(seed, chunkX, chunkY) {
 export function worldCacheStats() {
   return { chunks: chunkCache.size, capacity: CHUNK_CACHE_LIMIT };
 }
+
+export function prefetchChunks(seed, centerChunkX, centerChunkY, radius=1) {
+  for(let dy=-radius;dy<=radius;dy+=1) for(let dx=-radius;dx<=radius;dx+=1) getCachedChunk(seed,centerChunkX+dx,centerChunkY+dy);
+}
