@@ -17,6 +17,7 @@ function tileColor(t,mode){
   const water=t.waterform||t.hydrology?.waterform||'None';
   const biome=t.biome||'???',land=t.landform||'Plains';
   const surface=t.surface||t.detail?.surface||'';
+  if(mode==='normal'&&surface==='dirt')return 0x8b6b45;
   if(mode==='normal'&&surface==='scorched-dirt')return 0x514235;
   if(mode==='normal'&&surface==='stone-wall')return 0x72777b;
   if(mode==='normal'&&surface==='water-pond')return 0x258ac2;
@@ -113,6 +114,16 @@ function drawTile(scene,t,dx,dy,size,mode){
   if(Number(t.y)%16===0)g.lineStyle(2,0xd8df68,.8),g.lineBetween(x,y,x+size,y);
 }
 
+const FIXTURE_COLORS={fire:0xd86b4d,ice:0xb7e7f4,'rock-ground':0xb0b5b9,water:0x58b7d5,grass:0x8fcd63};
+function drawFixtureMarker(g,x,y,size,fixture){
+  const pad=Math.max(1,size*.10),color=fixture.available?(FIXTURE_COLORS[fixture.moveType]||0xf0c85a):0x6f767c;
+  g.lineStyle(Math.max(1,size*.045),color,.95);
+  g.strokeRect(x+pad,y+pad,size-pad*2,size-pad*2);
+  const cx=x+size*.5,cy=y+size*.5,r=size*.13;
+  g.fillStyle(color,.95);
+  g.fillTriangle(cx,cy-r,cx+r,cy,cx,cy+r);
+  g.fillTriangle(cx,cy-r,cx-r,cy,cx,cy+r);
+}
 function drawPlayer(scene,x,y,size,step=0){
   const g=scene.player;
   g.clear();
@@ -199,6 +210,14 @@ class AtlasScene extends PhaserLib.Scene{
       const sx=Math.floor(cols/2)+dx+ox/size;
       const sy=Math.floor(rows/2)+dy+oy/size;
       if(sx>-1&&sx<cols&&sy>-1&&sy<rows)drawTile(this,t,sx,sy,size,this.mode);
+    });
+    (this.snapshot.testFixtures||[]).forEach(fixture=>{
+      if(!fixture.available||!Number.isFinite(fixture.x)||!Number.isFinite(fixture.y))return;
+      const dx=worldDelta(fixture.x,center.x,40075000);
+      const dy=fixture.y-center.y;
+      const sx=Math.floor(cols/2)+dx+ox/size;
+      const sy=Math.floor(rows/2)+dy+oy/size;
+      if(sx>-1&&sx<cols&&sy>-1&&sy<rows)drawFixtureMarker(this.g,sx*size,sy*size,size,fixture);
     });
   }
   updateWorld(snapshot,mode,onTap){
