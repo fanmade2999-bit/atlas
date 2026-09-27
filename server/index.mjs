@@ -46,7 +46,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify(snapshot)); return;
     }
-    const requested = url.pathname === '/' ? '/index.html' : url.pathname;
+    const requested = url.pathname === '/' ? '/game.html' : url.pathname;
     const normalized = path.normalize(requested).replace(/^([.][.][/\\])+/, '');
     await sendFile(res, path.join(PUBLIC_DIR, normalized));
   } catch {
