@@ -728,3 +728,39 @@
     height:40px;
   }
 }
+
+
+/* FINAL OVERRIDE — unified Info/Observer content must be visible in Game mode.
+   The older #site hide rule has higher specificity and used !important.
+   Use the ID-aware selector here so the content viewport cannot be hidden. */
+.handheld.game-mode .info-panel #site{
+  display:block !important;
+  visibility:visible !important;
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:auto;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:auto;
+  scrollbar-color:#53616d #080b0e;
+}
+.handheld.game-mode .info-panel>.site{
+  grid-row:1;
+}
+.handheld.game-mode .info-panel>.cartridge-dock{
+  grid-row:2;
+  display:grid !important;
+  visibility:visible !important;
+  position:relative !important;
+  inset:auto !important;
+  min-width:0;
+  min-height:46px;
+  height:46px;
+  overflow:hidden;
+}
+.handheld.game-mode .info-panel{
+  grid-template-rows:minmax(0,1fr) 46px;
+}
