@@ -406,3 +406,203 @@
     max-height:240px;
   }
 }
+
+
+/* ================================================================
+   ATLAS HANDHELD FINAL COMPOSITION
+   Height is the source of truth:
+   GAME WORLD  ~58% | VISION ~10% | OBSERVER/INFO ~32%
+   Physical controller is a separate fixed device panel.
+   ================================================================ */
+.handheld.game-mode{
+  height:100svh;
+  min-height:0;
+  grid-template-rows:minmax(0,1fr) 112px;
+  overflow:hidden;
+}
+.handheld.game-mode .screen-frame{
+  min-height:0;
+  height:100%;
+  padding:0;
+  overflow:hidden;
+}
+.handheld.game-mode .screen-bezel{
+  width:100%;
+  height:100%;
+  min-height:0;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+}
+.handheld.game-mode .screen-glow{
+  width:100%;
+  height:100%;
+  min-height:0;
+  display:grid;
+  grid-template-rows:58% 10% 32%;
+  overflow:hidden;
+  border:0;
+  border-radius:0;
+}
+.handheld.game-mode .game-panel{
+  min-height:0;
+  height:100%;
+  overflow:hidden;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  padding:4px 5px;
+  border:0;
+  border-bottom:1px solid var(--border);
+  box-shadow:none;
+}
+.handheld.game-mode .game-panel-head{
+  min-height:16px;
+  margin:0 2px 3px;
+}
+.handheld.game-mode .game-board-wrap{
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  padding:0;
+  border:0;
+  border-radius:0;
+}
+.handheld.game-mode .game-board,
+.handheld.game-mode .game-board canvas{
+  width:100%!important;
+  height:100%!important;
+  max-width:none;
+  max-height:none;
+}
+.handheld.game-mode .game-vision{
+  min-width:0;
+  min-height:0;
+  height:100%;
+  overflow:hidden;
+  padding:3px 5px;
+  border-bottom:1px solid var(--border);
+  background:#050708;
+}
+.handheld.game-mode .vision-box{
+  margin:0;
+  padding:3px 5px;
+}
+.handheld.game-mode .vision-head{margin-bottom:2px}
+.handheld.game-mode .vision-options{
+  overflow:hidden;
+  flex-wrap:nowrap;
+}
+.handheld.game-mode .vision-options button{
+  padding:2px 4px;
+  font-size:6px;
+}
+.handheld.game-mode .vision-legend{
+  margin-top:2px;
+}
+.handheld.game-mode .info-panel{
+  min-width:0;
+  min-height:0;
+  height:100%;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  overflow:hidden;
+  background:#050708;
+}
+.handheld.game-mode .info-panel .site{
+  min-width:0;
+  min-height:0;
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:auto;
+  scrollbar-color:#53616d #080b0e;
+  padding:8px 8px 14px;
+}
+.handheld.game-mode .info-panel .cartridge-dock{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  min-height:46px;
+  flex:none;
+  padding:2px 4px;
+  border-top:1px solid var(--border);
+  border-bottom:0;
+  z-index:10;
+}
+.handheld.game-mode .info-panel .tab{
+  min-height:40px;
+}
+.handheld.game-mode .info-panel .tab b{
+  font-size:8px;
+}
+.handheld.game-mode .controller{
+  height:112px;
+  min-height:112px;
+  padding:7px 12px;
+  gap:14px;
+  overflow:hidden;
+}
+.handheld.game-mode .action-buttons button{
+  pointer-events:none;
+  opacity:.72;
+}
+.handheld.game-mode .console-center strong{font-size:15px}
+.handheld.game-mode .dpad{width:96px;height:68px}
+.handheld.game-mode .info-panel .site-inner{max-width:none}
+.handheld.game-mode .info-panel .hero{
+  margin:2px 0 9px;
+}
+.handheld.game-mode .info-panel h1{
+  font-size:22px;
+}
+.handheld.game-mode .info-panel .card-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+@media(max-width:699px){
+  .handheld.game-mode{
+    grid-template-rows:minmax(0,1fr) 112px;
+  }
+  .handheld.game-mode .screen-glow{
+    grid-template-rows:58% 10% 32%;
+  }
+  .handheld.game-mode .game-panel{
+    padding:3px 4px;
+  }
+  .handheld.game-mode .game-panel-head strong{font-size:7px}
+  .handheld.game-mode .game-panel-head span{font-size:5px}
+  .handheld.game-mode .game-status{font-size:6px}
+  .handheld.game-mode .game-vision{
+    padding:2px 4px;
+  }
+  .handheld.game-mode .vision-head b{font-size:7px}
+  .handheld.game-mode .vision-head span{font-size:6px}
+  .handheld.game-mode .vision-current{font-size:6px}
+  .handheld.game-mode .info-panel .site{
+    padding:7px 7px 12px;
+  }
+  .handheld.game-mode .info-panel .hero{
+    margin:0 0 8px;
+  }
+  .handheld.game-mode .info-panel h1{
+    font-size:20px;
+  }
+  .handheld.game-mode .info-panel .cartridge-dock{
+    min-height:44px;
+  }
+  .handheld.game-mode .info-panel .tab{
+    min-height:39px;
+  }
+  .handheld.game-mode .info-panel .tab b{font-size:8px}
+}
+
+/* Observer mode uses the same Info surface rather than creating a second Info. */
+.handheld:not(.game-mode) .info-panel{
+  min-height:0;
+}
+.handheld:not(.game-mode) .info-panel .site{
+  min-height:0;
+  overflow:auto;
+}
