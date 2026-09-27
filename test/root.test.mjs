@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sampleClimate, sampleTemperature, WORLD_HEIGHT, WORLD_WIDTH, rootSelfTest } from '../server/root/climate.mjs';
+import { sampleClimate, sampleTemperature, WORLD_HEIGHT, WORLD_WIDTH, rootSelfTest, classifyTerrain, terrainSelfTest, classifyHydrology } from '../server/root/climate.mjs';
 
 test('root functions are deterministic', () => {
   const a = sampleClimate('test-seed', 12345, 67890);
@@ -41,3 +41,18 @@ test('all root outputs are normalized', () => {
 test('root self test passes', () => {
   assert.equal(rootSelfTest('test-seed').passed, true);
 });
+
+test('terrain transform resolves biome, landform, and waterform deterministically',()=>{
+  const a=classifyTerrain('test-seed',12345,67890);
+  const b=classifyTerrain('test-seed',12345,67890);
+  assert.deepEqual(a,b);
+  assert.ok(['Ocean','Coast','Plains','Hills','Valley','Plateau','Mountain','Peak'].includes(a.landform));
+  assert.ok(['None','Ocean','Shallows','Lake','River','Swamp'].includes(a.waterform));
+});
+test('hydrology returns a deterministic drainage identity',()=>{
+  const a=classifyHydrology('test-seed',12345,67890);
+  const b=classifyHydrology('test-seed',12345,67890);
+  assert.deepEqual(a,b);
+  assert.equal(typeof a.watershedId,'string');
+});
+test('terrain self test passes',()=>assert.equal(terrainSelfTest('test-seed').passed,true));
