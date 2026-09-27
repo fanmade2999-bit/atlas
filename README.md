@@ -68,3 +68,8 @@ The playable handheld world is also available directly at `/game.html`. It uses 
 - `/api/observer` → Observer API route
 
 Game input is app-scoped: while Game is active, D-pad/arrow input moves the player; A inspects; B/START/SELECT return to Observer. The Game app also polls the browser Gamepad API rather than relying on keyboard events.
+
+
+## Screen architecture
+
+Game and Observer are now two app states inside one physical handheld screen. They are not separate screen documents: the shell stays mounted while `state.mode` switches the screen between `GAME` and `OBSERVER`. `/game.html` is only a compatibility entry that redirects into the same shell with `?app=game`.
