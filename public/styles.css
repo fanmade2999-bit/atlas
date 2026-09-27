@@ -1084,7 +1084,7 @@ input{
 @media(max-width:380px){
   :root{--control-height:96px;--dock-height:44px}
   .handheld.game-mode .screen-glow{
-    grid-template-rows:minmax(0,54%) minmax(0,8%) minmax(0,1fr) var(--control-height);
+    grid-template-rows:minmax(0,48%) minmax(0,8%) minmax(0,1fr) var(--control-height);
   }
   .handheld.game-mode #info-panel{grid-template-rows:minmax(0,1fr) var(--dock-height)}
   .handheld.game-mode #info-panel .cartridge-dock{
