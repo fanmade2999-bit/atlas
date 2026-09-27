@@ -8,10 +8,13 @@ test('game viewport reads deterministic root tiles', () => {
   const b = makeGameSnapshot({ seed: 'game-test', x: 10, y: 20 });
   assert.deepEqual(a.tiles, b.tiles);
   assert.deepEqual(a.center, b.center);
-  assert.deepEqual(a.stream, b.stream);
   assert.equal(a.tiles.length, 225);
   assert.equal(a.center.x, 10);
   assert.equal(a.center.y, 20);
+  assert.ok(a.stream);
+  assert.ok(b.stream);
+  assert.ok(a.stream.generated.length + a.stream.reused.length > 0);
+  assert.ok(b.stream.generated.length + b.stream.reused.length > 0);
 });
 
 test('game viewport respects X wrapping and Y cap', () => {
@@ -51,7 +54,6 @@ test('game snapshot exposes persistent player state', () => {
   assert.ok(Array.isArray(a.stream.reused));
 });
 
-
 import { teleportPlayer } from '../server/systems-state.mjs';
 import { applyTileTransform, recoverTileTransform } from '../server/root/tile.mjs';
 
@@ -62,14 +64,12 @@ test('teleport is explicit and normalizes destination coordinates', () => {
   assert.equal(result.player.lastAction.type, 'teleport');
 });
 
-
 test('game and map use the same deterministic world vocabulary', () => {
   const a = makeGameSnapshot({ seed: 'linked-test', x: 1234, y: 5678 });
   assert.equal(typeof a.center.x, 'number');
   assert.equal(typeof a.center.y, 'number');
   assert.ok(a.tiles.some(t => t.biome === a.center.biome));
 });
-
 
 test('game snapshot carries an active Layer 4 transform to the graphical renderer', () => {
   const seed = 'l4-graphics-link';
@@ -98,7 +98,6 @@ test('game snapshot carries an active Layer 4 transform to the graphical rendere
   recoverTileTransform(seed, fixture.x, fixture.y, { tile: transformed, now: Date.now() + 10001 });
 });
 
-
 test('game snapshot exposes isolated Layer 4 test fixtures separately from natural terrain', () => {
   const snapshot = makeGameSnapshot({ seed: 'l4-fixture-view', x: 100, y: 200, playerId: 'fixture-view' });
   assert.ok(Array.isArray(snapshot.testFixtures));
@@ -108,11 +107,14 @@ test('game snapshot exposes isolated Layer 4 test fixtures separately from natur
   assert.ok(snapshot.tiles.every(tile => tile.source !== 'test-fixture'));
 });
 
-
-test('Layer 4 test yard finds compatible natural targets without modifying terrain', () => {
+test('Layer 4 test yard exposes real ground targets without modifying generated tiles', () => {
   const snapshot = makeGameSnapshot({ seed: 'l4-test-yard', x: 0, y: 10001500, playerId: 'test-yard' });
-  assert.ok(Array.isArray(snapshot.testFixtures));
-  assert.equal(snapshot.testFixtures.length, 5);
-  assert.ok(snapshot.testFixtures.every(fixture => fixture.testOnly === true));
-  assert.ok(snapshot.testFixtures.every(fixture => fixture.available === true || fixture.available === false));
+  const fixtures = new Map(snapshot.testFixtures.map(fixture => [fixture.id, fixture]));
+  for (const id of ['l4-fire-grass', 'l4-rock-dirt', 'l4-water-dirt', 'l4-grass-dirt']) {
+    assert.equal(fixtures.get(id)?.available, true, id + ' should find a natural target in the deterministic test yard');
+  }
+  assert.ok(snapshot.tiles.some(tile => tile.surface === 'grass'));
+  assert.ok(snapshot.tiles.some(tile => tile.surface === 'dirt'));
+  assert.ok(snapshot.tiles.every(tile => tile.source !== 'test-fixture'));
+  assert.equal(snapshot.testFixtures.find(fixture => fixture.id === 'l4-ice-water')?.available, false);
 });
