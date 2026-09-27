@@ -2,3 +2,5 @@
 /* Keep every world block mathematically square, including the 1px grid gaps. */
 .game-board{--tile-size:min(calc((100cqw - 20px)/15),calc((100cqh - 16px)/11));}
 @media(max-width:699px){.screen-frame{padding:3px 5px 5px}.screen-bezel{padding:4px;border-radius:14px}.game-panel{padding:7px 6px 6px}.game-panel-head{margin-bottom:5px}.game-board-wrap{border-radius:7px;padding:3px}.game-action{font-size:7px}.site{padding-top:10px}.controller{min-height:76px}}
+
+.inspect-hud{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;padding:4px 6px;border:1px solid #ffffff2b;border-radius:6px;background:#05070bcc;color:#dfe6ec;font:700 8px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;backdrop-filter:blur(3px)}.inspect-hud b{width:100%;color:#fff}.inspect-hud span{color:#aeb9c4}.game-panel.game-active .game-action{color:#d0d8df}
