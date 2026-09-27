@@ -166,7 +166,7 @@ export function applyTransform({
     seed: String(seed),
     position: normalized,
     transformId: definition.id,
-    appliedAt,
+    appliedAt: at,
     sourceEntityId: sourceEntityId == null ? null : String(sourceEntityId),
     recovery: clone(selectedRecovery)
   });
