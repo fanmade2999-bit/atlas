@@ -88,7 +88,7 @@ function drawTransform(g,t,x,y,size){
     g.lineBetween(x+size*.2,y+size*.7,x+size*.75,y+size*.25);
     g.lineBetween(x+size*.45,y+size*.85,x+size*.85,y+size*.45);
   }
-  if(t.transform?.result?.object?.type==='BerryTree'){
+  if(t.object?.type==='BerryTree'){
     g.fillStyle(0x244c27,1);
     g.fillCircle(x+size*.5,y+size*.32,size*.2);
     g.fillCircle(x+size*.34,y+size*.43,size*.16);
@@ -145,8 +145,30 @@ class AtlasScene extends PhaserLib.Scene{
     this.playerAnim=0;
     this.cameraAnim=0;
     this.motionDuration=110;
+    this.inputBound=false;
     scene=this;
     if(lastSnapshot)this.updateWorld(lastSnapshot,lastMode,lastTap);
+    this.inputBound=true;
+    this.input.on('pointerdown', pointer => {
+      if(!this.lastLayout || !this.snapshot || !this.onTap)return;
+      const rect=this.game.canvas.getBoundingClientRect();
+      const px=(pointer.event.clientX-rect.left)*(this.scale.width/rect.width);
+      const py=(pointer.event.clientY-rect.top)*(this.scale.height/rect.height);
+      const {cols,rows,size,ox,oy}=this.lastLayout;
+      const sx=Math.floor((px-ox)/size), sy=Math.floor((py-oy)/size);
+      if(sx<0||sx>=cols||sy<0||sy>=rows)return;
+      const center=this.cameraNow();
+      const wx=Math.round(center.x+(sx-Math.floor(cols/2)));
+      const wy=Math.round(center.y+(sy-Math.floor(rows/2)));
+      const fixture=(this.snapshot.testFixtures||[]).find(f=>{
+        const fx=worldDelta(f.x,center.x,40075000)+Math.floor(cols/2);
+        const fy=(f.y-center.y)+Math.floor(rows/2);
+        return Math.round(fx)===sx&&Math.round(fy)===sy;
+      });
+      if(fixture){this.onTap({kind:'fixture',fixture});return;}
+      const tile=this.snapshot.tiles.find(t=>t.x===((wx%40075000)+40075000)%40075000&&t.y===wy);
+      this.onTap({kind:'tile',x:wx,y:wy,tile});
+    });
   }
   layoutFor(snapshot){
     const cols=snapshot.width,rows=snapshot.height;
