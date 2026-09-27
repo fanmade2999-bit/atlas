@@ -47,13 +47,13 @@ function visionColor(t,mode){
 }
 function visionLegend(mode){
   const legends={
-    normal:{title:'Normal',text:'Terrain + water + biome'},
-    elevation:{title:'Elevation',text:'Low → high'},
-    temperature:{title:'Temperature',text:'Cold → hot'},
-    moisture:{title:'Moisture',text:'Dry → wet'},
-    biome:{title:'Biome',text:'Climate biome'},
-    landform:{title:'Landform',text:'Ocean → Peak'},
-    waterform:{title:'Waterform',text:'None / ocean / lake / river / swamp'}
+    normal:{title:'Normal',text:'world colors',swatches:[['#155fa3','water'],['#88a944','land'],['#e4e9ed','peak snow']]},
+    elevation:{title:'Elevation',text:'low → high'},
+    temperature:{title:'Temperature',text:'cold → hot'},
+    moisture:{title:'Moisture',text:'dry → wet'},
+    biome:{title:'Biome',text:'climate biome'},
+    landform:{title:'Landform',text:'terrain shape'},
+    waterform:{title:'Waterform',text:'hydrology'}
   };
   const l=legends[mode]||legends.normal;
   const ramp={
@@ -61,7 +61,8 @@ function visionLegend(mode){
     temperature:'linear-gradient(90deg,#2a4baa,#37aad2,#6ecf7d,#f0cd46,#eb4b2d)',
     moisture:'linear-gradient(90deg,#7a5c37,#b2964e,#69b478,#2d96cd,#1950aa)'
   }[mode];
-  return '<div class="vision-legend"><div class="vision-legend-title"><b>'+l.title+'</b><span>'+l.text+'</span></div>'+(ramp?'<div class="vision-ramp" style="background:'+ramp+'"></div><div class="vision-ends"><span>LOW</span><span>HIGH</span></div>':'')+'</div>';
+  const swatches=l.swatches?'<div class="vision-swatches">'+l.swatches.map(s=>'<span><i style="background:'+s[0]+'"></i>'+s[1]+'</span>').join('')+'</div>':'';
+  return '<div class="vision-legend"><div class="vision-legend-title"><b>'+l.title+'</b><span>'+l.text+'</span></div>'+(ramp?'<div class="vision-ramp" style="background:'+ramp+'"></div><div class="vision-ends"><span>LOW</span><span>HIGH</span></div>':'')+swatches+'</div>';
 }
 function renderVisionControls(){
   const labels={normal:'Normal',elevation:'Elevation',temperature:'Temperature',moisture:'Moisture',biome:'Biome',landform:'Landform',waterform:'Water'};
