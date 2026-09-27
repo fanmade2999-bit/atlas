@@ -55,3 +55,29 @@ export function rootTileSelfTest(seed = 'atlas-root') {
   ];
   return { passed: checks.every((check) => check.ok), checks };
 }
+
+
+const CHUNK_CACHE_LIMIT = 128;
+const chunkCache = new Map();
+
+function chunkCacheKey(seed, chunkX, chunkY) {
+  return String(seed) + '|' + String(chunkX) + '|' + String(chunkY);
+}
+
+export function getCachedChunk(seed, chunkX, chunkY) {
+  const key = chunkCacheKey(seed, chunkX, chunkY);
+  const hit = chunkCache.get(key);
+  if (hit) {
+    chunkCache.delete(key);
+    chunkCache.set(key, hit);
+    return { chunk: hit, cacheHit: true };
+  }
+  const chunk = getChunk(seed, chunkX, chunkY);
+  chunkCache.set(key, chunk);
+  while (chunkCache.size > CHUNK_CACHE_LIMIT) chunkCache.delete(chunkCache.keys().next().value);
+  return { chunk, cacheHit: false };
+}
+
+export function worldCacheStats() {
+  return { chunks: chunkCache.size, capacity: CHUNK_CACHE_LIMIT };
+}
