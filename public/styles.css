@@ -4,3 +4,15 @@
 @media(max-width:699px){.screen-frame{padding:3px 5px 5px}.screen-bezel{padding:4px;border-radius:14px}.game-panel{padding:7px 6px 6px}.game-panel-head{margin-bottom:5px}.game-board-wrap{border-radius:7px;padding:3px}.game-action{font-size:7px}.site{padding-top:10px}.controller{min-height:76px}}
 
 .inspect-hud{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;padding:4px 6px;border:1px solid #ffffff2b;border-radius:6px;background:#05070bcc;color:#dfe6ec;font:700 8px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;backdrop-filter:blur(3px)}.inspect-hud b{width:100%;color:#fff}.inspect-hud span{color:#aeb9c4}.game-panel.game-active .game-action{color:#d0d8df}
+/* World-space chunk boundaries: every 16x16 tile region has a visible seam. */
+.game-tile.chunk-left{border-left:2px solid #d8df68}
+.game-tile.chunk-top{border-top:2px solid #d8df68}
+.game-tile.chunk-right{border-right:2px solid #d8df68}
+.game-tile.chunk-bottom{border-bottom:2px solid #d8df68}
+.game-tile.player{will-change:transform}
+.game-tile.player-step .player-glyph{animation:atlas-player-step .18s ease-out both}
+.game-tile.player-ghost{opacity:.72;filter:saturate(.35)}
+.game-tile.player-ghost .ghost-glyph{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:clamp(10px,2.3vw,18px);opacity:.8;animation:atlas-ghost .42s ease-out forwards;text-shadow:0 1px 4px #000}
+@keyframes atlas-player-step{0%{transform:scale(.78) translate(var(--step-x,0),var(--step-y,0));opacity:.55}100%{transform:scale(1) translate(0,0);opacity:1}}
+@keyframes atlas-ghost{0%{transform:scale(1);opacity:.8}100%{transform:scale(.5);opacity:0}}
+.step-right{--step-x:-100%}.step-left{--step-x:100%}.step-down{--step-y:-100%}.step-up{--step-y:100%}
