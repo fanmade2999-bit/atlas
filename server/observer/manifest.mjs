@@ -9,7 +9,7 @@ export const OBSERVER_SLOTS = [
   ['terrain.biome', 'Biome', 'terrain'], ['terrain.landform', 'Landform', 'terrain'], ['terrain.waterform', 'Waterform', 'terrain'],
   ['location.continent', 'Continent', 'location'], ['location.territory', 'Territory', 'location'], ['location.region', 'Region', 'location'], ['location.tract', 'Tract', 'location'], ['location.area', 'Area', 'location'],
   ['population.total', 'Pokémon', 'population'], ['population.active', 'Active', 'population'], ['population.dormant', 'Dormant', 'population'],
-  ['system.socket', 'Socket', 'system'], ['system.database', 'Database', 'system'], ['system.tickRate', 'Tick rate', 'system']
+  ['system.socket', 'Socket', 'system'], ['system.database', 'Database', 'system'], ['system.tickRate', 'Tick rate', 'system'], ['system.ecs', 'ECS', 'system']
 ];
 
 export function makePlaceholderSlots(overrides = {}) {
