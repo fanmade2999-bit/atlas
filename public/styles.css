@@ -16,3 +16,18 @@
 @keyframes atlas-player-step{0%{transform:scale(.78) translate(var(--step-x,0),var(--step-y,0));opacity:.55}100%{transform:scale(1) translate(0,0);opacity:1}}
 @keyframes atlas-ghost{0%{transform:scale(1);opacity:.8}100%{transform:scale(.5);opacity:0}}
 .step-right{--step-x:-100%}.step-left{--step-x:100%}.step-down{--step-y:-100%}.step-up{--step-y:100%}
+
+/* Vision selector + compact map legend */
+.vision-box{margin-top:3px;padding:5px 6px;border:1px solid #ffffff24;border-radius:7px;background:#05070bcc;backdrop-filter:blur(4px)}
+.vision-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.vision-head>div:first-child{display:grid;gap:1px}.vision-head b{font:800 8px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;color:#fff}.vision-head span{font-size:7px;color:#8996a3}.vision-current{font:800 7px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#d8df68;text-transform:uppercase}
+.vision-options{display:flex;gap:3px;overflow-x:auto;scrollbar-width:none}.vision-options::-webkit-scrollbar{display:none}.vision-options button{flex:0 0 auto;border:1px solid #ffffff1d;border-radius:5px;padding:3px 5px;background:#0c1014;color:#9ca8b3;font-size:7px;cursor:pointer}.vision-options button.active{border-color:#d8df68;color:#fff;background:#20261a;box-shadow:0 0 0 1px #d8df6833 inset}
+.vision-legend{display:grid;grid-template-columns:auto 1fr;gap:4px 7px;align-items:center;margin-top:4px}.vision-legend-title{display:flex;gap:4px;align-items:baseline;white-space:nowrap}.vision-legend-title b{font-size:7px;color:#fff}.vision-legend-title span{font-size:6px;color:#8996a3}.vision-ramp{grid-column:2;height:5px;border-radius:4px;border:1px solid #ffffff18}.vision-ends{grid-column:2;display:flex;justify-content:space-between;margin-top:-2px;color:#77838e;font:600 5px/1 ui-monospace,SFMono-Regular,Menlo,monospace}
+.game-board{position:relative}
+.game-tile{z-index:1}
+.player-cell{z-index:1}
+.player-marker{position:absolute;left:50%;top:50%;width:var(--tile-size);height:var(--tile-size);margin-left:calc(var(--tile-size) / -2);margin-top:calc(var(--tile-size) / -2);display:grid;place-items:center;z-index:8;pointer-events:none;filter:drop-shadow(0 1px 3px #000)}
+.player-marker span{color:#fff;font-size:clamp(11px,2.5vw,20px);text-shadow:0 0 5px #000,0 1px 2px #000}
+.player-marker-step{animation:atlas-marker-step .14s ease-out both}
+@keyframes atlas-marker-step{from{transform:translate(var(--move-x),var(--move-y)) scale(.72);opacity:.65}to{transform:translate(0,0) scale(1);opacity:1}}
+@media(max-width:699px){.vision-box{padding:4px 5px}.vision-options button{padding:3px 4px}.vision-legend-title span{display:none}}
