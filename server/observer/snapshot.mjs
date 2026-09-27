@@ -7,6 +7,7 @@ import { ecsSelfTest, ecsStats } from '../root/ecs.mjs';
 
 export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WORLD_HEIGHT / 2), playerId = 'local-player' } = {}) {
   const player = getPlayerState({ playerId, seed, x, y });
+  const ecs = ecsSelfTest();
   const climate = sampleClimate(seed, player.position.x, player.position.y);
   const grid = sampleGrid(seed, climate.x, climate.y, 4);
   const root = rootSelfTest(seed);
@@ -20,7 +21,7 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
     'world.seed': seed, 'world.tick': player.tick, 'world.time': player.simulationTime,
     'player.position': `${player.position.x}, ${player.position.y}, z???`, 'player.area': location.area.name,
     'climate.elevation': climate.elevation, 'climate.temperature': climate.temperature, 'climate.moisture': climate.moisture, 'terrain.biome': climate.biome, 'terrain.landform': terrain.landform, 'terrain.waterform': terrain.waterform,
-    'system.socket': 'not plugged', 'system.database': 'not plugged', 'system.tickRate': player.tickRate,
+    'system.socket': 'not plugged', 'system.database': 'not plugged', 'system.tickRate': player.tickRate, 'system.ecs': 'online',
     'interaction.lastAction': player.lastAction ? player.lastAction.type : '???',
     'location.continent': location.continent.name,
     'location.territory': location.territory.name,
@@ -30,6 +31,7 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
   });
   return {
     observer: { version: '0.1.0', mode: 'development', shell: 'Atlas Observer', philosophy: 'sites-inside-browser-shell' },
+    ecs: { layer: 6, status: ecs.passed ? 'PASS' : 'FAIL', stats: ecsStats(), checks: ecs.checks },
     world: { width: WORLD_WIDTH, height: WORLD_HEIGHT, xWraps: true, yWraps: false },
     player: { id: player.id, position: player.position, tick: player.tick, simulationTime: player.simulationTime, tickRate: player.tickRate, lastAction: player.lastAction, lastInspection: player.lastInspection },
     focus: { ...climate, terrain }, grid, slots, location,
@@ -40,7 +42,7 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
       { layer: 3, name: 'Naming hierarchy', status: 'PARTIAL' },
       { layer: 4, name: 'Terrain transform table', status: 'PARTIAL' },
       { layer: 5, name: 'Interaction & Move system', status: 'PASS' },
-      { layer: 6, name: 'Pokémon ECS', status: 'UNPLUGGED' },
+      { layer: 6, name: 'Pokémon ECS', status: 'PASS' },
       { layer: 7, name: 'Spawning & population', status: 'UNPLUGGED' },
       { layer: 8, name: 'Trust / Follow / Riding / Teleport', status: 'UNPLUGGED' },
       { layer: 9, name: 'Growth & Evolution', status: 'UNPLUGGED' },
