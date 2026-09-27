@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { makeGameSnapshot, makeObserverSnapshot } from './observer/snapshot.mjs';
+import { makeGameSnapshot, makeObserverSnapshot, makeRealtimeSnapshot } from './observer/snapshot.mjs';
 import { movePlayer, inspectPlayer } from './systems-state.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,9 +27,9 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     if (url.pathname === '/api/realtime') {
-      const snapshot = makeGameSnapshot({ seed: url.searchParams.get('seed') || 'atlas-root', x: Number(url.searchParams.get('x') || 0), y: Number(url.searchParams.get('y') || 10001500), playerId: url.searchParams.get('playerId') || 'local-player', radiusX: 0, radiusY: 0 });
-      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
-      res.end(JSON.stringify({ player: snapshot.player, center: snapshot.center, serverTime: Date.now() })); return;
+      const snapshot=makeRealtimeSnapshot({seed:url.searchParams.get('seed')||'atlas-root',x:Number(url.searchParams.get('x')||0),y:Number(url.searchParams.get('y')||10001500),playerId:url.searchParams.get('playerId')||'local-player'});
+      res.writeHead(200,{ 'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*' });
+      res.end(JSON.stringify(snapshot)); return;
     }
     if (url.pathname === '/api/game/move') {
       const result = movePlayer({ playerId: url.searchParams.get('playerId') || 'local-player', seed: url.searchParams.get('seed') || 'atlas-root', x: Number(url.searchParams.get('x') || 0), y: Number(url.searchParams.get('y') || 10001500), direction: url.searchParams.get('direction') || '' });
