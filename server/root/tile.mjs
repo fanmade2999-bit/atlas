@@ -7,20 +7,91 @@
  */
 import { normalizeCoordinates, sampleClimate, classifyTerrain, WORLD_HEIGHT, WORLD_WIDTH } from './climate.mjs';
 import { getTileDetail } from './detail.mjs';
+import { createTransformStore, applyTransform, recoverTransform, getEffectiveTile, getActiveTransform, terrainTransformSelfTest } from './terrain-transform.mjs';
 
 export const CHUNK_SIZE = 16;
+
+// Active Layer 4 mutations. Baseline generation remains deterministic; this
+// store contains only explicit world changes and is replaceable by persistence.
+export const terrainTransformStore = createTransformStore();
 
 export function tileKey(x, y) {
   const p = normalizeCoordinates(x, y);
   return `${p.x},${p.y}`;
 }
 
-export function getTile(seed, x, y, overrides = null) {
+function getBaselineTile(seed, x, y, overrides = null) {
   const position = normalizeCoordinates(x, y);
   const key = tileKey(position.x, position.y);
   const override = overrides?.[key];
   if (override) return { ...position, ...override, source: 'override' };
-  const climate=sampleClimate(seed, position.x, position.y); const terrain=classifyTerrain(seed, position.x, position.y); const detail=getTileDetail(seed, position.x, position.y); return { ...position, ...climate, landform:terrain.landform, waterform:terrain.waterform, surface:detail.surface, hydrology:terrain.hydrology, detail, source: 'baseline' };
+  const climate = sampleClimate(seed, position.x, position.y);
+  const terrain = classifyTerrain(seed, position.x, position.y);
+  const detail = getTileDetail(seed, position.x, position.y);
+  return {
+    ...position,
+    ...climate,
+    landform: terrain.landform,
+    waterform: terrain.waterform,
+    surface: detail.surface,
+    hydrology: terrain.hydrology,
+    detail,
+    source: 'baseline'
+  };
+}
+
+export function getTile(seed, x, y, overrides = null) {
+  const position = normalizeCoordinates(x, y);
+  const baseline = getBaselineTile(seed, position.x, position.y, overrides);
+  return getEffectiveTile(
+    terrainTransformStore,
+    seed,
+    position.x,
+    position.y,
+    baseline
+  );
+}
+
+export function applyTileTransform({
+  seed = 'atlas-root',
+  x = 0,
+  y = 0,
+  moveType,
+  transformId = null,
+  sourceEntityId = null,
+  at = Date.now(),
+  recovery = null,
+  overrides = null
+} = {}) {
+  const position = normalizeCoordinates(x, y);
+  const baseline = getBaselineTile(seed, position.x, position.y, overrides);
+  return applyTransform({
+    store: terrainTransformStore,
+    seed,
+    x: position.x,
+    y: position.y,
+    tile: baseline,
+    moveType,
+    transformId,
+    sourceEntityId,
+    at,
+    recovery
+  });
+}
+
+export function recoverTileTransform(seed, x, y, context = {}) {
+  return recoverTransform(terrainTransformStore, seed, x, y, context);
+}
+
+export function getTileTransform(seed, x, y) {
+  return getActiveTransform(terrainTransformStore, seed, x, y);
+}
+
+export function terrainTransformState(seed = 'atlas-root', x = 0, y = 0) {
+  return {
+    active: getTileTransform(seed, x, y),
+    selfTest: terrainTransformSelfTest(seed)
+  };
 }
 
 export function chunkOrigin(chunkX, chunkY) {
