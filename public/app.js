@@ -180,7 +180,7 @@ function pollGamepad(){const pads=navigator.getGamepads?.()||[];const g=[...pads
 addEventListener('gamepadconnected',e=>{lastGamepadId=e.gamepad.id;gamepadPrev={};document.querySelector('#app-mode-label').textContent='GAMEPAD CONNECTED'});
 addEventListener('gamepaddisconnected',()=>{lastGamepadId='';document.querySelector('#app-mode-label').textContent='GAME + INFO'});
 function nav(d){shell(order[(order.indexOf(state.site)+d+order.length)%order.length]);render()}
-tabs.forEach(t=>t.onclick=()=>{if(state.mode!=='observer')enterObserver();shell(t.dataset.site);if(state.snapshot)render();});
+tabs.forEach(t=>t.onclick=()=>{shell(t.dataset.site);if(state.snapshot||state.gameSnapshot)render();});
 document.querySelectorAll('[data-action="start"],[data-action="select"]').forEach(b=>b.onclick=()=>action(b.dataset.action));
 document.querySelectorAll('[data-direction]').forEach(b=>b.onclick=()=>{const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.direction];move(...v).catch(error)});
 document.onkeydown=e=>{const d={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(d){e.preventDefault();const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[d];move(...v).catch(error)}else if(e.key==='Enter'){e.preventDefault();action('a')}else if(e.key==='Escape'){e.preventDefault();action('b')}else if(e.key==='Tab'){e.preventDefault();action('start')}};
