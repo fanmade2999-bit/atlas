@@ -156,57 +156,151 @@ export function rootSelfTest(seed = 'atlas-root') {
 }
 
 
-export const TERRAIN_TRANSFORMS = Object.freeze([{landform:'Ocean',min:0,max:0.30,waterform:'Ocean'},{landform:'Coast',min:0.30,max:0.38,waterform:'Shallows'},{landform:'Plains',min:0.38,max:0.55,waterform:'None'},{landform:'Hills',min:0.55,max:0.65,waterform:'None'},{landform:'Valley/Plateau',min:0.65,max:0.80,waterform:'None'},{landform:'Mountain',min:0.80,max:0.92,waterform:'None'},{landform:'Peak',min:0.92,max:1.01,waterform:'None'}]);
+export const TERRAIN_TRANSFORMS = Object.freeze([
+  {landform:'Ocean',min:0,max:0.30,waterform:'Ocean'},
+  {landform:'Coast',min:0.30,max:0.38,waterform:'Shallows'},
+  {landform:'Plains',min:0.38,max:0.55,waterform:'None'},
+  {landform:'Hills',min:0.55,max:0.65,waterform:'None'},
+  {landform:'Valley/Plateau',min:0.65,max:0.80,waterform:'None'},
+  {landform:'Mountain',min:0.80,max:0.92,waterform:'None'},
+  {landform:'Peak',min:0.92,max:1.01,waterform:'None'}
+]);
+
+const FLOW_NEIGHBORS = Object.freeze([
+  [-1,-1], [0,-1], [1,-1],
+  [-1,0],           [1,0],
+  [-1,1],  [0,1],  [1,1]
+]);
 
 function terrainLocalVariance(seed,x,y){
   const center=sampleElevation(seed,x,y);
-  let sum=0,count=0;
-  for(const [dx,dy] of [[-4,0],[4,0],[0,-4],[0,4],[-4,-4],[4,-4],[-4,4],[4,4]]){sum+=sampleElevation(seed,x+dx,y+dy);count++}
-  const mean=sum/count;
+  let sum=0;
+  for(const [dx,dy] of [[-4,0],[4,0],[0,-4],[0,4],[-4,-4],[4,-4],[-4,4],[4,4]]) sum+=sampleElevation(seed,x+dx,y+dy);
+  const mean=sum/8;
   return {center,mean,variance:Math.abs(center-mean)};
 }
+
 export function classifyLandform(seed='atlas-root',x=0,y=0,elevation=sampleElevation(seed,x,y)){
   if(elevation<0.30)return 'Ocean';
   if(elevation<0.38)return 'Coast';
   if(elevation<0.55)return 'Plains';
   if(elevation<0.65)return 'Hills';
-  if(elevation<0.80){const v=terrainLocalVariance(seed,x,y);return v.variance<0.018?'Plateau':(v.center<v.mean?'Valley':'Plateau');}
+  if(elevation<0.80){
+    const v=terrainLocalVariance(seed,x,y);
+    return v.variance<0.018?'Plateau':(v.center<v.mean?'Valley':'Plateau');
+  }
   if(elevation<0.92)return 'Mountain';
   return 'Peak';
 }
+
 function downhillStep(seed,x,y,elevation){
   let best=null;
-  for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]){
+  for(const [dx,dy] of FLOW_NEIGHBORS){
     const p=normalizeCoordinates(x+dx,y+dy);
     const e=sampleElevation(seed,p.x,p.y);
-    if(e<elevation-0.000001&&(!best||e<best.elevation))best={x:p.x,y:p.y,elevation:e};
+    if(e<elevation-0.000001&&(!best||e<best.elevation))best={x:p.x,y:p.y,elevation:e,dx,dy};
   }
   return best;
 }
-export function flowToOcean(seed,x,y,elevation,maxSteps=64){
-  let cx=normalizeCoordinates(x,y).x,cy=normalizeCoordinates(x,y).y,ce=elevation;
+
+function flowTrace(seed,x,y,elevation,maxSteps=96){
+  let current=normalizeCoordinates(x,y);
+  let currentElevation=elevation;
   const visited=new Set();
-  for(let step=0;step<maxSteps;step++){
-    if(ce<0.30)return {reachesOcean:true,steps:step};
-    const key=cx+','+cy;
-    if(visited.has(key))break;
+  const path=[];
+  for(let step=0;step<maxSteps;step+=1){
+    const key=current.x+','+current.y;
+    if(visited.has(key)) return {reachesOcean:false,reachesBasin:true,steps:step,path,outlet:{x:current.x,y:current.y},sink:true};
     visited.add(key);
-    const next=downhillStep(seed,cx,cy,ce);
-    if(!next)break;
-    cx=next.x;cy=next.y;ce=next.elevation;
+    if(currentElevation<0.30) return {reachesOcean:true,reachesBasin:false,steps:step,path,outlet:{x:current.x,y:current.y},sink:false};
+    const next=downhillStep(seed,current.x,current.y,currentElevation);
+    if(!next) return {reachesOcean:false,reachesBasin:true,steps:step,path,outlet:{x:current.x,y:current.y},sink:true};
+    path.push({x:current.x,y:current.y});
+    current={x:next.x,y:next.y};
+    currentElevation=next.elevation;
   }
-  return {reachesOcean:false,steps:visited.size};
+  return {reachesOcean:false,reachesBasin:false,steps:maxSteps,path,outlet:{x:current.x,y:current.y},sink:false};
 }
-export function classifyTerrain(seed='atlas-root',x=0,y=0){
-  const normalized=normalizeCoordinates(x,y),key=sampleKey(seed,normalized.x,normalized.y);const hit=terrainCache.get(key);if(hit!==undefined){terrainCache.delete(key);terrainCache.set(key,hit);return hit;}
-  const c=sampleClimate(seed,normalized.x,normalized.y);
-  const landform=classifyLandform(seed,x,y,c.elevation);
+
+export function flowToOcean(seed,x,y,elevation,maxSteps=96){
+  const trace=flowTrace(seed,x,y,elevation,maxSteps);
+  return {reachesOcean:trace.reachesOcean,steps:trace.steps};
+}
+
+function immediateUpstreamCount(seed,x,y,elevation){
+  let count=0;
+  for(const [dx,dy] of FLOW_NEIGHBORS){
+    const p=normalizeCoordinates(x+dx,y+dy);
+    const neighborElevation=sampleElevation(seed,p.x,p.y);
+    const next=downhillStep(seed,p.x,p.y,neighborElevation);
+    if(next&&next.x===normalizeCoordinates(x,y).x&&next.y===normalizeCoordinates(x,y).y) count+=1;
+  }
+  return count;
+}
+
+function watershedId(trace){
+  return trace.outlet.x+','+trace.outlet.y;
+}
+
+export function classifyHydrology(seed='atlas-root',x=0,y=0){
+  const normalized=normalizeCoordinates(x,y);
+  const elevation=sampleElevation(seed,normalized.x,normalized.y);
+  if(elevation<0.30)return Object.freeze({
+    waterform:'Ocean',flowDirection:'ocean',flowSteps:0,flowAccumulation:0,upstreamCount:0,
+    watershedId:'ocean',isSink:false,reachesOcean:true
+  });
+  const trace=flowTrace(seed,normalized.x,normalized.y,elevation);
+  const next=downhillStep(seed,normalized.x,normalized.y,elevation);
+  const upstreamCount=immediateUpstreamCount(seed,normalized.x,normalized.y,elevation);
+  const slope=next?Math.max(0,elevation-next.elevation):0;
+  const sink=trace.sink;
   let waterform='None';
-  if(landform==='Ocean')waterform='Ocean';
-  else if(landform==='Coast')waterform='Shallows';
-  else if(c.elevation<0.44&&c.moisture>0.78)waterform='Swamp';
-  else if(c.moisture>0.62&&c.elevation>0.45&&flowToOcean(seed,x,y,c.elevation).reachesOcean)waterform='River';
-  const surface=landform==='Peak'?'Snow/Alpine':(waterform==='Ocean'||waterform==='Shallows'?waterform:c.biome);
-  const result=Object.freeze({...c,landform,waterform,surface});terrainCache.set(key,result);while(terrainCache.size>CLIMATE_CACHE_LIMIT)terrainCache.delete(terrainCache.keys().next().value);return result;
+  if(elevation<0.38) waterform='Shallows';
+  else if(sink && elevation<0.70) waterform='Lake';
+  else if(elevation<0.44 && sampleMoisture(seed,normalized.x,normalized.y)>0.78) waterform='Swamp';
+  else if(trace.steps>0 && trace.reachesOcean && sampleMoisture(seed,normalized.x,normalized.y)>0.55 && (upstreamCount>0 || slope>0.0015)) waterform='River';
+  return Object.freeze({
+    waterform,
+    flowDirection:next?next.dx+','+next.dy:(sink?'sink':'unknown'),
+    flowSteps:trace.steps,
+    flowAccumulation:Math.max(1,upstreamCount+1),
+    upstreamCount,
+    watershedId:watershedId(trace),
+    isSink:sink,
+    reachesOcean:trace.reachesOcean
+  });
 }
-export function terrainTransformSignature(seed='atlas-root',x=0,y=0){const t=classifyTerrain(seed,x,y);return JSON.stringify({biome:t.biome,landform:t.landform,waterform:t.waterform,surface:t.surface});}
+
+export function classifyTerrain(seed='atlas-root',x=0,y=0){
+  const normalized=normalizeCoordinates(x,y),key=sampleKey(seed,normalized.x,normalized.y);
+  const hit=terrainCache.get(key);
+  if(hit!==undefined){terrainCache.delete(key);terrainCache.set(key,hit);return hit;}
+  const c=sampleClimate(seed,normalized.x,normalized.y);
+  const landform=classifyLandform(seed,normalized.x,normalized.y,c.elevation);
+  const hydro=classifyHydrology(seed,normalized.x,normalized.y);
+  const waterform=hydro.waterform;
+  const surface=landform==='Peak'?'Snow/Alpine':(waterform==='Ocean'||waterform==='Shallows'||waterform==='Lake'||waterform==='River'||waterform==='Swamp'?waterform:c.biome);
+  const result=Object.freeze({...c,landform,waterform,surface,hydrology:hydro});
+  terrainCache.set(key,result);
+  while(terrainCache.size>CLIMATE_CACHE_LIMIT)terrainCache.delete(terrainCache.keys().next().value);
+  return result;
+}
+
+export function terrainTransformSignature(seed='atlas-root',x=0,y=0){
+  const t=classifyTerrain(seed,x,y);
+  return JSON.stringify({biome:t.biome,landform:t.landform,waterform:t.waterform,surface:t.surface,watershedId:t.hydrology.watershedId});
+}
+
+export function terrainSelfTest(seed='atlas-root'){
+  const points=[[0,0],[12345,67890],[Math.floor(WORLD_WIDTH/2),Math.floor(WORLD_HEIGHT/2)]];
+  const checks=[];
+  for(const [x,y] of points){
+    const a=classifyTerrain(seed,x,y),b=classifyTerrain(seed,x,y);
+    checks.push({id:'terrain-determinism',ok:JSON.stringify(a)===JSON.stringify(b),note:'terrain and hydrology are deterministic'});
+    checks.push({id:'landform-band',ok:TERRAIN_TRANSFORMS.some(t=>a.elevation>=t.min&&a.elevation<t.max),note:'elevation maps to a landform band'});
+    checks.push({id:'waterform-valid',ok:['None','Ocean','Shallows','Lake','River','Swamp'].includes(a.waterform),note:'waterform is from the Layer 4 vocabulary'});
+    checks.push({id:'watershed',ok:typeof a.hydrology.watershedId==='string'&&a.hydrology.watershedId.length>0,note:'every land tile has a deterministic drainage outlet id'});
+  }
+  return {passed:checks.every(c=>c.ok),checks};
+}
+
