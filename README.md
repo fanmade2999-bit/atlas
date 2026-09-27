@@ -82,3 +82,16 @@ Game and Observer are now two app states inside one physical handheld screen. Th
 - XYZ/tick is a compact HUD overlay on the world viewport.
 - World tiles are rendered as square cells.
 - Layer 3 Naming Hierarchy is now **PARTIAL**: deterministic physical tier naming is implemented and exposed through Observer (`Continent → Territory → Region → Tract → Area → Chunk → Tile`), while organic/directional split resolution remains to be completed because it depends on broader terrain variation data.
+
+
+## Runtime timing
+
+Atlas now exposes a live development simulation clock at **20 ticks per second**. The tick is derived from elapsed simulation time rather than player input, so it continues advancing while the player is idle. The Observer polls live state and displays the current tick, simulation time, and tick rate.
+
+## Movement presentation
+
+Movement has separate authoritative and visual layers: the server accepts the one-tile transition immediately, while the handheld renders a short step animation and a fading ghost at the previous tile. The world-state coordinates remain exact during this visual transition.
+
+## Chunk borders
+
+Every 16×16 chunk boundary is drawn on the game grid. This is a debug visualization of the same chunk coordinates used by the streaming cache.
