@@ -5,7 +5,7 @@
  * getTile() is deliberately an override gate. A future persistence layer can
  * supply a modified tile without changing the baseline generation contract.
  */
-import { normalizeCoordinates, sampleClimate, WORLD_HEIGHT, WORLD_WIDTH } from './climate.mjs';
+import { normalizeCoordinates, sampleClimate, classifyTerrain, WORLD_HEIGHT, WORLD_WIDTH } from './climate.mjs';
 
 export const CHUNK_SIZE = 16;
 
