@@ -6,6 +6,23 @@ import { getLocationNames, namingSelfTest, namingSignature } from '../root/namin
 import { ecsSelfTest, ecsStats } from '../root/ecs.mjs';
 import { terrainTransformState } from '../root/tile.mjs';
 
+
+function makeL4TestFixtures(seed, x, y) {
+  return [
+    { id:'l4-fire-grass', dx:-3, dy:0, label:'FIRE', moveType:'fire', target:'grass', expected:'scorched-dirt', mode:'modified-test' },
+    { id:'l4-ice-water', dx:-1, dy:0, label:'ICE', moveType:'ice', target:'water', expected:'ice', mode:'modified-test' },
+    { id:'l4-rock-dirt', dx:1, dy:0, label:'ROCK', moveType:'rock-ground', target:'dirt', expected:'stone-wall', mode:'modified-test' },
+    { id:'l4-water-dirt', dx:3, dy:0, label:'WATER', moveType:'water', target:'dirt', expected:'water-pond', mode:'modified-test' },
+    { id:'l4-grass-dirt', dx:5, dy:0, label:'GRASS', moveType:'grass', target:'dirt', expected:'BerryTree', mode:'modified-test' }
+  ].map(fixture => ({
+    ...fixture,
+    x: normalizeCoordinates(x + fixture.dx, y + fixture.dy).x,
+    y: normalizeCoordinates(x + fixture.dx, y + fixture.dy).y,
+    natural: false,
+    testOnly: true
+  }));
+}
+
 export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WORLD_HEIGHT / 2), playerId = 'local-player' } = {}) {
   const player = getPlayerState({ playerId, seed, x, y });
   const ecs = ecsSelfTest();
@@ -120,6 +137,7 @@ export function makeGameSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WO
     },
     radiusX, radiusY, width: radiusX * 2 + 1, height: radiusY * 2 + 1,
     tiles,
-    stream: { generated: [...generated], reused: [...reused] }
+    stream: { generated: [...generated], reused: [...reused] },
+    testFixtures: makeL4TestFixtures(seed, center.x, center.y)
   };
 }
