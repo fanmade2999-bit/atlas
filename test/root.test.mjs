@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { sampleClimate, sampleTemperature, WORLD_HEIGHT, WORLD_WIDTH, rootSelfTest, classifyTerrain, terrainSelfTest, classifyHydrology } from '../server/root/climate.mjs';
+import { getLocationNames, namingSelfTest } from '../server/root/naming.mjs';
 
 test('root functions are deterministic', () => {
   const a = sampleClimate('test-seed', 12345, 67890);
@@ -42,17 +43,44 @@ test('root self test passes', () => {
   assert.equal(rootSelfTest('test-seed').passed, true);
 });
 
-test('terrain transform resolves biome, landform, and waterform deterministically',()=>{
-  const a=classifyTerrain('test-seed',12345,67890);
-  const b=classifyTerrain('test-seed',12345,67890);
-  assert.deepEqual(a,b);
+test('terrain transform resolves biome, landform, and waterform deterministically', () => {
+  const a = classifyTerrain('test-seed', 12345, 67890);
+  const b = classifyTerrain('test-seed', 12345, 67890);
+  assert.deepEqual(a, b);
   assert.ok(['Ocean','Coast','Plains','Hills','Valley','Plateau','Mountain','Peak'].includes(a.landform));
   assert.ok(['None','Ocean','Shallows','Lake','River','Swamp'].includes(a.waterform));
 });
-test('hydrology returns a deterministic drainage identity',()=>{
-  const a=classifyHydrology('test-seed',12345,67890);
-  const b=classifyHydrology('test-seed',12345,67890);
-  assert.deepEqual(a,b);
-  assert.equal(typeof a.watershedId,'string');
+
+test('hydrology returns a deterministic drainage identity', () => {
+  const a = classifyHydrology('test-seed', 12345, 67890);
+  const b = classifyHydrology('test-seed', 12345, 67890);
+  assert.deepEqual(a, b);
+  assert.equal(typeof a.watershedId, 'string');
 });
-test('terrain self test passes',()=>assert.equal(terrainSelfTest('test-seed').passed,true));
+
+test('terrain self test passes', () => assert.equal(terrainSelfTest('test-seed').passed, true));
+
+test('Layer 3 naming is deterministic and physical', () => {
+  const a = getLocationNames('test-seed', 12345, 67890);
+  const b = getLocationNames('test-seed', 12345, 67890);
+  assert.deepEqual(a, b);
+  assert.equal(a.chunk.name, undefined);
+  assert.equal(a.tile.name, undefined);
+  if (a.continent.active) {
+    assert.ok(a.territory.name);
+    assert.ok(a.region.name);
+    assert.ok(a.tract.name);
+    assert.ok(a.area.name);
+    assert.equal(a.territory.sizeCapKm, 2000);
+    assert.equal(a.region.sizeCapKm, 400);
+    assert.equal(a.tract.sizeCapKm, 80);
+    assert.equal(a.area.sizeCapKm, 8);
+    assert.notEqual(a.territory.physicalType, '???');
+  } else {
+    assert.equal(a.territory.name, '???');
+  }
+});
+
+test('Layer 3 naming self test passes', () => {
+  assert.equal(namingSelfTest('test-seed').passed, true);
+});
