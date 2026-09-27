@@ -35,7 +35,7 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
     root: { layer: 1, name: 'Root Climate', status: root.passed ? 'PASS' : 'FAIL', checks: root.checks, samples: root.samples },
     branches: [
       { layer: 2, name: 'Tile & chunk generation', status: 'PASS' },
-      { layer: 3, name: 'Naming hierarchy', status: 'PASS' },
+      { layer: 3, name: 'Naming hierarchy', status: 'PARTIAL' },
       { layer: 4, name: 'Terrain transform table', status: 'UNPLUGGED' },
       { layer: 5, name: 'Interaction & Move system', status: 'PASS' },
       { layer: 6, name: 'Pokémon ECS', status: 'UNPLUGGED' },
