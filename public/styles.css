@@ -764,3 +764,123 @@
 .handheld.game-mode .info-panel{
   grid-template-rows:minmax(0,1fr) 46px;
 }
+
+
+/* UNIFIED HANDHELD LAYOUT
+   The Game, Vision, Observer Info, section dock, and physical controls
+   share one vertical layout tree. The controller is not a separate layout island. */
+.handheld{
+  height:100svh;
+  min-height:0;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+}
+.screen-frame{
+  min-height:0;
+  overflow:hidden;
+}
+.screen-bezel{
+  height:100%;
+  min-height:0;
+  display:grid;
+}
+.screen-glow{
+  height:100%;
+  min-height:0;
+  min-width:0;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  overflow:hidden;
+}
+
+/* Observer mode: the selected section fills the information viewport,
+   while the section buttons remain locked at its bottom. */
+.handheld:not(.game-mode) .screen-glow{
+  grid-template-rows:minmax(0,1fr) auto;
+}
+.handheld:not(.game-mode) .info-panel{
+  min-height:0;
+  min-width:0;
+  height:100%;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  overflow:hidden;
+}
+.handheld:not(.game-mode) .info-panel #site{
+  min-height:0;
+  overflow:auto;
+}
+.handheld:not(.game-mode) .info-panel .cartridge-dock{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  min-height:46px;
+  flex:none;
+}
+
+/* Game mode: one unified stack.
+   Game → Vision → Observer content → locked section buttons → controls. */
+.handheld.game-mode .screen-glow{
+  grid-template-rows:54% 8% minmax(0,1fr) 104px;
+  overflow:hidden;
+}
+.handheld.game-mode .info-panel{
+  min-width:0;
+  min-height:0;
+  height:100%;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) 46px;
+  overflow:hidden;
+}
+.handheld.game-mode .info-panel #site{
+  display:block !important;
+  visibility:visible !important;
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:8px 8px 14px;
+}
+.handheld.game-mode .info-panel .cartridge-dock{
+  display:grid !important;
+  grid-template-columns:repeat(4,1fr);
+  min-height:46px;
+  height:46px;
+  padding:2px 4px;
+  border-top:1px solid var(--border);
+  border-bottom:0;
+  z-index:20;
+}
+.handheld.game-mode .controller{
+  grid-row:4;
+  min-height:104px;
+  height:104px;
+  overflow:hidden;
+  position:relative;
+  z-index:30;
+  border-top:1px solid var(--border);
+}
+.handheld.game-mode .action-buttons button{
+  pointer-events:auto;
+  opacity:1;
+}
+
+@media(max-width:699px){
+  .handheld.game-mode .screen-glow{
+    grid-template-rows:54% 8% minmax(0,1fr) 104px;
+  }
+  .handheld.game-mode .controller{
+    min-height:104px;
+    height:104px;
+    padding:6px 10px;
+  }
+}
+
+/* Keep the controls physically below the three screen regions in both modes. */
+.controller{
+  grid-column:1;
+  width:100%;
+}
