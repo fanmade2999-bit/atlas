@@ -46,6 +46,7 @@ test('applying a transform does not mutate the deterministic baseline tile', () 
   });
 
   assert.equal(result.ok, true);
+  assert.equal(result.record.appliedAt, 1000);
   assert.equal(baseline.surface, 'grass');
 
   const effective = getEffectiveTile(store, 'test-seed', 10, 20, baseline);
@@ -153,4 +154,22 @@ test('active transform store is isolated by seed', () => {
   assert.equal(applyTransform({ store, seed: 'alpha', x: 5, y: 6, tile, moveType: 'fire', at: 100 }).ok, true);
   assert.equal(getActiveTransform(store, 'alpha', 5, 6)?.transformId, 'fire-grass-scorch');
   assert.equal(getActiveTransform(store, 'beta', 5, 6), null);
+});
+
+
+test('transform records retain the supplied application timestamp', () => {
+  const store = createTransformStore();
+  const tile = { x: 9, y: 10, surface: 'grass', waterform: 'None' };
+  const result = applyTransform({
+    store,
+    seed: 'timestamp-regression',
+    x: 9,
+    y: 10,
+    tile,
+    moveType: 'fire',
+    at: 4321,
+    recovery: { type: 'timer', durationMs: 100 }
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.record.appliedAt, 4321);
 });
