@@ -95,8 +95,8 @@ function renderGamePanel(){
   const terrain=g.player?.lastInspection?.terrain;
   const inspectText=inspected?'<div class="inspect-hud"><b>'+esc(inspected.biome)+' · '+esc(terrain?.landform||'???')+' · '+esc(terrain?.waterform||'???')+'</b><span>E '+inspected.elevation.toFixed(3)+'</span><span>T '+inspected.temperature.toFixed(3)+'</span><span>M '+inspected.moisture.toFixed(3)+'</span></div>':'';
   stats.innerHTML='<div class="xyz-hud"><span>X '+g.player.position.x+'</span><span>Y '+g.player.position.y+'</span><span>T '+(g.player?.tick??'???')+'</span></div>'+inspectText;
-  const terrain=g.tiles.find(t=>t.dx===0&&t.dy===0)||g.tiles[0];
-  siteRoot.innerHTML='<div class="game-info-panel"><div class="game-info-title">WORLD INFO</div><div class="game-info-grid"><div><span>X</span><b>'+g.player.position.x+'</b></div><div><span>Y</span><b>'+g.player.position.y+'</b></div><div><span>CHUNK</span><b>'+Math.floor(g.player.position.x/16)+','+Math.floor(g.player.position.y/16)+'</b></div><div><span>BIOME</span><b>'+esc(terrain?.biome||'???')+'</b></div><div><span>LANDFORM</span><b>'+esc(terrain?.landform||'???')+'</b></div><div><span>WATER</span><b>'+esc(terrain?.waterform||'???')+'</b></div></div></div>';
+  const infoTile=g.tiles.find(t=>t.dx===0&&t.dy===0)||g.tiles[0];
+  siteRoot.innerHTML='<div class="game-info-panel"><div class="game-info-title">WORLD INFO</div><div class="game-info-grid"><div><span>X</span><b>'+g.player.position.x+'</b></div><div><span>Y</span><b>'+g.player.position.y+'</b></div><div><span>CHUNK</span><b>'+Math.floor(g.player.position.x/16)+','+Math.floor(g.player.position.y/16)+'</b></div><div><span>BIOME</span><b>'+esc(infoTile?.biome||'???')+'</b></div><div><span>LANDFORM</span><b>'+esc(infoTile?.landform||'???')+'</b></div><div><span>WATER</span><b>'+esc(infoTile?.waterform||'???')+'</b></div></div></div>';
   actionEl.innerHTML=renderVisionControls();
   document.querySelectorAll('[data-vision]').forEach(b=>b.onclick=()=>{state.vision=b.dataset.vision;renderGamePanel()});
 }
@@ -133,5 +133,5 @@ tabs.forEach(t=>t.onclick=()=>{if(state.mode!=='observer')enterObserver();shell(
 document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>action(b.dataset.action));
 document.querySelectorAll('[data-direction]').forEach(b=>b.onclick=()=>{const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.direction];move(...v).catch(error)});
 document.onkeydown=e=>{const d={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(d){e.preventDefault();const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[d];move(...v).catch(error)}else if(e.key==='Enter'){e.preventDefault();action('a')}else if(e.key==='Escape'){e.preventDefault();action('b')}else if(e.key==='Tab'){e.preventDefault();action('start')}};
-refreshButton.onclick=()=>Promise.all([snapshot(),game()]).catch(error);
+if(refreshButton)refreshButton.onclick=()=>Promise.all([snapshot(),game()]).catch(error);
 shell('world');mode(new URLSearchParams(location.search).get('app')==='game'?'game':'observer');snapshot().then(()=>game(true)).catch(error);pollGamepad();setInterval(realtime,500);
