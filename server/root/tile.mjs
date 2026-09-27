@@ -6,6 +6,7 @@
  * supply a modified tile without changing the baseline generation contract.
  */
 import { normalizeCoordinates, sampleClimate, classifyTerrain, WORLD_HEIGHT, WORLD_WIDTH } from './climate.mjs';
+import { getTileDetail } from './detail.mjs';
 
 export const CHUNK_SIZE = 16;
 
@@ -19,7 +20,7 @@ export function getTile(seed, x, y, overrides = null) {
   const key = tileKey(position.x, position.y);
   const override = overrides?.[key];
   if (override) return { ...position, ...override, source: 'override' };
-  const climate=sampleClimate(seed, position.x, position.y); const terrain=classifyTerrain(seed, position.x, position.y); return { ...position, ...climate, landform:terrain.landform, waterform:terrain.waterform, surface:terrain.surface, hydrology:terrain.hydrology, source: 'baseline' };
+  const climate=sampleClimate(seed, position.x, position.y); const terrain=classifyTerrain(seed, position.x, position.y); const detail=getTileDetail(seed, position.x, position.y); return { ...position, ...climate, landform:terrain.landform, waterform:terrain.waterform, surface:detail.surface, hydrology:terrain.hydrology, detail, source: 'baseline' };
 }
 
 export function chunkOrigin(chunkX, chunkY) {
