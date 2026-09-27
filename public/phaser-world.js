@@ -76,31 +76,154 @@ function drawTile(scene,t,dx,dy,size,mode){
   if(Number(t.y)%16===0)g.lineStyle(2,0xd8df68,.8),g.lineBetween(x,y,x+size,y);
 }
 
-function drawPlayer(scene,x,y,size){
+function drawPlayer(scene,x,y,size,step=0){
   const g=scene.player;
-  g.clear();g.fillStyle(0xf7d34a,1);g.fillCircle(x*size+size/2,y*size+size/2,size*.30);
-  g.lineStyle(Math.max(2,size*.07),0x11151b,.9);g.strokeCircle(x*size+size/2,y*size+size/2,size*.34);
+  g.clear();
+  const bob=Math.sin(step*Math.PI*2)*size*.035;
+  const cx=x*size+size/2,cy=y*size+size/2+bob;
+  const pulse=1+Math.sin(step*Math.PI)*.035;
+  g.fillStyle(0xf7d34a,1);g.fillCircle(cx,cy,size*.30*pulse);
+  g.lineStyle(Math.max(2,size*.07),0x11151b,.9);g.strokeCircle(cx,cy,size*.34*pulse);
+}
+
+function worldDelta(value,center,size){
+  let d=value-center;
+  if(size>0&&Math.abs(d)>size/2)d+=d>0?-size:size;
+  return d;
 }
 
 class AtlasScene extends PhaserLib.Scene{
   constructor(){super('AtlasWorld')}
-  create(){this.g=this.add.graphics();this.player=this.add.graphics();this.snapshot=null;this.mode='normal';this.onTap=null;scene=this;if(lastSnapshot)this.updateWorld(lastSnapshot,lastMode,lastTap)}
-  updateWorld(snapshot,mode,onTap){
-    this.snapshot=snapshot;this.mode=mode||'normal';this.onTap=onTap||null;
+  create(){
+    this.g=this.add.graphics();
+    this.player=this.add.graphics();
+    this.snapshot=null;
+    this.mode='normal';
+    this.onTap=null;
+    this.lastTarget=null;
+    this.visualPlayer=null;
+    this.visualCamera=null;
+    this.cameraStart=null;
+    this.cameraTarget=null;
+    this.playerAnim=0;
+    this.cameraAnim=0;
+    this.motionDuration=110;
+    scene=this;
+    if(lastSnapshot)this.updateWorld(lastSnapshot,lastMode,lastTap);
+  }
+  layoutFor(snapshot){
     const cols=snapshot.width,rows=snapshot.height;
     const size=Math.max(1,Math.floor(Math.min(this.scale.width/cols,this.scale.height/rows)));
     const ox=Math.floor((this.scale.width-cols*size)/2),oy=Math.floor((this.scale.height-rows*size)/2);
-    this.g.clear();
-    snapshot.tiles.forEach(t=>{
-      const dx=t.dx+Math.floor(cols/2),dy=t.dy+Math.floor(rows/2);
-      drawTile(this,t,dx+ox/size,dy+oy/size,size,this.mode);
-    });
-    const p=snapshot.player?.position||snapshot.center;
-    const pdx=p.x-snapshot.center.x,pdy=p.y-snapshot.center.y;
-    drawPlayer(this,Math.floor(cols/2)+pdx+ox/size,Math.floor(rows/2)+pdy+oy/size,size);
-    this.lastLayout={size,ox,oy,cols,rows};
+    return {size,ox,oy,cols,rows};
   }
-  resize(){if(this.snapshot)this.updateWorld(this.snapshot,this.mode,this.onTap)}
+  cameraNow(){
+    return this.visualCamera||this.cameraTarget||this.snapshot?.center||{x:0,y:0};
+  }
+  screenPlayerPosition(){
+    const p=this.visualPlayer||this.snapshot?.player?.position||this.snapshot?.center;
+    const c=this.cameraNow();
+    const {cols,rows,size,ox,oy}=this.lastLayout;
+    return {
+      x:Math.floor(cols/2)+worldDelta(p.x,c.x,40075000)/1+ox/size,
+      y:Math.floor(rows/2)+(p.y-c.y)+oy/size
+    };
+  }
+  redrawWorld(){
+    if(!this.snapshot||!this.lastLayout)return;
+    const {cols,rows,size,ox,oy}=this.lastLayout;
+    const center=this.cameraNow();
+    this.g.clear();
+    this.snapshot.tiles.forEach(t=>{
+      const dx=worldDelta(t.x,center.x,40075000);
+      const dy=t.y-center.y;
+      const sx=Math.floor(cols/2)+dx+ox/size;
+      const sy=Math.floor(rows/2)+dy+oy/size;
+      if(sx>-1&&sx<cols&&sy>-1&&sy<rows)drawTile(this,t,sx,sy,size,this.mode);
+    });
+  }
+  updateWorld(snapshot,mode,onTap){
+    const previousTarget=this.lastTarget;
+    this.snapshot=snapshot;
+    this.mode=mode||'normal';
+    this.onTap=onTap||null;
+    this.lastLayout=this.layoutFor(snapshot);
+
+    const target=snapshot.player?.position||snapshot.center;
+    if(!this.visualPlayer){
+      this.visualPlayer={x:target.x,y:target.y};
+      this.visualCamera={x:snapshot.center.x,y:snapshot.center.y};
+      this.cameraTarget={x:snapshot.center.x,y:snapshot.center.y};
+      this.lastTarget={x:target.x,y:target.y};
+    }
+
+    if(previousTarget&&(
+      previousTarget.x!==target.x||previousTarget.y!==target.y
+    )){
+      this.visualPlayer={x:this.visualPlayer?.x??previousTarget.x,y:this.visualPlayer?.y??previousTarget.y};
+      this.playerAnim=0;
+    }
+
+    const camera=this.cameraTarget||snapshot.center;
+    const playerOffsetX=worldDelta(target.x,camera.x,40075000);
+    const playerOffsetY=target.y-camera.y;
+    if(Math.abs(playerOffsetX)>=4||Math.abs(playerOffsetY)>=4){
+      this.cameraStart={x:this.cameraNow().x,y:this.cameraNow().y};
+      this.cameraTarget={x:snapshot.center.x,y:snapshot.center.y};
+      this.cameraAnim=0;
+    }
+
+    this.redrawWorld();
+    this.drawPlayerNow();
+    this.lastTarget={x:target.x,y:target.y};
+  }
+  drawPlayerNow(){
+    if(!this.lastLayout)return;
+    const p=this.screenPlayerPosition();
+    const progress=Math.min(1,this.playerAnim);
+    drawPlayer(this,p.x,p.y,this.lastLayout.size,progress);
+  }
+  update(time,delta){
+    if(!this.snapshot||!this.lastLayout)return;
+    const dt=Math.min(50,Math.max(0,delta||16.7));
+    const target=this.snapshot.player?.position||this.snapshot.center;
+
+    if(this.visualPlayer){
+      const rate=dt/this.motionDuration;
+      this.visualPlayer.x+=worldDelta(target.x,this.visualPlayer.x,40075000)*Math.min(1,rate);
+      this.visualPlayer.y+=(target.y-this.visualPlayer.y)*Math.min(1,rate);
+      this.playerAnim=Math.min(1,this.playerAnim+rate);
+    }
+
+    let cameraChanged=false;
+    if(this.cameraTarget&&this.cameraStart&&(
+      this.cameraStart.x!==this.cameraTarget.x||this.cameraStart.y!==this.cameraTarget.y
+    )){
+      this.cameraAnim=Math.min(1,this.cameraAnim+dt/this.motionDuration);
+      const t=this.cameraAnim*this.cameraAnim*(3-2*this.cameraAnim);
+      const nextX=this.cameraStart.x+worldDelta(this.cameraTarget.x,this.cameraStart.x,40075000)*t;
+      const nextY=this.cameraStart.y+(this.cameraTarget.y-this.cameraStart.y)*t;
+      if(!this.visualCamera)this.visualCamera={x:nextX,y:nextY};
+      else{
+        cameraChanged=Math.abs(this.visualCamera.x-nextX)>.001||Math.abs(this.visualCamera.y-nextY)>.001;
+        this.visualCamera.x=nextX;this.visualCamera.y=nextY;
+      }
+      if(this.cameraAnim>=1){
+        this.visualCamera={...this.cameraTarget};
+        this.cameraStart=null;
+      }
+    }
+
+    if(cameraChanged)this.redrawWorld();
+    this.drawPlayerNow();
+  }
+  resize(){
+    if(this.snapshot){
+      this.lastLayout=this.layoutFor(this.snapshot);
+      this.redrawWorld();
+      this.drawPlayerNow();
+    }
+  }
 }
 let game=null,scene=null,container=null,lastSnapshot=null,lastMode='normal',lastTap=null,phaserError=null;
 
