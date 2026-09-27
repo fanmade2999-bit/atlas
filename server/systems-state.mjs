@@ -32,7 +32,7 @@ export function movePlayer({ playerId, seed, x, y, direction }) {
 
 export function inspectPlayer({ playerId, seed, x, y }) {
   const player = getPlayerState({ playerId, seed, x, y });
-  player.lastInspection = inspectPosition(player.position.x, player.position.y);
+  player.lastInspection = inspectPosition(player.position.x, player.position.y, seed);
   player.lastAction = { type: 'inspect', tick: player.tick };
   return { player, inspection: player.lastInspection };
 }
