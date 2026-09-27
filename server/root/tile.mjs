@@ -39,6 +39,8 @@ export function getChunk(seed, chunkX, chunkY, overrides = null) {
 }
 
 export function rootTileSelfTest(seed = 'atlas-root') {
+  const cached = tileSelfTestCache.get(seed);
+  if (cached) return cached;
   const a = getTile(seed, 12345, 67890);
   const b = getTile(seed, 12345, 67890);
   const northEast = getChunk(seed, 0, 0);
@@ -53,12 +55,15 @@ export function rootTileSelfTest(seed = 'atlas-root') {
     { id: 'neighbor-seam', ok: eastEdge.x === 15 && westEdge.x === 40_074_999, note: 'adjacent chunks preserve global coordinates' },
     { id: 'x-wrap', ok: JSON.stringify(seam) === JSON.stringify(wrapped), note: 'tile generation respects the root X wrap' }
   ];
-  return { passed: checks.every((check) => check.ok), checks };
+  const result={ passed: checks.every((check) => check.ok), checks };
+  tileSelfTestCache.set(seed,result);
+  return result;
 }
 
 
 const CHUNK_CACHE_LIMIT = 128;
 const chunkCache = new Map();
+const tileSelfTestCache = new Map();
 
 function chunkCacheKey(seed, chunkX, chunkY) {
   return String(seed) + '|' + String(chunkX) + '|' + String(chunkY);
