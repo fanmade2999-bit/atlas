@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeGameSnapshot, makeObserverSnapshot, makeRealtimeSnapshot } from './observer/snapshot.mjs';
 import { movePlayer, inspectPlayer, teleportPlayer } from './systems-state.mjs';
-import { normalizeCoordinates, sampleClimate } from './root/climate.mjs';
+import { normalizeCoordinates, sampleClimate, classifyTerrain } from './root/climate.mjs';
 import { prefetchChunks } from './root/tile.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -36,13 +36,14 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/world-map') {
       const seed = url.searchParams.get('seed') || 'atlas-root';
       const center = normalizeCoordinates(Number(url.searchParams.get('x') || 0), Number(url.searchParams.get('y') || 10001500));
-      const zoom = Math.max(0, Math.min(4, Number(url.searchParams.get('zoom') || 0)));
-      const width = 25, height = 17, scales = [65536, 8192, 1024, 128, 16];
+      const zoom = Math.max(0, Math.min(5, Number(url.searchParams.get('zoom') || 0)));
+      const width = 25, height = 17, scales = [262144, 32768, 4096, 512, 16, 1];
       const scale = scales[zoom], cells = [];
       const startX = center.x - Math.floor(width / 2) * scale, startY = center.y - Math.floor(height / 2) * scale;
       for (let row = 0; row < height; row += 1) for (let col = 0; col < width; col += 1) {
         const p = normalizeCoordinates(startX + col * scale, startY + row * scale), c = sampleClimate(seed, p.x, p.y);
-        cells.push({x:p.x,y:p.y,chunkX:Math.floor(p.x/16),chunkY:Math.floor(p.y/16),elevation:c.elevation,temperature:c.temperature,moisture:c.moisture,biome:c.biome});
+        const terrain = zoom >= 4 ? classifyTerrain(seed, p.x, p.y) : null;
+        cells.push({x:p.x,y:p.y,chunkX:Math.floor(p.x/16),chunkY:Math.floor(p.y/16),elevation:c.elevation,temperature:c.temperature,moisture:c.moisture,biome:c.biome,landform:terrain?.landform ?? null,waterform:terrain?.waterform ?? null,surface:terrain?.surface ?? null});
       }
       res.writeHead(200,{ 'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*' });
       res.end(JSON.stringify({seed,center,zoom,scale,width,height,cells})); return;
