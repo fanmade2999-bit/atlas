@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CHUNK_SIZE, getChunk, getTile, rootTileSelfTest } from '../server/root/tile.mjs';
+import { CHUNK_SIZE, getChunk, getTile, rootTileSelfTest, applyTileTransform, recoverTileTransform, getTileTransform } from '../server/root/tile.mjs';
 import { WORLD_WIDTH } from '../server/root/climate.mjs';
 
 test('tile generation is deterministic', () => {
@@ -43,4 +43,63 @@ test('override gate replaces baseline without changing tile identity', () => {
 
 test('tile root self test passes', () => {
   assert.equal(rootTileSelfTest('test-seed').passed, true);
+});
+
+
+test('Layer 4 transform is resolved by getTile without mutating the baseline contract', () => {
+  const seed = 'l4-tile-integration';
+  const x = 101;
+  const y = 202;
+  const baseline = getTile(seed, x, y);
+  const applied = applyTileTransform({
+    seed,
+    x,
+    y,
+    moveType: 'fire',
+    recovery: { type: 'timer', durationMs: 1000 }
+  });
+
+  // The test coordinate must be grass for the transform to be applicable.
+  // If the deterministic terrain is not grass, the transform engine correctly
+  // rejects the action and the baseline remains untouched.
+  if (baseline.surface === 'grass') {
+    assert.equal(applied.ok, true);
+    assert.equal(getTileTransform(seed, x, y)?.transformId, 'fire-grass-scorch');
+    assert.equal(getTile(seed, x, y).surface, 'scorched-dirt');
+    assert.equal(baseline.surface, 'grass');
+
+    const recovered = recoverTileTransform(seed, x, y, {
+      tile: getTile(seed, x, y),
+      now: Date.now() + 1001
+    });
+    assert.equal(recovered.recovered, true);
+    assert.equal(getTile(seed, x, y).surface, 'grass');
+  } else {
+    assert.equal(applied.ok, false);
+    assert.equal(getTile(seed, x, y).surface, baseline.surface);
+  }
+});
+
+test('Layer 4 transformed chunk tiles remain addressable by coordinate', () => {
+  const seed = 'l4-chunk-integration';
+  const x = 17;
+  const y = 16;
+  const baseline = getTile(seed, x, y);
+  const applied = applyTileTransform({
+    seed,
+    x,
+    y,
+    moveType: 'fire',
+    recovery: { type: 'timer', durationMs: 1000 }
+  });
+
+  if (baseline.surface === 'grass') {
+    assert.equal(applied.ok, true);
+    const chunk = getChunk(seed, 1, 1);
+    const tile = chunk.tiles.find(item => item.x === x && item.y === y);
+    assert.equal(tile?.surface, 'scorched-dirt');
+    recoverTileTransform(seed, x, y, { tile, now: Date.now() + 1001 });
+  } else {
+    assert.equal(applied.ok, false);
+  }
 });
