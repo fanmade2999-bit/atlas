@@ -24,8 +24,97 @@ function renderInspector(s){siteRoot.innerHTML=layout('Inspector','atlas://inspe
 let boardResizeObserver=null;
 function syncBoardSize(){const wrap=document.querySelector('.game-board-wrap'),board=document.querySelector('#game-board');if(!wrap||!board)return;const cs=getComputedStyle(wrap),padX=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight),padY=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom),gap=1;const usableW=Math.max(0,wrap.clientWidth-padX-gap*14),usableH=Math.max(0,wrap.clientHeight-padY-gap*10);const tile=Math.max(1,Math.floor(Math.min(usableW/15,usableH/11)));board.style.setProperty('--tile-size',tile+'px');}
 function watchBoardSize(){if(boardResizeObserver)boardResizeObserver.disconnect();const wrap=document.querySelector('.game-board-wrap');if(!wrap)return;boardResizeObserver=new ResizeObserver(syncBoardSize);boardResizeObserver.observe(wrap);syncBoardSize();}
-function renderGamePanel(){const panel=document.querySelector('#game-panel');const board=document.querySelector('#game-board');const stats=document.querySelector('#game-panel-stats');const status=document.querySelector('#game-status');const action=document.querySelector('#game-action');if(!panel||!state.gameSnapshot)return;const g=state.gameSnapshot;const tiles=g.tiles.map(t=>{const e=Math.max(0,Math.min(1,Number(t.elevation)||0));const m=Math.max(0,Math.min(1,Number(t.moisture)||0));const temp=Math.max(0,Math.min(1,Number(t.temperature)||0));const hue=200-165*temp;const sat=42+42*m;const light=22+45*e;const bg='linear-gradient(135deg,hsl('+hue+' '+sat+'% '+Math.max(12,light-8)+'%),hsl('+hue+' '+sat+'% '+Math.min(78,light+8)+'%))';const chunkEdge=(Number(t.x)%16===0?' chunk-left':'')+(Number(t.x)%16===15?' chunk-right':'')+(Number(t.y)%16===0?' chunk-top':'')+(Number(t.y)%16===15?' chunk-bottom':'');const isPlayer=t.dx===0&&t.dy===0;const isGhost=state.motion&&t.x===state.motion.from.x&&t.y===state.motion.from.y&&!isPlayer;const motionClass=isPlayer&&state.motion?' player-step step-'+state.motion.direction:'';return '<div class="game-tile '+(isPlayer?'player':'')+(isGhost?' player-ghost':'')+chunkEdge+motionClass+'" title="X '+t.x+' · Y '+t.y+' · elevation '+e.toFixed(3)+' · temperature '+temp.toFixed(3)+' · moisture '+m.toFixed(3)+'" style="background:'+bg+';box-shadow:inset 0 -3px 0 #0004">'+(isPlayer?'<span class="player-glyph">◆</span>':'')+(isGhost?'<span class="ghost-glyph">◇</span>':'')+'</div>'}).join('');board.innerHTML=tiles;watchBoardSize();status.textContent=g.width+'×'+g.height+' ROOT CLIMATE · CHUNK '+Math.floor(g.center.x/16)+','+Math.floor(g.center.y/16)+' · '+(g.stream?.reused?.length??0)+' cached';const inspected=g.player?.lastInspection?.climate;const inspectText=inspected?'<div class="inspect-hud"><b>'+esc(inspected.biome)+'</b><span>E '+inspected.elevation.toFixed(3)+'</span><span>T '+inspected.temperature.toFixed(3)+'</span><span>M '+inspected.moisture.toFixed(3)+'</span></div>':'';stats.innerHTML='<div class="xyz-hud"><span>X '+g.player.position.x+'</span><span>Y '+g.player.position.y+'</span><span>T '+(g.player?.tick??'???')+'</span></div>'+inspectText;action.textContent='Last action: '+(g.player?.lastAction?.type??'—')+' · TICK '+(g.player?.tick??'???')+' · '+(g.player?.tickRate??'???')+' TPS · D-pad moves · A inspects'}
-async function move(dx,dy){if(state.mode!=='game'){enterGame();return}if(state.moveBusy)return;state.moveBusy=true;try{const direction=dx===1?'right':dx===-1?'left':dy===1?'down':'up';const from={x:state.gameX,y:state.gameY};const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY,direction}),r=await fetch('/api/game/move?'+p);if(!r.ok)throw Error('Move API '+r.status);const z=await r.json();state.motion={direction,from,to:z.player.position,startedAt:performance.now(),duration:180};state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;await game(false);animateMotion();}finally{state.moveBusy=false}}
+function visionColor(t,mode){
+  const e=Math.max(0,Math.min(1,Number(t.elevation)||0));
+  const m=Math.max(0,Math.min(1,Number(t.moisture)||0));
+  const temp=Math.max(0,Math.min(1,Number(t.temperature)||0));
+  const water=t.waterform||t.hydrology?.waterform||'None';
+  const land=t.landform||'Plains';
+  const biome=t.biome||'???';
+  const ramp=(value,stops)=>{const s=Math.max(0,Math.min(1,value))*(stops.length-1),i=Math.min(stops.length-2,Math.floor(s)),f=s-i,a=stops[i],b=stops[i+1];return 'rgb('+a.map((v,k)=>Math.round(v+(b[k]-v)*f)).join(',')+')'};
+  if(mode==='elevation')return 'linear-gradient(135deg,'+ramp(e,[[28,76,45],[110,150,65],[205,190,100],[150,105,65],[235,235,235]])+','+ramp(Math.min(1,e+.12),[[28,76,45],[110,150,65],[205,190,100],[150,105,65],[235,235,235]])+')';
+  if(mode==='temperature')return 'linear-gradient(135deg,'+ramp(temp,[[42,75,170],[55,170,210],[110,205,125],[240,205,70],[235,75,45]])+','+ramp(Math.min(1,temp+.1),[[42,75,170],[55,170,210],[110,205,125],[240,205,70],[235,75,45]])+')';
+  if(mode==='moisture')return 'linear-gradient(135deg,'+ramp(m,[[122,92,55],[178,150,78],[105,180,120],[45,150,205],[25,80,170]])+','+ramp(Math.min(1,m+.1),[[122,92,55],[178,150,78],[105,180,120],[45,150,205],[25,80,170]])+')';
+  if(mode==='biome'){const colors={'Ocean':'#1769aa','Alpine':'#e8edf2','Highlands':'#9a8060','Tundra':'#9fc5c9','Cold Steppe':'#7f9b8c','Desert':'#d6b35b','Tropical Forest':'#18844b','Wetland':'#3d9278','Grassland':'#8caf45','Temperate Forest':'#3f7f43'};const col=colors[biome]||'#68737d';return 'linear-gradient(135deg,'+col+','+col+'cc)'};
+  if(mode==='landform'){const colors={'Ocean':'#1769aa','Coast':'#58a9c8','Plains':'#8eae4d','Hills':'#9b9b4f','Valley':'#628e57','Plateau':'#b08a50','Mountain':'#766b63','Peak':'#e6e9eb'};const col=colors[land]||'#68737d';return 'linear-gradient(135deg,'+col+','+col+'bb)'};
+  if(mode==='waterform'){const colors={'None':'#71804b','Ocean':'#155fa3','Shallows':'#4ea8c4','Lake':'#258ac2','River':'#45b8d8','Swamp':'#3d8064'};const col=colors[water]||'#71804b';return 'linear-gradient(135deg,'+col+','+col+'bb)'};
+  const normalWater={Ocean:'#155fa3',Shallows:'#4ea8c4',Lake:'#258ac2',River:'#45b8d8',Swamp:'#3d8064'};
+  if(normalWater[water])return 'linear-gradient(135deg,'+normalWater[water]+','+normalWater[water]+'aa)';
+  const biomeColors={'Alpine':'#e4e9ed','Highlands':'#8d795e','Tundra':'#91b9bb','Cold Steppe':'#7d987e','Desert':'#d0ad5a','Tropical Forest':'#187c48','Wetland':'#3c8c73','Grassland':'#88a944','Temperate Forest':'#397540'};
+  const base=biomeColors[biome]||'#65705c';
+  const shade=Math.round(38+e*28);
+  return 'linear-gradient(135deg,'+base+','+base+Math.min(99,shade)+')';
+}
+function visionLegend(mode){
+  const legends={
+    normal:{title:'Normal',text:'Terrain + water + biome'},
+    elevation:{title:'Elevation',text:'Low → high'},
+    temperature:{title:'Temperature',text:'Cold → hot'},
+    moisture:{title:'Moisture',text:'Dry → wet'},
+    biome:{title:'Biome',text:'Climate biome'},
+    landform:{title:'Landform',text:'Ocean → Peak'},
+    waterform:{title:'Waterform',text:'None / ocean / lake / river / swamp'}
+  };
+  const l=legends[mode]||legends.normal;
+  const ramp={
+    elevation:'linear-gradient(90deg,#1c4c2d,#6e9641,#cdbf64,#966941,#ebebeb)',
+    temperature:'linear-gradient(90deg,#2a4baa,#37aad2,#6ecf7d,#f0cd46,#eb4b2d)',
+    moisture:'linear-gradient(90deg,#7a5c37,#b2964e,#69b478,#2d96cd,#1950aa)'
+  }[mode];
+  return '<div class="vision-legend"><div class="vision-legend-title"><b>'+l.title+'</b><span>'+l.text+'</span></div>'+(ramp?'<div class="vision-ramp" style="background:'+ramp+'"></div><div class="vision-ends"><span>LOW</span><span>HIGH</span></div>':'')+'</div>';
+}
+function renderVisionControls(){
+  const labels={normal:'Normal',elevation:'Elevation',temperature:'Temperature',moisture:'Moisture',biome:'Biome',landform:'Landform',waterform:'Water'};
+  return '<div class="vision-box"><div class="vision-head"><div><b>VISION</b><span>Choose what the world shows</span></div><div class="vision-current">'+labels[state.vision]+'</div></div><div class="vision-options">'+Object.entries(labels).map(([id,label])=>'<button class="'+(state.vision===id?'active':'')+'" data-vision="'+id+'">'+label+'</button>').join('')+'</div>'+visionLegend(state.vision)+'</div>';
+}
+function renderGamePanel(){
+  const panel=document.querySelector('#game-panel'),board=document.querySelector('#game-board'),stats=document.querySelector('#game-panel-stats'),status=document.querySelector('#game-status'),actionEl=document.querySelector('#game-action');
+  if(!panel||!state.gameSnapshot)return;
+  const g=state.gameSnapshot,modeName=state.vision||'normal';
+  const tiles=g.tiles.map(t=>{
+    const chunkEdge=(Number(t.x)%16===0?' chunk-left':'')+(Number(t.x)%16===15?' chunk-right':'')+(Number(t.y)%16===0?' chunk-top':'')+(Number(t.y)%16===15?' chunk-bottom':'');
+    const isPlayer=t.dx===0&&t.dy===0;
+    return '<div class="game-tile '+(isPlayer?'player-cell ':'')+chunkEdge+'" title="X '+t.x+' · Y '+t.y+' · '+esc(t.biome||'???')+' · '+esc(t.landform||'???')+' · '+esc(t.waterform||'???')+'" style="background:'+visionColor(t,modeName)+';box-shadow:inset 0 -3px 0 #0004"></div>';
+  }).join('');
+  const marker='<div class="player-marker"><span>◆</span></div>';
+  board.innerHTML=tiles+marker;
+  watchBoardSize();
+  status.textContent=g.width+'×'+g.height+' WORLD · '+(modeName==='normal'?'TERRAIN':'VIEW '+modeName.toUpperCase())+' · CHUNK '+Math.floor(g.center.x/16)+','+Math.floor(g.center.y/16)+' · '+(g.stream?.reused?.length??0)+' cached';
+  const inspected=g.player?.lastInspection?.climate;
+  const terrain=g.player?.lastInspection?.terrain;
+  const inspectText=inspected?'<div class="inspect-hud"><b>'+esc(inspected.biome)+' · '+esc(terrain?.landform||'???')+' · '+esc(terrain?.waterform||'???')+'</b><span>E '+inspected.elevation.toFixed(3)+'</span><span>T '+inspected.temperature.toFixed(3)+'</span><span>M '+inspected.moisture.toFixed(3)+'</span></div>':'';
+  stats.innerHTML='<div class="xyz-hud"><span>X '+g.player.position.x+'</span><span>Y '+g.player.position.y+'</span><span>T '+(g.player?.tick??'???')+'</span></div>'+inspectText;
+  actionEl.innerHTML=renderVisionControls();
+  document.querySelectorAll('[data-vision]').forEach(b=>b.onclick=()=>{state.vision=b.dataset.vision;renderGamePanel()});
+}
+async function move(dx,dy){
+  if(state.mode!=='game'){enterGame();return}
+  if(state.moveBusy)return;
+  state.moveBusy=true;
+  try{
+    const direction=dx===1?'right':dx===-1?'left':dy===1?'down':'up';
+    const from={x:state.gameX,y:state.gameY};
+    const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY,direction}),r=await fetch('/api/game/move?'+p);
+    if(!r.ok)throw Error('Move API '+r.status);
+    const z=await r.json();
+    state.motion={direction,from,to:z.player.position,startedAt:performance.now(),duration:140};
+    state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;
+    if(state.gameSnapshot)state.gameSnapshot.player=z.player;
+    renderGamePanel();
+    animateMotion();
+    game(false).catch(error);
+  }finally{state.moveBusy=false}
+}
+function animateMotion(){
+  const motion=state.motion;if(!motion)return;
+  const marker=document.querySelector('.player-marker');if(!marker)return;
+  const board=document.querySelector('#game-board');
+  const tile=parseFloat(getComputedStyle(board).getPropertyValue('--tile-size'))||20;
+  const dx=motion.direction==='right'?1:motion.direction==='left'?-1:0,dy=motion.direction==='down'?1:motion.direction==='up'?-1:0;
+  marker.style.setProperty('--move-x',(dx*tile)+'px');marker.style.setProperty('--move-y',(dy*tile)+'px');
+  marker.classList.remove('player-marker-step');void marker.offsetWidth;marker.classList.add('player-marker-step');
+  setTimeout(()=>{if(marker)marker.classList.remove('player-marker-step');state.motion=null},150);
+}
 async function inspect(){const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY}),r=await fetch('/api/game/inspect?'+p);if(!r.ok)throw Error('Inspect API '+r.status);const z=await r.json();state.gameSnapshot.player=z.player;render()}
 function action(a){if(a==='a'){if(state.mode==='game')inspect().catch(error);else enterGame()}else if(a==='b'){if(state.mode==='game')enterObserver();else nav(-1)}else if(a==='start'||a==='select'){if(state.mode==='game')enterObserver();else enterGame()}}function animateMotion(){const started=state.motion?.startedAt;if(!started)return;const frame=()=>{if(!state.motion)return;const p=Math.min(1,(performance.now()-started)/state.motion.duration);document.querySelectorAll('.player-step').forEach(el=>el.style.setProperty('--step-progress',p));if(p<1)requestAnimationFrame(frame);else{state.motion=null;document.querySelectorAll('.player-step').forEach(el=>el.style.removeProperty('--step-progress'))}};requestAnimationFrame(frame)}
 async function realtime(){if(state.realtimeBusy)return;state.realtimeBusy=true;try{const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY}),r=await fetch('/api/realtime?'+p,{cache:'no-store'});if(!r.ok)throw Error('Realtime API '+r.status);const z=await r.json();if(z.player){const changed=state.gameX!==z.player.position.x||state.gameY!==z.player.position.y;state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;if(state.snapshot){state.snapshot.player=z.player;state.snapshot.focus=z.focus;state.snapshot.grid=z.grid;state.snapshot.location=z.location;state.snapshot.cache=z.cache;state.snapshot.tile=z.tile;state.snapshot.slots=z.slots;state.snapshot.world=z.world}if(state.gameSnapshot){state.gameSnapshot.player=z.player;state.gameSnapshot.center=z.player.position;if(state.mode==='game'&&changed)game(false).catch(error);else if(state.mode==='game')renderGamePanel()}}if(state.mode==='observer'&&state.snapshot)render()}catch(e){console.warn(e)}finally{state.realtimeBusy=false}}
