@@ -24,10 +24,13 @@ function mode(m){
   render();
 }
 async function snapshot(showLoad=true){if(showLoad)loadProgress(18,'Loading Observer plugs…');const p=new URLSearchParams({seed:state.seed,x:state.x,y:state.y,playerId:state.playerId}),r=await fetch('/api/observer?'+p);if(!r.ok)throw Error('Observer API '+r.status);state.snapshot=await r.json();render();}
+let gameRequestSerial=0;
 async function game(showLoad=false){
+  const requestSerial=++gameRequestSerial;
+  const requestedX=state.gameX,requestedY=state.gameY;
   if(showLoad)loadProgress(12,'Preparing world stream…');
   const started=performance.now();
-  const p=new URLSearchParams({seed:state.seed,x:state.gameX,y:state.gameY,playerId:state.playerId});
+  const p=new URLSearchParams({seed:state.seed,x:requestedX,y:requestedY,playerId:state.playerId});
   if(showLoad)loadProgress(24,'Requesting world snapshot…');
   const r=await fetch('/api/game?'+p,{cache:'no-store'});
   if(!r.ok)throw Error('Game API '+r.status);
@@ -39,6 +42,7 @@ async function game(showLoad=false){
   let parsed;
   try{parsed=JSON.parse(raw)}
   catch(parseError){throw Error('Game snapshot JSON parse failed ('+raw.length+' chars): '+parseError.message)}
+  if(requestSerial!==gameRequestSerial||state.gameX!==requestedX||state.gameY!==requestedY)return;
   if(showLoad)loadProgress(60,'World snapshot parsed…');
   state.gameSnapshot=parsed;
   if(showLoad)loadProgress(78,'Building visible tile field…');
@@ -215,6 +219,7 @@ async function move(dx,dy){
     if(!r.ok)throw Error('Move API '+r.status);
     const z=await r.json();
     const to=z.player.position;
+    gameRequestSerial++;
     state.motion={direction,from,to,startedAt:performance.now(),duration:110};
     state.gameX=to.x;state.gameY=to.y;state.x=state.gameX;state.y=state.gameY;
     if(state.gameSnapshot)state.gameSnapshot.player=z.player;
