@@ -335,3 +335,74 @@
     max-height:160px;
   }
 }
+
+
+/* Info is a first-class Game screen region: larger viewport, all sections scroll inside it. */
+.handheld.game-mode .game-info{
+  height:clamp(170px,28svh,240px);
+  min-height:170px;
+  max-height:240px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:auto;
+  scrollbar-color:#53616d #080b0e;
+}
+.handheld.game-mode .game-info-panel{
+  display:grid;
+  gap:9px;
+  padding:7px 2px 12px;
+}
+.handheld.game-mode .info-section{
+  display:grid;
+  gap:5px;
+  padding-bottom:8px;
+  border-bottom:1px solid #ffffff20;
+}
+.handheld.game-mode .info-section-title{
+  position:sticky;
+  top:0;
+  z-index:5;
+  padding:3px 0 5px;
+  background:#050708;
+  color:var(--accent);
+  font:900 8px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.13em;
+}
+.handheld.game-mode .info-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:5px;
+}
+.handheld.game-mode .info-grid>div{
+  min-width:0;
+  border:1px solid #ffffff1a;
+  border-radius:7px;
+  padding:6px 7px;
+  background:#0b1015;
+}
+.handheld.game-mode .info-grid span{
+  display:block;
+  color:#7f8b96;
+  font-size:6px;
+  line-height:1;
+  letter-spacing:.06em;
+}
+.handheld.game-mode .info-grid b{
+  display:block;
+  margin-top:3px;
+  color:#edf2f6;
+  font-size:8px;
+  line-height:1.15;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+@media(max-width:699px){
+  .handheld.game-mode .game-info{
+    height:28svh;
+    min-height:170px;
+    max-height:240px;
+  }
+}
