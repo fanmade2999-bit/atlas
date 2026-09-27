@@ -36,4 +36,4 @@ document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>action(b.dat
 document.querySelectorAll('[data-direction]').forEach(b=>b.onclick=()=>{const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.direction];move(...v).catch(error)});
 document.onkeydown=e=>{const d={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(d){e.preventDefault();const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[d];move(...v).catch(error)}else if(e.key==='Enter'){e.preventDefault();action('a')}else if(e.key==='Escape'){e.preventDefault();action('b')}else if(e.key==='Tab'){e.preventDefault();action('start')}};
 refreshButton.onclick=()=>Promise.all([snapshot(),game()]).catch(error);
-shell('overview');mode(new URLSearchParams(location.search).get('app')==='game'?'game':'observer');snapshot().then(()=>game()).catch(error);
+shell('overview');mode(new URLSearchParams(location.search).get('app')==='game'?'game':'observer');snapshot().then(()=>game()).catch(error);pollGamepad();
