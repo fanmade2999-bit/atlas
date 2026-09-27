@@ -169,7 +169,7 @@ button{color:inherit}
 }
 .handheld.game-mode .screen-glow{
   grid-template-rows:
-    minmax(0,54%)
+    minmax(0,48%)
     minmax(0,8%)
     minmax(0,1fr)
     var(--control-height);
@@ -210,6 +210,7 @@ button{color:inherit}
   background:var(--world);
 }
 .handheld.game-mode #info-panel #site{
+  font-size:14px;
   grid-row:1;
   min-width:0;
   min-height:0;
@@ -583,22 +584,23 @@ button{color:inherit}
   color:var(--accent);
   text-transform:uppercase;
   letter-spacing:.09em;
-  font-size:9px;
+  font-size:10px;
   font-weight:800;
 }
 h1{
-  margin:3px 0;
+  margin:4px 0;
   color:#eef3f7;
-  font-size:22px;
+  font-size:28px;
   line-height:1.1;
 }
 h2{
   margin:0;
   color:#eef3f7;
-  font-size:15px;
+  font-size:20px;
+  line-height:1.15;
 }
 .muted{color:#8996a3}
-.small{font-size:10px}
+.small{font-size:11px}
 .card-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
@@ -613,15 +615,15 @@ h2{
 }
 .label{
   color:#8996a3;
-  font-size:8px;
+  font-size:10px;
   text-transform:uppercase;
   letter-spacing:.07em;
   font-weight:800;
 }
 .value{
-  margin-top:3px;
+  margin-top:4px;
   color:#eef3f7;
-  font-size:12px;
+  font-size:14px;
   font-weight:750;
   overflow-wrap:anywhere;
 }
@@ -656,11 +658,11 @@ h2{
 }
 .branch-layer,.branch-status{
   color:#8996a3;
-  font-size:9px;
+  font-size:10px;
 }
 .branch-name{
   min-width:0;
-  font-size:10px;
+  font-size:12px;
   font-weight:650;
 }
 .controls{
@@ -705,13 +707,13 @@ input{
 }
 .metric-name{
   min-width:0;
-  font-size:10px;
+  font-size:12px;
   font-weight:650;
 }
 .metric-value{
   max-width:58%;
   color:#eef3f7;
-  font-size:10px;
+  font-size:12px;
   text-align:right;
   overflow-wrap:anywhere;
 }
@@ -1062,7 +1064,7 @@ input{
 /* Mobile tuning */
 @media(max-width:699px){
   .handheld.game-mode .screen-glow{
-    grid-template-rows:minmax(0,54%) minmax(0,8%) minmax(0,1fr) var(--control-height);
+    grid-template-rows:minmax(0,48%) minmax(0,8%) minmax(0,1fr) var(--control-height);
   }
   .handheld.game-mode #game-panel{padding:3px 4px 4px}
   .handheld.game-mode #game-vision{padding:2px 4px}
