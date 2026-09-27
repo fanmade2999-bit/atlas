@@ -88,7 +88,7 @@ function renderGamePanel(){
   const panel=document.querySelector('#game-panel'),board=document.querySelector('#game-board'),stats=document.querySelector('#game-panel-stats'),status=document.querySelector('#game-status'),actionEl=document.querySelector('#game-action');
   if(!panel||!state.gameSnapshot)return;
   const g=state.gameSnapshot,modeName=state.vision||'normal';
-  try{mountPhaserWorld(board,g,modeName)}catch(error){error(error);return}
+  try{mountPhaserWorld(board,g,modeName)}catch(e){error(e);return}
   status.textContent=g.width+'×'+g.height+' WORLD · '+(modeName==='normal'?'PHASER TERRAIN':'VIEW '+modeName.toUpperCase())+' · CHUNK '+Math.floor(g.center.x/16)+','+Math.floor(g.center.y/16)+' · '+(g.stream?.reused?.length??0)+' cached';
   const inspected=g.player?.lastInspection?.climate;
   const terrain=g.player?.lastInspection?.terrain;
