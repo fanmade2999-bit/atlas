@@ -70,6 +70,17 @@ function renderVisionControls(){
   const labels={normal:'Normal',elevation:'Elevation',temperature:'Temperature',moisture:'Moisture',biome:'Biome',landform:'Landform',waterform:'Water'};
   return '<div class="vision-box"><div class="vision-head"><div><b>VISION</b><span>Choose what the world shows</span></div><div class="vision-current">'+labels[state.vision]+'</div></div><div class="vision-options">'+Object.entries(labels).map(([id,label])=>'<button class="'+(state.vision===id?'active':'')+'" data-vision="'+id+'">'+label+'</button>').join('')+'</div>'+visionLegend(state.vision)+'</div>';
 }
+function terrainGlyph(t,mode){
+  if(mode!=='normal')return '';
+  const water=t.waterform||t.hydrology?.waterform||'None';
+  if(water==='Ocean'||water==='Shallows'||water==='Lake'||water==='River')return '<span class="terrain-glyph water">≈</span>';
+  if(water==='Swamp')return '<span class="terrain-glyph water">≋</span>';
+  if(t.landform==='Peak'||t.landform==='Mountain')return '<span class="terrain-glyph">▲</span>';
+  if(t.biome==='Alpine')return '<span class="terrain-glyph">❄</span>';
+  if(t.biome==='Desert')return '<span class="terrain-glyph">·</span>';
+  if(t.biome==='Tropical Forest'||t.biome==='Temperate Forest'||t.biome==='Wetland')return '<span class="terrain-glyph">♣</span>';
+  return '<span class="terrain-glyph">·</span>';
+}
 function renderGamePanel(){
   const panel=document.querySelector('#game-panel'),board=document.querySelector('#game-board'),stats=document.querySelector('#game-panel-stats'),status=document.querySelector('#game-status'),actionEl=document.querySelector('#game-action');
   if(!panel||!state.gameSnapshot)return;
@@ -77,7 +88,7 @@ function renderGamePanel(){
   const tiles=g.tiles.map(t=>{
     const chunkEdge=(Number(t.x)%16===0?' chunk-left':'')+(Number(t.x)%16===15?' chunk-right':'')+(Number(t.y)%16===0?' chunk-top':'')+(Number(t.y)%16===15?' chunk-bottom':'');
     const isPlayer=t.dx===0&&t.dy===0;
-    return '<div class="game-tile '+(isPlayer?'player-cell ':'')+chunkEdge+'" title="X '+t.x+' · Y '+t.y+' · '+esc(t.biome||'???')+' · '+esc(t.landform||'???')+' · '+esc(t.waterform||'???')+'" style="background:'+visionColor(t,modeName)+';box-shadow:inset 0 -3px 0 #0004"></div>';
+    return '<div class="game-tile '+(isPlayer?'player-cell ':'')+chunkEdge+'" title="X '+t.x+' · Y '+t.y+' · '+esc(t.biome||'???')+' · '+esc(t.landform||'???')+' · '+esc(t.waterform||'???')+'" style="background:'+visionColor(t,modeName)+';box-shadow:inset 0 -3px 0 #0004">'+terrainGlyph(t,modeName)+'</div>';
   }).join('');
   const marker='<div class="player-marker"><span>◆</span></div>';
   board.innerHTML=tiles+marker;
