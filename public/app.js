@@ -65,6 +65,7 @@ function render(){
   if(state.mode==='game'){
     if(state.gameSnapshot)renderGamePanel();
     else if(state.boot.active)loadProgress(state.boot.progress,state.boot.message);
+    if(state.snapshot)sites[state.site](state.snapshot);
     return;
   }
   if(state.snapshot)sites[state.site](state.snapshot);
@@ -136,9 +137,9 @@ function terrainGlyph(t,mode){
   return '<span class="terrain-glyph">·</span>';
 }
 function renderGamePanel(){
-  const panel=document.querySelector('#game-panel'),board=document.querySelector('#game-board'),stats=document.querySelector('#game-panel-stats'),status=document.querySelector('#game-status'),visionEl=document.querySelector('#game-vision'),infoEl=document.querySelector('#game-info');
+  const panel=document.querySelector('#game-panel'),board=document.querySelector('#game-board'),stats=document.querySelector('#game-panel-stats'),status=document.querySelector('#game-status'),visionEl=document.querySelector('#game-vision');
   if(!panel||!state.gameSnapshot)return;
-  if(!visionEl||!infoEl)throw new Error('Game UI sections are missing from the handheld screen');
+  if(!visionEl)throw new Error('Game Vision panel is missing from the handheld screen');
   const g=state.gameSnapshot,modeName=state.vision||'normal';
   board.querySelector('.world-loading')?.remove();
   try{mountPhaserWorld(board,g,modeName)}catch(e){error(e);return}
@@ -147,14 +148,8 @@ function renderGamePanel(){
   const terrain=g.player?.lastInspection?.terrain;
   const inspectText=inspected?'<div class="inspect-hud"><b>'+esc(inspected.biome)+' · '+esc(terrain?.landform||'???')+' · '+esc(terrain?.waterform||'???')+'</b><span>E '+inspected.elevation.toFixed(3)+'</span><span>T '+inspected.temperature.toFixed(3)+'</span><span>M '+inspected.moisture.toFixed(3)+'</span></div>':'';
   stats.innerHTML='<div class="xyz-hud"><span>X '+g.player.position.x+'</span><span>Y '+g.player.position.y+'</span><span>T '+(g.player?.tick??'???')+'</span></div>'+inspectText;
-  const infoTile=g.tiles.find(t=>t.dx===0&&t.dy===0)||g.tiles[0];
-  const h=infoTile?.hydrology||{};
-  const loc=g.location||{};
-  const center=g.focus||infoTile||{};
-  const infoValue=(v)=>v==null||v===''?'???':esc(v);
-  infoEl.innerHTML='<div class="game-info-panel"><section class="info-section"><div class="info-section-title">POSITION</div><div class="info-grid compact"><div><span>X</span><b>'+g.player.position.x+'</b></div><div><span>Y</span><b>'+g.player.position.y+'</b></div><div><span>CHUNK</span><b>'+Math.floor(g.player.position.x/16)+','+Math.floor(g.player.position.y/16)+'</b></div><div><span>TICK</span><b>'+g.player.tick+'</b></div></div></section><section class="info-section"><div class="info-section-title">CLIMATE</div><div class="info-grid compact"><div><span>ELEVATION</span><b>'+infoValue(center.elevation)+'</b></div><div><span>TEMPERATURE</span><b>'+infoValue(center.temperature)+'</b></div><div><span>MOISTURE</span><b>'+infoValue(center.moisture)+'</b></div><div><span>BIOME</span><b>'+infoValue(center.biome)+'</b></div></div></section><section class="info-section"><div class="info-section-title">TERRAIN & HYDROLOGY</div><div class="info-grid compact"><div><span>LANDFORM</span><b>'+infoValue(infoTile?.landform)+'</b></div><div><span>WATERFORM</span><b>'+infoValue(infoTile?.waterform)+'</b></div><div><span>SURFACE</span><b>'+infoValue(infoTile?.surface)+'</b></div><div><span>FLOW</span><b>'+infoValue(h.flowDirection)+'</b></div><div><span>FLOW STEPS</span><b>'+infoValue(h.flowSteps)+'</b></div><div><span>UPSTREAM</span><b>'+infoValue(h.upstreamCount)+'</b></div><div><span>WATERSHED</span><b>'+infoValue(h.watershedId)+'</b></div><div><span>OCEAN</span><b>'+infoValue(h.reachesOcean==null?null:(h.reachesOcean?'YES':'NO'))+'</b></div></div></section><section class="info-section"><div class="info-section-title">LOCATION</div><div class="info-grid compact"><div><span>CONTINENT</span><b>'+infoValue(loc.continent?.name)+'</b></div><div><span>TERRITORY</span><b>'+infoValue(loc.territory?.name)+'</b></div><div><span>REGION</span><b>'+infoValue(loc.region?.name)+'</b></div><div><span>TRACT</span><b>'+infoValue(loc.tract?.name)+'</b></div><div><span>AREA</span><b>'+infoValue(loc.area?.name)+'</b></div></div></section><section class="info-section"><div class="info-section-title">SIMULATION</div><div class="info-grid compact"><div><span>TIME</span><b>'+infoValue(g.player.simulationTime==null?null:g.player.simulationTime.toFixed(2)+'s')+'</b></div><div><span>TICK RATE</span><b>'+infoValue(g.player.tickRate)+'</b></div><div><span>LAST ACTION</span><b>'+infoValue(g.player.lastAction?.type)+'</b></div></div></section></div>';
   visionEl.innerHTML=renderVisionControls();
-  document.querySelectorAll('#game-vision [data-vision]').forEach(b=>b.onclick=()=>{state.vision=b.dataset.vision;renderGamePanel()});
+  visionEl.querySelectorAll('[data-vision]').forEach(b=>b.onclick=()=>{state.vision=b.dataset.vision;renderGamePanel()});
 }
 async function move(dx,dy){
   if(state.mode!=='game'){enterGame();return}
@@ -175,18 +170,18 @@ async function move(dx,dy){
   }finally{state.moveBusy=false}
 }
 async function inspect(){const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY}),r=await fetch('/api/game/inspect?'+p);if(!r.ok)throw Error('Inspect API '+r.status);const z=await r.json();state.gameSnapshot.player=z.player;render()}
-function action(a){if(a==='a'){if(state.mode==='game')inspect().catch(error);else enterGame()}else if(a==='b'){if(state.mode==='game')enterObserver();else nav(-1)}else if(a==='start'||a==='select'){if(state.mode==='game')enterObserver();else enterGame()}}function animateMotion(){}
+function action(a){if(a==='start'||a==='select'){if(state.mode==='game')enterObserver();else enterGame()}}function animateMotion(){}
 async function realtime(){if(state.realtimeBusy)return;state.realtimeBusy=true;try{const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY}),r=await fetch('/api/realtime?'+p,{cache:'no-store'});if(!r.ok)throw Error('Realtime API '+r.status);const z=await r.json();if(z.player){const changed=state.gameX!==z.player.position.x||state.gameY!==z.player.position.y;state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;if(state.snapshot){state.snapshot.player=z.player;state.snapshot.focus=z.focus;state.snapshot.grid=z.grid;state.snapshot.location=z.location;state.snapshot.cache=z.cache;state.snapshot.tile=z.tile;state.snapshot.slots=z.slots;state.snapshot.world=z.world}if(state.gameSnapshot){state.gameSnapshot.player=z.player;state.gameSnapshot.center=z.player.position;if(state.mode==='game'&&changed)game(false).catch(error);else if(state.mode==='game')renderGamePanel()}}if(state.mode==='observer'&&state.snapshot&&state.site!=='map')render()}catch(e){console.warn(e)}finally{state.realtimeBusy=false}}
 
 function pressed(g,i){return !!g.buttons?.[i]?.pressed}
 function edge(name,value){const was=!!gamepadPrev[name];gamepadPrev[name]=value;return value&&!was}
 let gamepadPrev={},lastGamepadId='';
-function pollGamepad(){const pads=navigator.getGamepads?.()||[];const g=[...pads].find(Boolean);if(!g){requestAnimationFrame(pollGamepad);return}if(g.id!==lastGamepadId){lastGamepadId=g.id;gamepadPrev={};document.querySelector('#app-mode-label').textContent='GAMEPAD CONNECTED'}const axX=g.axes?.[0]??0,axY=g.axes?.[1]??0;const left=pressed(g,14)||axX<-.5,right=pressed(g,15)||axX>.5,up=pressed(g,12)||axY<-.5,down=pressed(g,13)||axY>.5;if(edge('left',left))move(-1,0).catch(error);if(edge('right',right))move(1,0).catch(error);if(edge('up',up))move(0,-1).catch(error);if(edge('down',down))move(0,1).catch(error);if(edge('a',pressed(g,0)))action('a');if(edge('b',pressed(g,1)))action('b');if(edge('start',pressed(g,9)))action('start');if(edge('select',pressed(g,8)))action('select');requestAnimationFrame(pollGamepad)}
+function pollGamepad(){const pads=navigator.getGamepads?.()||[];const g=[...pads].find(Boolean);if(!g){requestAnimationFrame(pollGamepad);return}if(g.id!==lastGamepadId){lastGamepadId=g.id;gamepadPrev={};document.querySelector('#app-mode-label').textContent='GAMEPAD CONNECTED'}const axX=g.axes?.[0]??0,axY=g.axes?.[1]??0;const left=pressed(g,14)||axX<-.5,right=pressed(g,15)||axX>.5,up=pressed(g,12)||axY<-.5,down=pressed(g,13)||axY>.5;if(edge('left',left))move(-1,0).catch(error);if(edge('right',right))move(1,0).catch(error);if(edge('up',up))move(0,-1).catch(error);if(edge('down',down))move(0,1).catch(error);if(edge('start',pressed(g,9)))action('start');if(edge('select',pressed(g,8)))action('select');requestAnimationFrame(pollGamepad)}
 addEventListener('gamepadconnected',e=>{lastGamepadId=e.gamepad.id;gamepadPrev={};document.querySelector('#app-mode-label').textContent='GAMEPAD CONNECTED'});
 addEventListener('gamepaddisconnected',()=>{lastGamepadId='';document.querySelector('#app-mode-label').textContent='GAME + INFO'});
 function nav(d){shell(order[(order.indexOf(state.site)+d+order.length)%order.length]);render()}
 tabs.forEach(t=>t.onclick=()=>{if(state.mode!=='observer')enterObserver();shell(t.dataset.site);if(state.snapshot)render();});
-document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>action(b.dataset.action));
+document.querySelectorAll('[data-action="start"],[data-action="select"]').forEach(b=>b.onclick=()=>action(b.dataset.action));
 document.querySelectorAll('[data-direction]').forEach(b=>b.onclick=()=>{const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.direction];move(...v).catch(error)});
 document.onkeydown=e=>{const d={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(d){e.preventDefault();const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[d];move(...v).catch(error)}else if(e.key==='Enter'){e.preventDefault();action('a')}else if(e.key==='Escape'){e.preventDefault();action('b')}else if(e.key==='Tab'){e.preventDefault();action('start')}};
 if(refreshButton)refreshButton.onclick=()=>Promise.all([snapshot(),game()]).catch(error);
@@ -194,7 +189,6 @@ shell('world');
 const initialMode=new URLSearchParams(location.search).get('app')==='observer'?'observer':'game';
 applyScreenMode(initialMode);
 mode(initialMode);
-if(initialMode==='game')game(true).catch(error);
-else snapshot().catch(error);
+Promise.all([snapshot(false),initialMode==='game'?game(true):Promise.resolve()]).catch(error);
 pollGamepad();
 setInterval(realtime,500);
