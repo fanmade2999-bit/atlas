@@ -611,3 +611,19 @@
 /* Final height-only proportions: large World, lean Vision, generous unified Info/Observer. */
 .handheld.game-mode .screen-glow{grid-template-rows:56% 8% 36%}
 @media(max-width:699px){.handheld.game-mode .screen-glow{grid-template-rows:56% 8% 36%}}
+
+
+/* Critical fix: the original Observer surface lives inside the unified Info panel.
+   A legacy Game-mode rule hid .site globally; override that only inside Info. */
+.handheld.game-mode .info-panel .site{
+  display:block !important;
+  visibility:visible;
+  min-height:0;
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+.handheld.game-mode .info-panel .cartridge-dock{
+  display:grid !important;
+  visibility:visible;
+}
