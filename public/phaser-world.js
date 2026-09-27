@@ -99,10 +99,10 @@ class AtlasScene extends PhaserLib.Scene{
   }
   resize(){if(this.snapshot)this.updateWorld(this.snapshot,this.mode,this.onTap)}
 }
-let game=null,scene=null,container=null,lastSnapshot=null,lastMode='normal';
+let game=null,scene=null,container=null,lastSnapshot=null,lastMode='normal',phaserError=null;
 
 export function mountPhaserWorld(host,snapshot,mode='normal',onTap=null){
-  if(!PhaserLib)throw new Error('Phaser 3 failed to load');
+  if(!PhaserLib)throw new Error('Phaser 3 failed to load (CDN unavailable or script blocked)');
   container=host;lastSnapshot=snapshot;lastMode=mode;
   if(!game){
     game=new PhaserLib.Game({
@@ -117,6 +117,7 @@ export function mountPhaserWorld(host,snapshot,mode='normal',onTap=null){
       scene:AtlasScene
     });
     scene=game.scene.getScene('AtlasWorld');
+    if(!scene)throw new Error('Phaser AtlasWorld scene failed to initialize');
     scene.events.once('create',()=>scene.updateWorld(lastSnapshot,lastMode,onTap));
   }else scene.updateWorld(snapshot,mode,onTap);
   return game;
