@@ -26,5 +26,6 @@ export function movePosition(x, y, direction) {
 export function inspectPosition(x, y, seed = 'atlas-root') {
   const position = normalizeCoordinates(x, y);
   const climate = sampleClimate(seed, position.x, position.y);
-  const terrain = classifyTerrain(seed, position.x, position.y);\n  return { position, climate, terrain, world: { width: WORLD_WIDTH, height: WORLD_HEIGHT, xWraps: true, yWraps: false } };
+  const terrain = classifyTerrain(seed, position.x, position.y);
+  return { position, climate, terrain, world: { width: WORLD_WIDTH, height: WORLD_HEIGHT, xWraps: true, yWraps: false } };
 }
