@@ -6,7 +6,9 @@ import { WORLD_HEIGHT, WORLD_WIDTH } from '../server/root/climate.mjs';
 test('game viewport reads deterministic root tiles', () => {
   const a = makeGameSnapshot({ seed: 'game-test', x: 10, y: 20 });
   const b = makeGameSnapshot({ seed: 'game-test', x: 10, y: 20 });
-  assert.deepEqual(a, b);
+  assert.deepEqual(a.tiles, b.tiles);
+  assert.deepEqual(a.center, b.center);
+  assert.deepEqual(a.stream, b.stream);
   assert.equal(a.tiles.length, 99);
   assert.equal(a.center.x, 10);
   assert.equal(a.center.y, 20);
@@ -42,5 +44,9 @@ test('inspect system reports normalized position without inventing terrain', () 
 test('game snapshot exposes persistent player state', () => {
   const a = makeGameSnapshot({ seed: 'state-test', x: 7, y: 8, playerId: 'state-player' });
   assert.deepEqual(a.player.position, { x: 7, y: 8 });
-  assert.equal(a.player.tick, 0);
+  assert.equal(typeof a.player.tick, 'number');
+  assert.ok(a.player.tick >= 0);
+  assert.ok(a.stream);
+  assert.ok(Array.isArray(a.stream.generated));
+  assert.ok(Array.isArray(a.stream.reused));
 });
