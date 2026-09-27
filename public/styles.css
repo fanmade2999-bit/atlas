@@ -91,3 +91,155 @@
 .handheld.game-mode .site{display:block;height:auto;max-height:none;min-height:0;overflow:hidden}
 .handheld.game-mode .cartridge-dock{display:none}
 .handheld.game-mode .game-info-panel{max-height:74px;overflow:hidden}
+
+
+/* ------------------------------------------------------------------
+   HANDHELD GAME LAYOUT
+   Exact mobile order: SCREEN -> VISION -> INFO -> CONTROL.
+   Only INFO scrolls internally.
+   ------------------------------------------------------------------ */
+.handheld.game-mode {
+  height: 100svh;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.handheld.game-mode .console-top,
+.handheld.game-mode .cartridge-dock,
+.handheld.game-mode #site {
+  display: none !important;
+}
+
+.handheld.game-mode .screen-frame {
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.handheld.game-mode .screen-bezel {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.handheld.game-mode .screen-glow {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto minmax(86px, 24%);
+  background: #080b0e;
+}
+
+.handheld.game-mode .game-panel {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: 6px;
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.handheld.game-mode .game-panel-head {
+  min-height: 18px;
+  margin: 0 2px 4px;
+}
+
+.handheld.game-mode .game-board-wrap {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 2px;
+  border-radius: 6px;
+}
+
+.handheld.game-mode .game-board {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  min-width: 0;
+  min-height: 0;
+}
+
+.handheld.game-mode .game-board canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.handheld.game-mode .game-vision {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+  background: #050708;
+}
+
+.handheld.game-mode .game-vision .vision-box {
+  margin: 0;
+}
+
+.handheld.game-mode .game-info {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  background: #050708;
+  padding: 0 6px;
+}
+
+.handheld.game-mode .game-info-panel {
+  min-width: 0;
+  padding: 5px 2px 8px;
+}
+
+.handheld.game-mode .game-info-title {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 4px 0 5px;
+  background: #050708;
+}
+
+.handheld.game-mode .game-info-grid {
+  min-width: 0;
+}
+
+.handheld.game-mode .controller {
+  position: relative;
+  min-height: 76px;
+  flex-shrink: 0;
+  z-index: 20;
+}
+
+@media (max-width: 699px) {
+  .handheld.game-mode .screen-glow {
+    grid-template-rows: minmax(0, 1fr) auto minmax(86px, 27%);
+  }
+
+  .handheld.game-mode .game-panel {
+    padding: 5px;
+  }
+
+  .handheld.game-mode .game-vision {
+    padding: 3px 5px;
+  }
+}
