@@ -122,7 +122,7 @@ function terrainGlyph(t,mode){
   return '<span class="terrain-glyph">·</span>';
 }
 function renderGamePanel(){
-  const panel=document.querySelector('#game-panel'),board=document.querySelector('#game-board'),stats=document.querySelector('#game-panel-stats'),status=document.querySelector('#game-status'),actionEl=document.querySelector('#game-action');
+  const panel=document.querySelector('#game-panel'),board=document.querySelector('#game-board'),stats=document.querySelector('#game-panel-stats'),status=document.querySelector('#game-status'),visionEl=document.querySelector('#game-vision'),infoEl=document.querySelector('#game-info');
   if(!panel||!state.gameSnapshot)return;
   const g=state.gameSnapshot,modeName=state.vision||'normal';
   board.querySelector('.world-loading')?.remove();
@@ -133,9 +133,9 @@ function renderGamePanel(){
   const inspectText=inspected?'<div class="inspect-hud"><b>'+esc(inspected.biome)+' · '+esc(terrain?.landform||'???')+' · '+esc(terrain?.waterform||'???')+'</b><span>E '+inspected.elevation.toFixed(3)+'</span><span>T '+inspected.temperature.toFixed(3)+'</span><span>M '+inspected.moisture.toFixed(3)+'</span></div>':'';
   stats.innerHTML='<div class="xyz-hud"><span>X '+g.player.position.x+'</span><span>Y '+g.player.position.y+'</span><span>T '+(g.player?.tick??'???')+'</span></div>'+inspectText;
   const infoTile=g.tiles.find(t=>t.dx===0&&t.dy===0)||g.tiles[0];
-  siteRoot.innerHTML='<div class="game-info-panel"><div class="game-info-title">WORLD INFO</div><div class="game-info-grid"><div><span>X</span><b>'+g.player.position.x+'</b></div><div><span>Y</span><b>'+g.player.position.y+'</b></div><div><span>CHUNK</span><b>'+Math.floor(g.player.position.x/16)+','+Math.floor(g.player.position.y/16)+'</b></div><div><span>BIOME</span><b>'+esc(infoTile?.biome||'???')+'</b></div><div><span>LANDFORM</span><b>'+esc(infoTile?.landform||'???')+'</b></div><div><span>WATER</span><b>'+esc(infoTile?.waterform||'???')+'</b></div></div></div>';
-  actionEl.innerHTML=renderVisionControls();
-  document.querySelectorAll('[data-vision]').forEach(b=>b.onclick=()=>{state.vision=b.dataset.vision;renderGamePanel()});
+  infoEl.innerHTML='<div class="game-info-panel"><div class="game-info-title">WORLD INFO</div><div class="game-info-grid"><div><span>X</span><b>'+g.player.position.x+'</b></div><div><span>Y</span><b>'+g.player.position.y+'</b></div><div><span>CHUNK</span><b>'+Math.floor(g.player.position.x/16)+','+Math.floor(g.player.position.y/16)+'</b></div><div><span>BIOME</span><b>'+esc(infoTile?.biome||'???')+'</b></div><div><span>LANDFORM</span><b>'+esc(infoTile?.landform||'???')+'</b></div><div><span>WATER</span><b>'+esc(infoTile?.waterform||'???')+'</b></div></div></div>';
+  visionEl.innerHTML=renderVisionControls();
+  document.querySelectorAll('#game-vision [data-vision]').forEach(b=>b.onclick=()=>{state.vision=b.dataset.vision;renderGamePanel()});
 }
 async function move(dx,dy){
   if(state.mode!=='game'){enterGame();return}
