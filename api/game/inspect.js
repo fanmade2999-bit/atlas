@@ -1,0 +1,2 @@
+import { inspectPlayer } from '../../server/systems-state.mjs';
+export default function handler(req,res){const q=req.query||{};const result=inspectPlayer({playerId:q.playerId||'local-player',seed:q.seed||'atlas-root',x:Number(q.x||0),y:Number(q.y||10001500)});res.setHeader('Cache-Control','no-store');res.status(200).json(result);}
