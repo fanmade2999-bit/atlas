@@ -81,3 +81,13 @@
 .handheld.game-mode #site{display:block}
 .handheld.game-mode .cartridge-dock{display:none}
 .handheld.game-mode .site{overflow:hidden;overscroll-behavior:none}
+
+
+/* Final handheld Game layout: world -> vision -> information -> physical controls. */
+.handheld.game-mode .screen-glow{grid-template-rows:minmax(0,1fr) auto;overflow:hidden}
+.handheld.game-mode .game-panel{display:grid;height:auto;min-height:0;overflow:hidden}
+.handheld.game-mode .game-board-wrap{min-height:0;height:100%}
+.handheld.game-mode .game-action{min-height:0}
+.handheld.game-mode .site{display:block;height:auto;max-height:none;min-height:0;overflow:hidden}
+.handheld.game-mode .cartridge-dock{display:none}
+.handheld.game-mode .game-info-panel{max-height:74px;overflow:hidden}
