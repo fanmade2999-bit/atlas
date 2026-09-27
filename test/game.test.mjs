@@ -74,13 +74,16 @@ test('game and map use the same deterministic world vocabulary', () => {
 test('game snapshot carries an active Layer 4 transform to the graphical renderer', () => {
   const seed = 'l4-graphics-link';
   const base = makeGameSnapshot({ seed, x: 0, y: 10001500, playerId: 'l4-graphics' });
-  const target = base.tiles.find(tile => tile.surface === 'grass');
-  assert.ok(target, 'expected a generated grass tile in the visible field');
+  const fixture = base.testFixtures.find(item => item.id === 'l4-fire-grass' && item.available);
+  assert.ok(fixture, 'expected a visible natural grass fixture for the fire transform');
+
+  const target = base.tiles.find(tile => tile.x === fixture.x && tile.y === fixture.y);
+  assert.equal(target?.surface, 'grass');
 
   const applied = applyTileTransform({
     seed,
-    x: target.x,
-    y: target.y,
+    x: fixture.x,
+    y: fixture.y,
     moveType: 'fire',
     sourceEntityId: 'l4-graphics',
     recovery: { type: 'timer', durationMs: 10000 }
@@ -88,11 +91,11 @@ test('game snapshot carries an active Layer 4 transform to the graphical rendere
   assert.equal(applied.ok, true);
 
   const next = makeGameSnapshot({ seed, x: 0, y: 10001500, playerId: 'l4-graphics' });
-  const transformed = next.tiles.find(tile => tile.x === target.x && tile.y === target.y);
+  const transformed = next.tiles.find(tile => tile.x === fixture.x && tile.y === fixture.y);
   assert.equal(transformed?.surface, 'scorched-dirt');
   assert.equal(transformed?.transform?.id, 'fire-grass-scorch');
 
-  recoverTileTransform(seed, target.x, target.y, { tile: transformed, now: Date.now() + 10001 });
+  recoverTileTransform(seed, fixture.x, fixture.y, { tile: transformed, now: Date.now() + 10001 });
 });
 
 
