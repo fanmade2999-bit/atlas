@@ -154,3 +154,6 @@ export function rootSelfTest(seed = 'atlas-root') {
   ];
   return { passed: checks.every((check) => check.ok), checks, samples: { equator, northPole, southPole } };
 }
+
+
+export const TERRAIN_TRANSFORMS = Object.freeze([{landform:'Ocean',min:0,max:0.30,waterform:'Ocean'},{landform:'Coast',min:0.30,max:0.38,waterform:'Shallows'},{landform:'Plains',min:0.38,max:0.55,waterform:'None'},{landform:'Hills',min:0.55,max:0.65,waterform:'None'},{landform:'Valley/Plateau',min:0.65,max:0.80,waterform:'None'},{landform:'Mountain',min:0.80,max:0.92,waterform:'None'},{landform:'Peak',min:0.92,max:1.01,waterform:'None'}]);
