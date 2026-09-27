@@ -107,13 +107,28 @@ export function sampleTemperature(seed, x, y) {
   return clamp01(latitude * 0.78 + localNoise * 0.22);
 }
 
+export function classifyBiome(elevation, temperature, moisture) {
+  if (elevation < 0.22) return 'Ocean';
+  if (elevation > 0.82) return temperature < 0.35 ? 'Alpine' : 'Highlands';
+  if (temperature < 0.24) return moisture > 0.58 ? 'Tundra' : 'Cold Steppe';
+  if (temperature > 0.76 && moisture < 0.28) return 'Desert';
+  if (temperature > 0.68 && moisture > 0.68) return 'Tropical Forest';
+  if (moisture > 0.70) return 'Wetland';
+  if (moisture < 0.24) return 'Grassland';
+  return 'Temperate Forest';
+}
+
 export function sampleClimate(seed, x, y) {
   const normalized = normalizeCoordinates(x, y);
+  const elevation = sampleElevation(seed, normalized.x, normalized.y);
+  const temperature = sampleTemperature(seed, normalized.x, normalized.y);
+  const moisture = sampleMoisture(seed, normalized.x, normalized.y);
   return {
     ...normalized,
-    elevation: sampleElevation(seed, normalized.x, normalized.y),
-    temperature: sampleTemperature(seed, normalized.x, normalized.y),
-    moisture: sampleMoisture(seed, normalized.x, normalized.y)
+    elevation,
+    temperature,
+    moisture,
+    biome: classifyBiome(elevation, temperature, moisture)
   };
 }
 
