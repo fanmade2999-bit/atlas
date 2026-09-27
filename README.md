@@ -53,3 +53,8 @@ Game:
 - Start / Select / Tab: return Observer
 
 Player persistence is intentionally not implemented yet; development state is in memory.
+
+
+## Direct game screen
+
+The playable handheld world is also available directly at `/game.html`. It uses the same `/api/game` and movement/inspect endpoints as the main shell, so a deployment can open the game screen immediately.
