@@ -1,886 +1,1102 @@
-:root{color-scheme:dark light;--bg:light-dark(#f4f6f8,#090c10);--surface:light-dark(#fff,#11161d);--surface-2:light-dark(#eef2f5,#171d25);--surface-3:light-dark(#e5eaef,#1c2430);--text:light-dark(#10151b,#eef3f7);--muted:light-dark(#66727e,#8996a3);--border:light-dark(#d9e0e7,#27313d);--accent:light-dark(#2055c9,#7fa7ff);--good:light-dark(#08783d,#62d39b);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--text)}body{min-height:100svh;overflow:hidden}button,input{font:inherit}button{color:inherit}.handheld{height:100svh;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:var(--bg)}.console-top{display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--surface);border-bottom:1px solid var(--border)}.brand-mark{width:24px;height:24px;display:grid;place-items:center;border-radius:9px;background:var(--text);color:var(--bg);font-weight:900}.console-title{display:grid;line-height:1}.console-title strong{font-size:11px;letter-spacing:.16em}.console-title span{font-size:7px;letter-spacing:.2em;color:var(--muted)}.console-led{margin-left:auto;width:7px;height:7px;border-radius:50%;background:var(--good)}.screen-frame{min-height:0;padding:4px 6px 6px;display:grid;background:var(--surface-2);overflow:hidden}.screen-bezel{width:min(100%,900px);height:100%;min-height:0;margin:auto;padding:5px;border:1px solid var(--border);border-radius:16px;background:#070a0d}.screen-glow{height:100%;min-height:0;overflow:hidden;border:2px solid #1e2933;border-radius:10px;background:#080b0e;display:grid;grid-template-rows:auto minmax(260px,46%) minmax(0,1fr) auto}.browser-bar{display:grid;grid-template-columns:1fr 30px;align-items:center;gap:5px;padding:3px 6px;border-bottom:1px solid var(--border);background:var(--surface)}.address-bar{min-width:0;height:25px;display:flex;align-items:center;gap:8px;padding:0 11px;border:1px solid var(--border);border-radius:18px;background:var(--surface-2);color:var(--muted);font-size:12px}.address-bar #address{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.icon-button{border:0;background:transparent;cursor:pointer;width:28px;height:28px;border-radius:50%;font-size:20px}.game-panel{min-height:0;padding:7px 7px 6px;background:#050708;border-bottom:1px solid var(--border);box-shadow:0 8px 20px #0008;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto}.game-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}.game-panel-head strong{font-size:11px;letter-spacing:.12em}.game-panel-head span{display:block;color:var(--muted);font-size:7px;letter-spacing:.14em}.game-status{white-space:nowrap}.game-board-wrap{position:relative;min-height:0;overflow:hidden;border:1px solid #33404c;border-radius:8px;padding:3px;background:#020304;display:grid;place-items:center;container-type:size}.game-board{--tile-size:20px;display:grid;grid-template-columns:repeat(15,var(--tile-size));grid-template-rows:repeat(11,var(--tile-size));gap:1px;width:calc(15 * var(--tile-size) + 14px);height:calc(11 * var(--tile-size) + 10px);max-width:100%;max-height:100%;min-height:0;flex:none}.game-tile{position:relative;width:var(--tile-size);height:var(--tile-size);min-width:0;min-height:0;border-radius:2px;border:1px solid #0005;box-shadow:inset 0 0 0 1px #fff1}.game-tile.player{outline:3px solid #fff;outline-offset:-3px;z-index:2}.player-glyph{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:clamp(11px,2.5vw,20px);text-shadow:0 1px 4px #000}.game-panel-stats{position:absolute;top:7px;left:7px;z-index:5;display:block;pointer-events:none}.game-stat{min-width:0;padding:4px 6px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}.game-stat .label{color:var(--muted);font-size:8px;text-transform:uppercase}.game-stat .value{font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.game-action{margin-top:4px;font-size:8px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.site{min-height:0;overflow:auto;padding:12px 10px 16px;overscroll-behavior:contain}.site-inner{max-width:1100px;margin:0 auto}.hero{margin:4px 0 16px}.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.09em;font-size:10px;font-weight:800}h1{margin:4px 0;font-size:28px;line-height:1.1}h2{margin:0;font-size:18px}.muted{color:var(--muted)}.small{font-size:12px}.card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.card{min-width:0;padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--surface)}.label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-weight:800}.value{margin-top:5px;font-size:16px;font-weight:750;overflow-wrap:anywhere}.value.unknown{color:var(--muted)}.status{display:inline-flex;padding:5px 8px;border:1px solid var(--border);border-radius:999px;font-size:10px;font-weight:850}.status.pass{color:var(--good)}.section{margin-top:16px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:8px}.branch-list{display:grid;gap:7px}.branch{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:9px 10px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}.branch-layer,.branch-status{color:var(--muted);font-size:11px}.branch-name{font-size:12px;font-weight:650}.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.field{display:grid;gap:5px}.field label{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase}input{width:100%;height:38px;border:1px solid var(--border);border-radius:10px;padding:0 10px;background:var(--surface);color:var(--text)}.map-wrap{overflow:auto;border-radius:14px;border:1px solid var(--border);background:var(--surface);padding:7px}.map{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;min-width:288px}.cell{aspect-ratio:1;border:0;border-radius:4px;cursor:pointer}.cell.selected{outline:2px solid var(--text);outline-offset:-2px}.metric-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}.metric-name{font-size:12px;font-weight:650}.metric-value{font-size:12px}.test-list{display:grid;gap:7px}.test{display:grid;grid-template-columns:18px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}.test-note{font-size:11px;color:var(--muted);margin-top:2px}.controller{min-height:88px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:18px;padding:8px 14px;background:var(--surface);border-top:1px solid var(--border);z-index:20}.dpad{width:92px;height:64px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}.dpad button,.dpad span{border:1px solid var(--border);background:var(--surface-2)}.dpad-up{grid-column:2}.dpad-left{grid-column:1;grid-row:2}.dpad span{grid-column:2;grid-row:2}.dpad-right{grid-column:3;grid-row:2}.dpad-down{grid-column:2;grid-row:3}.console-center{text-align:center}.system-buttons{display:flex;justify-content:center;gap:5px}.system-buttons button{border:1px solid var(--border);background:var(--surface-2);border-radius:5px;padding:3px 5px;font-size:7px}.action-buttons{display:flex;gap:8px;justify-self:end}.action-buttons button{width:35px;height:35px;border:1px solid var(--border);border-radius:50%;background:var(--surface-2);font-weight:850}.cartridge-dock{display:grid;grid-template-columns:repeat(5,1fr);padding:3px 4px;background:var(--surface);border-top:1px solid var(--border)}.tab{border:0;background:transparent;cursor:pointer;min-height:44px;display:grid;place-items:center;color:var(--muted)}.tab b{font-size:9px}.tab.active{color:var(--text);background:var(--surface-2);border-radius:10px}.device-badge{display:flex;justify-content:space-between;padding:7px 9px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font-size:9px}@media(min-width:700px){.handheld{max-width:980px;margin:auto;border-inline:1px solid var(--border)}.screen-frame{padding:12px 18px 14px}.screen-bezel{padding:11px;border-radius:26px}.game-board{max-width:780px;margin:auto}.site{padding:18px 16px 24px}.card-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}.xyz-hud{display:flex;gap:5px;padding:3px 6px;border:1px solid #ffffff2b;border-radius:6px;background:#05070bcc;color:#fff;font:700 9px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;backdrop-filter:blur(3px);text-shadow:0 1px 2px #000}.xyz-hud span{white-space:nowrap}.game-panel-stats .game-stat{display:none}.game-panel-head{min-height:20px}.game-panel-head strong{font-size:9px}.game-panel-head span{font-size:6px}.game-action{margin-top:2px;font-size:7px}.controller{min-height:78px;padding:5px 10px;gap:12px}.world-loading{width:min(92%,330px);aspect-ratio:1.7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#c9d2dc;text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.world-loading .loader-icon{font-size:28px;animation:atlas-pulse 1s steps(2,end) infinite}.world-loading strong{font-size:11px;letter-spacing:.12em}.world-loading span{font-size:9px;color:#8996a3;min-height:12px}.world-loading small{font-size:8px;color:#8996a3}.progress{width:100%;height:7px;border:1px solid #33404c;border-radius:5px;background:#0a0d10;overflow:hidden}.progress i{display:block;height:100%;background:#d8df68;box-shadow:0 0 8px #d8df6866;transition:width .18s linear}@keyframes atlas-pulse{50%{opacity:.35;transform:scale(.85)}}
-/* Keep every world block mathematically square, including the 1px grid gaps. */
-.game-board{--tile-size:min(calc((100cqw - 20px)/15),calc((100cqh - 16px)/11));}
-@media(max-width:699px){.screen-frame{padding:3px 5px 5px}.screen-bezel{padding:4px;border-radius:14px}.game-panel{padding:7px 6px 6px}.game-panel-head{margin-bottom:5px}.game-board-wrap{border-radius:7px;padding:3px}.game-action{font-size:7px}.site{padding-top:10px}.controller{min-height:76px}}
-
-.inspect-hud{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;padding:4px 6px;border:1px solid #ffffff2b;border-radius:6px;background:#05070bcc;color:#dfe6ec;font:700 8px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;backdrop-filter:blur(3px)}.inspect-hud b{width:100%;color:#fff}.inspect-hud span{color:#aeb9c4}.game-panel.game-active .game-action{color:#d0d8df}
-/* World-space chunk boundaries: every 16x16 tile region has a visible seam. */
-.game-tile.chunk-left{border-left:2px solid #d8df68}
-.game-tile.chunk-top{border-top:2px solid #d8df68}
-.game-tile.chunk-right{border-right:2px solid #d8df68}
-.game-tile.chunk-bottom{border-bottom:2px solid #d8df68}
-.game-tile.player{will-change:transform}
-.game-tile.player-step .player-glyph{animation:atlas-player-step .18s ease-out both}
-.game-tile.player-ghost{opacity:.72;filter:saturate(.35)}
-.game-tile.player-ghost .ghost-glyph{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:clamp(10px,2.3vw,18px);opacity:.8;animation:atlas-ghost .42s ease-out forwards;text-shadow:0 1px 4px #000}
-@keyframes atlas-player-step{0%{transform:scale(.78) translate(var(--step-x,0),var(--step-y,0));opacity:.55}100%{transform:scale(1) translate(0,0);opacity:1}}
-@keyframes atlas-ghost{0%{transform:scale(1);opacity:.8}100%{transform:scale(.5);opacity:0}}
-.step-right{--step-x:-100%}.step-left{--step-x:100%}.step-down{--step-y:-100%}.step-up{--step-y:100%}
-
-/* Vision selector + compact map legend */
-.vision-box{margin-top:3px;padding:5px 6px;border:1px solid #ffffff24;border-radius:7px;background:#05070bcc;backdrop-filter:blur(4px)}
-.vision-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
-.vision-head>div:first-child{display:grid;gap:1px}.vision-head b{font:800 8px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;color:#fff}.vision-head span{font-size:7px;color:#8996a3}.vision-current{font:800 7px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#d8df68;text-transform:uppercase}
-.vision-options{display:flex;gap:3px;overflow-x:auto;scrollbar-width:none}.vision-options::-webkit-scrollbar{display:none}.vision-options button{flex:0 0 auto;border:1px solid #ffffff1d;border-radius:5px;padding:3px 5px;background:#0c1014;color:#9ca8b3;font-size:7px;cursor:pointer}.vision-options button.active{border-color:#d8df68;color:#fff;background:#20261a;box-shadow:0 0 0 1px #d8df6833 inset}
-.vision-legend{display:grid;grid-template-columns:auto 1fr;gap:4px 7px;align-items:center;margin-top:4px}.vision-legend-title{display:flex;gap:4px;align-items:baseline;white-space:nowrap}.vision-legend-title b{font-size:7px;color:#fff}.vision-legend-title span{font-size:6px;color:#8996a3}.vision-ramp{grid-column:2;height:5px;border-radius:4px;border:1px solid #ffffff18}.vision-ends{grid-column:2;display:flex;justify-content:space-between;margin-top:-2px;color:#77838e;font:600 5px/1 ui-monospace,SFMono-Regular,Menlo,monospace}
-.game-board{position:relative}
-.game-tile{z-index:1}
-.player-cell{z-index:1}
-.player-marker{position:absolute;left:50%;top:50%;width:var(--tile-size);height:var(--tile-size);margin-left:calc(var(--tile-size) / -2);margin-top:calc(var(--tile-size) / -2);display:grid;place-items:center;z-index:8;pointer-events:none;filter:drop-shadow(0 1px 3px #000)}
-.player-marker span{color:#fff;font-size:clamp(11px,2.5vw,20px);text-shadow:0 0 5px #000,0 1px 2px #000}
-.player-marker-step{animation:atlas-marker-step .14s ease-out both}
-@keyframes atlas-marker-step{from{transform:translate(0,0) scale(.72);opacity:.65}to{transform:translate(var(--move-x),var(--move-y)) scale(1);opacity:1}}
-@media(max-width:699px){.vision-box{padding:4px 5px}.vision-options button{padding:3px 4px}.vision-legend-title span{display:none}}
-.vision-swatches{grid-column:2;display:flex;gap:6px;flex-wrap:wrap}.vision-swatches span{display:flex;align-items:center;gap:3px;color:#8996a3;font-size:6px}.vision-swatches i{width:7px;height:7px;border-radius:2px;border:1px solid #ffffff2b;display:inline-block}
-
-.world-map-card{display:grid;gap:8px}.map-toolbar{display:flex;align-items:center;justify-content:space-between;gap:7px;flex-wrap:wrap}.map-toolbar-group{display:flex;gap:4px;align-items:center}.map-tool{border:1px solid var(--border);background:var(--surface-2);border-radius:8px;padding:6px 8px;font-size:10px;font-weight:800}.map-tool.active{border-color:#d8df68;box-shadow:0 0 0 1px #d8df6833 inset}.world-map-viewport{position:relative;height:min(58svh,520px);min-height:280px;overflow:hidden;border:1px solid var(--border);border-radius:14px;background:#050708;touch-action:none;user-select:none;cursor:grab}.world-map-viewport.dragging{cursor:grabbing}.world-map-grid{position:absolute;inset:8px;display:grid;grid-template-columns:repeat(25,minmax(0,1fr));grid-template-rows:repeat(17,minmax(0,1fr));gap:1px;will-change:transform}.world-map-cell{position:relative;border:0;border-radius:1px;min-width:0;min-height:0;padding:0}.map-center-cross{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px;border:1px solid #ffffff66;border-radius:50%;z-index:7;pointer-events:none}.map-you{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px;display:grid;place-items:center;z-index:8;pointer-events:none;color:#fff;font-size:13px;text-shadow:0 1px 4px #000}.map-hud{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;padding:7px 9px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}.map-hud strong{font:800 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.map-hud span{display:block;font-size:8px;color:var(--muted);margin-top:4px}.map-target-card{display:grid;gap:6px;padding:8px 9px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}.target-coords{font:800 11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace}.map-target-card .target-meta{display:flex;gap:7px;flex-wrap:wrap;font-size:8px;color:var(--muted)}.map-help{font-size:8px;color:var(--muted)}.map-legend{display:flex;gap:8px;flex-wrap:wrap;font-size:7px;color:var(--muted)}.map-legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px;vertical-align:-1px}.modal-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:16px;background:#0009;backdrop-filter:blur(4px)}.modal-backdrop[hidden]{display:none}.teleport-dialog{width:min(92vw,380px);padding:16px;border:1px solid var(--border);border-radius:16px;background:var(--surface);box-shadow:0 20px 60px #000b}.modal-kicker{font-size:8px;color:var(--accent);font-weight:850;letter-spacing:.1em}.teleport-dialog h2{margin:5px 0 12px}.teleport-details{display:grid}.teleport-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}.teleport-row span{font-size:10px;color:var(--muted)}.teleport-row strong{font-size:11px;text-align:right}.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.modal-button{height:40px;border:1px solid var(--border);border-radius:10px;font-weight:850}.modal-button.secondary{background:var(--surface-2)}.modal-button.primary{background:#d8df68;color:#111}@media(max-width:699px){.world-map-viewport{height:48svh;min-height:250px}.map-tool{padding:5px 7px}.modal-backdrop{padding:10px}}
-
-.map-glyph{position:absolute;inset:0;display:grid;place-items:center;color:#ffffffcc;font-size:clamp(8px,1.7vw,15px);font-weight:900;line-height:1;text-shadow:0 1px 3px #0008;pointer-events:none}.world-map-cell{overflow:hidden}.game-tile{position:relative;display:grid;place-items:center;overflow:hidden}.terrain-glyph{position:absolute;inset:0;display:grid;place-items:center;color:#ffffffb8;font-size:clamp(8px,2.1vw,16px);font-weight:900;line-height:1;text-shadow:0 1px 3px #0009;pointer-events:none}.terrain-glyph.water{color:#dff8ffcc}
-.td{position:absolute;z-index:3;transform:translate(-50%,-50%);width:var(--s);height:var(--s);pointer-events:none}.td:before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-shadow:0 1px 2px #000b;font-weight:900}.td-tree:before{content:'♣';font-size:calc(var(--s)*.72);color:#184d22}.td-shrub:before{content:'♣';font-size:calc(var(--s)*.48);color:#397c39}.td-grass:before{content:'˄';font-size:calc(var(--s)*.40);color:#d6e86d}.td-rock:before{content:'◆';font-size:calc(var(--s)*.38);color:#9ba19d}.td-flower:before{content:'✦';font-size:calc(var(--s)*.32);color:#f0d5e8}.td-shore:before{content:'≈';font-size:calc(var(--s)*.65);color:#d9f6ff}.td-dune:before{content:'⌁';font-size:calc(var(--s)*.58);color:#f0d08a}.td-snowcap:before{content:'△';font-size:calc(var(--s)*.62);color:#fff}
-.game-board{position:relative;display:block;overflow:hidden;touch-action:none;background:#10161a}.game-board canvas{display:block!important;width:100%!important;height:100%!important;image-rendering:pixelated}.game-board .td{display:none}
-
-/* Fullscreen handheld game mode: no fake browser chrome, no observer scrolling. */
-.handheld.game-mode .screen-frame{padding:0}
-.handheld.game-mode .screen-bezel{width:100%;height:100%;padding:0;border:0;border-radius:0}
-.handheld.game-mode .screen-glow{border:0;border-radius:0;grid-template-rows:minmax(0,1fr);overflow:hidden}
-.handheld.game-mode .game-panel{height:100%;min-height:0;border:0;border-radius:0;box-shadow:none;padding:4px 5px 5px;grid-template-rows:auto minmax(0,1fr) auto}
-.handheld.game-mode .game-panel-head{margin:0 2px 4px;min-height:16px}
-.handheld.game-mode .game-panel-head strong{font-size:8px}
-.handheld.game-mode .game-panel-head span{font-size:5px}
-.handheld.game-mode .game-status{font-size:6px}
-.handheld.game-mode .game-board-wrap{min-height:0;width:100%;height:100%;padding:0;border:0;border-radius:0}
-.handheld.game-mode .game-board{width:100%;height:100%;max-width:none;max-height:none}
-.handheld.game-mode .game-panel-stats{top:5px;left:5px}
-.handheld.game-mode .game-action{position:relative;z-index:20;margin:4px 0 0;padding:5px 2px 2px;background:#05070bcc;border-top:1px solid #ffffff1c}
-.handheld.game-mode .vision-box{margin:0;padding:5px 6px;border-radius:7px}
-.handheld.game-mode .site,.handheld.game-mode .cartridge-dock{display:none}
-.handheld.game-mode .screen-frame{overflow:hidden}
-.handheld.game-mode .game-board canvas{width:100%!important;height:100%!important}
-@media(max-width:699px){
-  .handheld.game-mode .console-top{display:none}
-  .handheld.game-mode .controller{min-height:76px}
+:root{
+  color-scheme:dark;
+  --bg:#090c10;
+  --surface:#11161d;
+  --surface-2:#171d25;
+  --surface-3:#1c2430;
+  --text:#eef3f7;
+  --muted:#8996a3;
+  --border:#27313d;
+  --accent:#7fa7ff;
+  --good:#62d39b;
+  --world:#050708;
+  --control-height:104px;
+  --dock-height:46px;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
 
+*{box-sizing:border-box}
+html,body{
+  width:100%;
+  height:100%;
+  min-height:100%;
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+}
+body{
+  min-height:100dvh;
+  overflow:hidden;
+}
+button,input{font:inherit}
+button{color:inherit}
+[hidden]{display:none!important}
 
-/* Game information stays inside the screen, between Vision and the physical controller. */
-.handheld.game-mode .site{display:block;min-height:0;overflow:hidden;background:#050708;border-top:1px solid var(--border);padding:0 6px}
-.handheld.game-mode .game-info-panel{display:grid;gap:4px;padding:5px 2px 6px}
-.handheld.game-mode .game-info-title{font-size:7px;font-weight:900;letter-spacing:.14em;color:var(--accent)}
-.handheld.game-mode .game-info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
-.handheld.game-mode .game-info-grid>div{min-width:0;border:1px solid var(--border);border-radius:6px;padding:4px 5px;background:var(--surface-2)}
-.handheld.game-mode .game-info-grid span{display:block;font-size:5px;color:var(--muted);letter-spacing:.08em}
-.handheld.game-mode .game-info-grid b{display:block;margin-top:2px;font-size:7px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.handheld.game-mode .screen-glow{grid-template-rows:minmax(0,1fr) auto auto}
-.handheld.game-mode .game-panel{height:auto;min-height:0}
-
-
-/* Observer and Game are separate applications sharing the physical screen. */
-.handheld:not(.game-mode) #game-panel{display:none}
-.handheld:not(.game-mode) #site{display:block}
-.handheld.game-mode #game-panel{display:grid}
-.handheld.game-mode #site{display:block}
-.handheld.game-mode .cartridge-dock{display:none}
-.handheld.game-mode .site{overflow:hidden;overscroll-behavior:none}
-
-
-/* Final handheld Game layout: world -> vision -> information -> physical controls. */
-.handheld.game-mode .screen-glow{grid-template-rows:minmax(0,1fr) auto;overflow:hidden}
-.handheld.game-mode .game-panel{display:grid;height:auto;min-height:0;overflow:hidden}
-.handheld.game-mode .game-board-wrap{min-height:0;height:100%}
-.handheld.game-mode .game-action{min-height:0}
-.handheld.game-mode .site{display:block;height:auto;max-height:none;min-height:0;overflow:hidden}
-.handheld.game-mode .cartridge-dock{display:none}
-.handheld.game-mode .game-info-panel{max-height:74px;overflow:hidden}
-
-
-/* ------------------------------------------------------------------
-   HANDHELD GAME LAYOUT
-   Exact mobile order: SCREEN -> VISION -> INFO -> CONTROL.
-   Only INFO scrolls internally.
-   ------------------------------------------------------------------ */
-.handheld.game-mode {
-  height: 100svh;
-  min-height: 0;
-  grid-template-rows: minmax(0, 1fr) auto;
-  overflow: hidden;
+/* ---------------------------------------------------------------
+   Handheld shell
+   The Game and Observer modes use the same physical screen tree.
+   --------------------------------------------------------------- */
+.handheld{
+  width:100%;
+  height:100dvh;
+  min-height:0;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  overflow:hidden;
+  background:var(--bg);
+}
+.console-top{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:5px 10px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+}
+.brand-mark{
+  width:24px;
+  height:24px;
+  flex:none;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  background:var(--text);
+  color:var(--bg);
+  font-weight:900;
+}
+.console-title{display:grid;line-height:1}
+.console-title strong{font-size:11px;letter-spacing:.16em}
+.console-title span{font-size:7px;letter-spacing:.2em;color:var(--muted)}
+.console-led{
+  width:7px;
+  height:7px;
+  margin-left:auto;
+  flex:none;
+  border-radius:50%;
+  background:var(--good);
 }
 
-.handheld.game-mode .console-top,
-.handheld.game-mode .cartridge-dock,
-.handheld.game-mode #site {
-  display: none !important;
+.screen-frame{
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  padding:4px 6px 6px;
+  display:grid;
+  overflow:hidden;
+  background:var(--surface-2);
+}
+.screen-bezel{
+  min-width:0;
+  min-height:0;
+  width:min(100%,900px);
+  height:100%;
+  margin:auto;
+  padding:5px;
+  display:grid;
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:#070a0d;
+}
+.screen-glow{
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  display:grid;
+  overflow:hidden;
+  border:2px solid #1e2933;
+  border-radius:10px;
+  background:#080b0e;
 }
 
-.handheld.game-mode .screen-frame {
-  min-height: 0;
-  height: 100%;
-  padding: 0;
-  overflow: hidden;
+/* ---------------------------------------------------------------
+   Observer mode
+   Info is the screen content. Its section dock is locked to bottom.
+   --------------------------------------------------------------- */
+.handheld:not(.game-mode) .screen-glow{
+  grid-template-rows:minmax(0,1fr) auto;
 }
-
-.handheld.game-mode .screen-bezel {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
+.handheld:not(.game-mode) #game-panel,
+.handheld:not(.game-mode) #game-vision{
+  display:none;
 }
-
-.handheld.game-mode .screen-glow {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  border: 0;
-  border-radius: 0;
-  overflow: hidden;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto minmax(86px, 24%);
-  background: #080b0e;
-}
-
-.handheld.game-mode .game-panel {
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  padding: 6px;
-  border-bottom: 1px solid var(--border);
-  box-shadow: none;
-}
-
-.handheld.game-mode .game-panel-head {
-  min-height: 18px;
-  margin: 0 2px 4px;
-}
-
-.handheld.game-mode .game-board-wrap {
-  min-width: 0;
-  min-height: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  padding: 2px;
-  border-radius: 6px;
-}
-
-.handheld.game-mode .game-board {
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
-  min-width: 0;
-  min-height: 0;
-}
-
-.handheld.game-mode .game-board canvas {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.handheld.game-mode .game-vision {
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  padding: 4px 6px;
-  border-bottom: 1px solid var(--border);
-  background: #050708;
-}
-
-.handheld.game-mode .game-vision .vision-box {
-  margin: 0;
-}
-
-.handheld.game-mode .game-info {
-  min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  background: #050708;
-  padding: 0 6px;
-}
-
-.handheld.game-mode .game-info-panel {
-  min-width: 0;
-  padding: 5px 2px 8px;
-}
-
-.handheld.game-mode .game-info-title {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  padding: 4px 0 5px;
-  background: #050708;
-}
-
-.handheld.game-mode .game-info-grid {
-  min-width: 0;
-}
-
-.handheld.game-mode .controller {
-  position: relative;
-  min-height: 76px;
-  flex-shrink: 0;
-  z-index: 20;
-}
-
-@media (max-width: 699px) {
-  .handheld.game-mode .screen-glow {
-    grid-template-rows: minmax(0, 1fr) auto minmax(86px, 27%);
-  }
-
-  .handheld.game-mode .game-panel {
-    padding: 5px;
-  }
-
-  .handheld.game-mode .game-vision {
-    padding: 3px 5px;
-  }
-}
-
-/* Vision is fixed; it never becomes a scroll container. Wrap its options instead. */
-.handheld.game-mode .game-vision .vision-options {
-  overflow: hidden;
-  flex-wrap: wrap;
-}
-@media (max-width: 699px) {
-  .handheld.game-mode .game-vision .vision-options button {
-    padding: 2px 3px;
-    font-size: 6px;
-  }
-}
-
-
-/* Final responsive game composition: maximize world, keep Vision fixed, make Info genuinely scrollable. */
-.handheld.game-mode .screen-glow{
-  grid-template-rows:minmax(0,1fr) auto auto;
-}
-.handheld.game-mode .game-panel{
+.handheld:not(.game-mode) .info-panel{
+  grid-row:1;
+  min-width:0;
   min-height:0;
   height:100%;
-}
-.handheld.game-mode .game-vision{
-  flex:none;
-}
-.handheld.game-mode .game-info{
-  height:clamp(96px,18svh,170px);
-  min-height:96px;
-  max-height:170px;
-  overflow-y:auto;
-  overflow-x:hidden;
-  overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:thin;
-}
-.handheld.game-mode .game-info-panel{
   display:grid;
-  gap:7px;
-  padding:6px 2px 10px;
-}
-.handheld.game-mode .info-section{
-  display:grid;
-  gap:4px;
-  padding-bottom:6px;
-  border-bottom:1px solid #ffffff1a;
-}
-.handheld.game-mode .info-section:last-child{border-bottom:0}
-.handheld.game-mode .info-section-title{
-  position:sticky;
-  top:0;
-  z-index:3;
-  padding:2px 0 3px;
-  background:#050708;
-  color:var(--accent);
-  font:900 7px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
-  letter-spacing:.12em;
-}
-.handheld.game-mode .info-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:4px;
-}
-.handheld.game-mode .info-grid>div{
-  min-width:0;
-  border:1px solid #ffffff18;
-  border-radius:6px;
-  padding:4px 5px;
-  background:#0b1015;
-}
-.handheld.game-mode .info-grid span{
-  display:block;
-  color:#7f8b96;
-  font-size:5px;
-  line-height:1;
-  letter-spacing:.06em;
-}
-.handheld.game-mode .info-grid b{
-  display:block;
-  margin-top:2px;
-  color:#edf2f6;
-  font-size:7px;
-  line-height:1.15;
-  white-space:nowrap;
+  grid-template-rows:minmax(0,1fr) var(--dock-height);
   overflow:hidden;
-  text-overflow:ellipsis;
+  background:var(--world);
 }
-@media(max-width:699px){
-  .handheld.game-mode .game-info{
-    height:clamp(100px,20svh,160px);
-    max-height:160px;
-  }
-}
-
-
-/* Info is a first-class Game screen region: larger viewport, all sections scroll inside it. */
-.handheld.game-mode .game-info{
-  height:clamp(170px,28svh,240px);
-  min-height:170px;
-  max-height:240px;
-  overflow-y:auto;
-  overflow-x:hidden;
-  overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:auto;
-  scrollbar-color:#53616d #080b0e;
-}
-.handheld.game-mode .game-info-panel{
-  display:grid;
-  gap:9px;
-  padding:7px 2px 12px;
-}
-.handheld.game-mode .info-section{
-  display:grid;
-  gap:5px;
-  padding-bottom:8px;
-  border-bottom:1px solid #ffffff20;
-}
-.handheld.game-mode .info-section-title{
-  position:sticky;
-  top:0;
-  z-index:5;
-  padding:3px 0 5px;
-  background:#050708;
-  color:var(--accent);
-  font:900 8px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
-  letter-spacing:.13em;
-}
-.handheld.game-mode .info-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:5px;
-}
-.handheld.game-mode .info-grid>div{
+.handheld:not(.game-mode) .info-panel #site{
   min-width:0;
-  border:1px solid #ffffff1a;
-  border-radius:7px;
-  padding:6px 7px;
-  background:#0b1015;
-}
-.handheld.game-mode .info-grid span{
-  display:block;
-  color:#7f8b96;
-  font-size:6px;
-  line-height:1;
-  letter-spacing:.06em;
-}
-.handheld.game-mode .info-grid b{
-  display:block;
-  margin-top:3px;
-  color:#edf2f6;
-  font-size:8px;
-  line-height:1.15;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-@media(max-width:699px){
-  .handheld.game-mode .game-info{
-    height:28svh;
-    min-height:170px;
-    max-height:240px;
-  }
-}
-
-
-/* ================================================================
-   ATLAS HANDHELD FINAL COMPOSITION
-   Height is the source of truth:
-   GAME WORLD  ~58% | VISION ~10% | OBSERVER/INFO ~32%
-   Physical controller is a separate fixed device panel.
-   ================================================================ */
-.handheld.game-mode{
-  height:100svh;
   min-height:0;
-  grid-template-rows:minmax(0,1fr) 112px;
-  overflow:hidden;
+  height:100%;
+  display:block;
+  overflow-x:hidden;
+  overflow-y:auto;
+}
+.handheld:not(.game-mode) .controller{
+  grid-row:2;
+}
+
+/* ---------------------------------------------------------------
+   Game mode
+   Authoritative order:
+   GAME -> VISION -> OBSERVER INFO -> SECTION DOCK -> CONTROLLER
+   --------------------------------------------------------------- */
+.handheld.game-mode{
+  grid-template-rows:minmax(0,1fr);
+}
+.handheld.game-mode .console-top{
+  display:none;
 }
 .handheld.game-mode .screen-frame{
-  min-height:0;
-  height:100%;
   padding:0;
-  overflow:hidden;
 }
 .handheld.game-mode .screen-bezel{
   width:100%;
   height:100%;
-  min-height:0;
   margin:0;
   padding:0;
   border:0;
   border-radius:0;
 }
 .handheld.game-mode .screen-glow{
-  width:100%;
-  height:100%;
-  min-height:0;
-  display:grid;
-  grid-template-rows:58% 10% 32%;
-  overflow:hidden;
+  grid-template-rows:
+    minmax(0,54%)
+    minmax(0,8%)
+    minmax(0,1fr)
+    var(--control-height);
   border:0;
   border-radius:0;
 }
-.handheld.game-mode .game-panel{
+.handheld.game-mode #game-panel{
+  grid-row:1;
+  min-width:0;
   min-height:0;
   height:100%;
-  overflow:hidden;
   display:grid;
-  grid-template-rows:auto minmax(0,1fr);
-  padding:4px 5px;
-  border:0;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  overflow:hidden;
+  padding:4px 5px 5px;
+  background:var(--world);
   border-bottom:1px solid var(--border);
-  box-shadow:none;
 }
-.handheld.game-mode .game-panel-head{
-  min-height:16px;
-  margin:0 2px 3px;
+.handheld.game-mode #game-vision{
+  grid-row:2;
+  min-width:0;
+  min-height:0;
+  height:100%;
+  display:block;
+  overflow:hidden;
+  padding:3px 5px;
+  background:var(--world);
+  border-bottom:1px solid var(--border);
 }
-.handheld.game-mode .game-board-wrap{
+.handheld.game-mode #info-panel{
+  grid-row:3;
+  min-width:0;
+  min-height:0;
+  height:100%;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) var(--dock-height);
+  overflow:hidden;
+  background:var(--world);
+}
+.handheld.game-mode #info-panel #site{
+  grid-row:1;
   min-width:0;
   min-height:0;
   width:100%;
   height:100%;
-  padding:0;
-  border:0;
-  border-radius:0;
-}
-.handheld.game-mode .game-board,
-.handheld.game-mode .game-board canvas{
-  width:100%!important;
-  height:100%!important;
-  max-width:none;
-  max-height:none;
-}
-.handheld.game-mode .game-vision{
-  min-width:0;
-  min-height:0;
-  height:100%;
-  overflow:hidden;
-  padding:3px 5px;
-  border-bottom:1px solid var(--border);
-  background:#050708;
-}
-.handheld.game-mode .vision-box{
-  margin:0;
-  padding:3px 5px;
-}
-.handheld.game-mode .vision-head{margin-bottom:2px}
-.handheld.game-mode .vision-options{
-  overflow:hidden;
-  flex-wrap:nowrap;
-}
-.handheld.game-mode .vision-options button{
-  padding:2px 4px;
-  font-size:6px;
-}
-.handheld.game-mode .vision-legend{
-  margin-top:2px;
-}
-.handheld.game-mode .info-panel{
-  min-width:0;
-  min-height:0;
-  height:100%;
-  display:grid;
-  grid-template-rows:minmax(0,1fr) auto;
-  overflow:hidden;
-  background:#050708;
-}
-.handheld.game-mode .info-panel .site{
-  min-width:0;
-  min-height:0;
-  height:100%;
-  overflow-y:auto;
+  display:block!important;
+  visibility:visible!important;
   overflow-x:hidden;
+  overflow-y:auto;
   overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
   scrollbar-width:auto;
   scrollbar-color:#53616d #080b0e;
   padding:8px 8px 14px;
+  color:#eef3f7;
 }
-.handheld.game-mode .info-panel .cartridge-dock{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  min-height:46px;
-  flex:none;
+.handheld.game-mode #info-panel .cartridge-dock{
+  grid-row:2;
+  min-width:0;
+  min-height:var(--dock-height);
+  width:100%;
+  height:var(--dock-height);
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  overflow:hidden;
   padding:2px 4px;
+  background:var(--surface);
   border-top:1px solid var(--border);
   border-bottom:0;
   z-index:10;
 }
-.handheld.game-mode .info-panel .tab{
+.handheld.game-mode #info-panel .tab{
+  min-width:0;
   min-height:40px;
+  height:40px;
 }
-.handheld.game-mode .info-panel .tab b{
+.handheld.game-mode #info-panel .tab b{
   font-size:8px;
 }
-.handheld.game-mode .controller{
-  height:112px;
-  min-height:112px;
-  padding:7px 12px;
+
+/* The controller belongs to the same screen tree and owns the last row. */
+.controller{
+  grid-column:1;
+  grid-row:auto;
+  width:100%;
+  min-width:0;
+  min-height:0;
+  height:var(--control-height);
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;
   gap:14px;
+  padding:6px 12px;
   overflow:hidden;
-}
-.handheld.game-mode .action-buttons button{
-  pointer-events:none;
-  opacity:.72;
-}
-.handheld.game-mode .console-center strong{font-size:15px}
-.handheld.game-mode .dpad{width:96px;height:68px}
-.handheld.game-mode .info-panel .site-inner{max-width:none}
-.handheld.game-mode .info-panel .hero{
-  margin:2px 0 9px;
-}
-.handheld.game-mode .info-panel h1{
-  font-size:22px;
-}
-.handheld.game-mode .info-panel .card-grid{
-  grid-template-columns:repeat(2,minmax(0,1fr));
-}
-@media(max-width:699px){
-  .handheld.game-mode{
-    grid-template-rows:minmax(0,1fr) 112px;
-  }
-  .handheld.game-mode .screen-glow{
-    grid-template-rows:58% 10% 32%;
-  }
-  .handheld.game-mode .game-panel{
-    padding:3px 4px;
-  }
-  .handheld.game-mode .game-panel-head strong{font-size:7px}
-  .handheld.game-mode .game-panel-head span{font-size:5px}
-  .handheld.game-mode .game-status{font-size:6px}
-  .handheld.game-mode .game-vision{
-    padding:2px 4px;
-  }
-  .handheld.game-mode .vision-head b{font-size:7px}
-  .handheld.game-mode .vision-head span{font-size:6px}
-  .handheld.game-mode .vision-current{font-size:6px}
-  .handheld.game-mode .info-panel .site{
-    padding:7px 7px 12px;
-  }
-  .handheld.game-mode .info-panel .hero{
-    margin:0 0 8px;
-  }
-  .handheld.game-mode .info-panel h1{
-    font-size:20px;
-  }
-  .handheld.game-mode .info-panel .cartridge-dock{
-    min-height:44px;
-  }
-  .handheld.game-mode .info-panel .tab{
-    min-height:39px;
-  }
-  .handheld.game-mode .info-panel .tab b{font-size:8px}
-}
-
-/* Observer mode uses the same Info surface rather than creating a second Info. */
-.handheld:not(.game-mode) .info-panel{
-  min-height:0;
-}
-.handheld:not(.game-mode) .info-panel .site{
-  min-height:0;
-  overflow:auto;
-}
-
-
-/* Final height-only proportions: large World, lean Vision, generous unified Info/Observer. */
-.handheld.game-mode .screen-glow{grid-template-rows:56% 8% 36%}
-@media(max-width:699px){.handheld.game-mode .screen-glow{grid-template-rows:56% 8% 36%}}
-
-
-/* Critical fix: the original Observer surface lives inside the unified Info panel.
-   A legacy Game-mode rule hid .site globally; override that only inside Info. */
-.handheld.game-mode .info-panel .site{
-  display:block !important;
-  visibility:visible;
-  min-height:0;
-  height:100%;
-  overflow-y:auto;
-  overflow-x:hidden;
-}
-.handheld.game-mode .info-panel .cartridge-dock{
-  display:grid !important;
-  visibility:visible;
-}
-
-
-/* =================================================================
-   UNIFIED INFO / OBSERVER PANEL
-   The panel owns its content viewport and its section dock.
-   Nothing inside it can resize, overlay, or replace the World/Vision
-   panels above it.
-   ================================================================= */
-.info-panel{
-  min-width:0;
-  min-height:0;
-  height:100%;
-  overflow:hidden;
-  display:grid;
-  grid-template-rows:minmax(0,1fr) auto;
-  contain:layout paint;
-  background:#050708;
-}
-.info-panel>.site{
-  min-width:0;
-  min-height:0;
-  height:100%;
-  overflow-x:hidden;
-  overflow-y:auto;
-  overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:auto;
-  scrollbar-color:#53616d #080b0e;
-  padding:8px 8px 14px;
-}
-.info-panel>.site .site-inner{
-  min-width:0;
-  max-width:none;
-}
-.info-panel>.cartridge-dock{
-  display:grid !important;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  min-width:0;
-  min-height:48px;
-  height:48px;
-  flex:none;
-  overflow:hidden;
-  padding:2px 4px;
-  border-top:1px solid var(--border);
   background:var(--surface);
-  z-index:5;
-}
-.info-panel>.cartridge-dock .tab{
-  min-width:0;
-  min-height:42px;
-  height:42px;
-}
-.info-panel>.cartridge-dock .tab span,
-.info-panel>.cartridge-dock .tab b{
-  pointer-events:none;
-}
-.info-panel>.cartridge-dock .tab b{font-size:8px}
-
-/* Game composition is always three height-owned rows; Info never leaks. */
-.handheld.game-mode .screen-glow{
-  grid-template-rows:minmax(0,56%) minmax(0,8%) minmax(0,36%);
-}
-.handheld.game-mode .game-panel,
-.handheld.game-mode .game-vision,
-.handheld.game-mode .info-panel{
-  min-height:0;
-  min-width:0;
-  overflow:hidden;
-}
-.handheld.game-mode .info-panel{
-  grid-row:3;
-}
-.handheld.game-mode .game-vision{
-  grid-row:2;
-}
-.handheld.game-mode .game-panel{
-  grid-row:1;
-}
-
-/* The original Observer content is the Info content. It scrolls;
-   only the four section buttons stay locked at the bottom. */
-.handheld.game-mode .info-panel>.site{
-  overflow-y:auto;
-  overflow-x:hidden;
-}
-.handheld.game-mode .info-panel>.cartridge-dock{
-  position:relative;
-  bottom:auto;
-  left:auto;
-  right:auto;
-}
-@media(max-width:699px){
-  .handheld.game-mode .info-panel>.cartridge-dock{
-    min-height:46px;
-    height:46px;
-  }
-  .handheld.game-mode .info-panel>.cartridge-dock .tab{
-    min-height:40px;
-    height:40px;
-  }
-}
-
-
-/* FINAL OVERRIDE — unified Info/Observer content must be visible in Game mode.
-   The older #site hide rule has higher specificity and used !important.
-   Use the ID-aware selector here so the content viewport cannot be hidden. */
-.handheld.game-mode .info-panel #site{
-  display:block !important;
-  visibility:visible !important;
-  min-width:0;
-  min-height:0;
-  width:100%;
-  height:auto;
-  overflow-x:hidden;
-  overflow-y:auto;
-  overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:auto;
-  scrollbar-color:#53616d #080b0e;
-}
-.handheld.game-mode .info-panel>.site{
-  grid-row:1;
-}
-.handheld.game-mode .info-panel>.cartridge-dock{
-  grid-row:2;
-  display:grid !important;
-  visibility:visible !important;
-  position:relative !important;
-  inset:auto !important;
-  min-width:0;
-  min-height:46px;
-  height:46px;
-  overflow:hidden;
-}
-.handheld.game-mode .info-panel{
-  grid-template-rows:minmax(0,1fr) 46px;
-}
-
-
-/* UNIFIED HANDHELD LAYOUT
-   The Game, Vision, Observer Info, section dock, and physical controls
-   share one vertical layout tree. The controller is not a separate layout island. */
-.handheld{
-  height:100svh;
-  min-height:0;
-  display:grid;
-  grid-template-rows:auto minmax(0,1fr);
-}
-.screen-frame{
-  min-height:0;
-  overflow:hidden;
-}
-.screen-bezel{
-  height:100%;
-  min-height:0;
-  display:grid;
-}
-.screen-glow{
-  height:100%;
-  min-height:0;
-  min-width:0;
-  display:grid;
-  grid-template-rows:minmax(0,1fr) auto;
-  overflow:hidden;
-}
-
-/* Observer mode: the selected section fills the information viewport,
-   while the section buttons remain locked at its bottom. */
-.handheld:not(.game-mode) .screen-glow{
-  grid-template-rows:minmax(0,1fr) auto;
-}
-.handheld:not(.game-mode) .info-panel{
-  min-height:0;
-  min-width:0;
-  height:100%;
-  display:grid;
-  grid-template-rows:minmax(0,1fr) auto;
-  overflow:hidden;
-}
-.handheld:not(.game-mode) .info-panel #site{
-  min-height:0;
-  overflow:auto;
-}
-.handheld:not(.game-mode) .info-panel .cartridge-dock{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  min-height:46px;
-  flex:none;
-}
-
-/* Game mode: one unified stack.
-   Game → Vision → Observer content → locked section buttons → controls. */
-.handheld.game-mode .screen-glow{
-  grid-template-rows:54% 8% minmax(0,1fr) 104px;
-  overflow:hidden;
-}
-.handheld.game-mode .info-panel{
-  min-width:0;
-  min-height:0;
-  height:100%;
-  display:grid;
-  grid-template-rows:minmax(0,1fr) 46px;
-  overflow:hidden;
-}
-.handheld.game-mode .info-panel #site{
-  display:block !important;
-  visibility:visible !important;
-  min-width:0;
-  min-height:0;
-  width:100%;
-  height:100%;
-  overflow-y:auto;
-  overflow-x:hidden;
-  overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch;
-  padding:8px 8px 14px;
-}
-.handheld.game-mode .info-panel .cartridge-dock{
-  display:grid !important;
-  grid-template-columns:repeat(4,1fr);
-  min-height:46px;
-  height:46px;
-  padding:2px 4px;
   border-top:1px solid var(--border);
-  border-bottom:0;
-  z-index:20;
+  z-index:30;
 }
 .handheld.game-mode .controller{
   grid-row:4;
-  min-height:104px;
-  height:104px;
-  overflow:hidden;
-  position:relative;
-  z-index:30;
-  border-top:1px solid var(--border);
+  height:var(--control-height);
+  min-height:var(--control-height);
 }
-.handheld.game-mode .action-buttons button{
-  pointer-events:auto;
-  opacity:1;
+.dpad{
+  width:96px;
+  height:68px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(3,1fr);
+}
+.dpad button,.dpad span{
+  min-width:0;
+  min-height:0;
+  border:1px solid var(--border);
+  background:var(--surface-2);
+}
+.dpad-up{grid-column:2}
+.dpad-left{grid-column:1;grid-row:2}
+.dpad span{grid-column:2;grid-row:2}
+.dpad-right{grid-column:3;grid-row:2}
+.dpad-down{grid-column:2;grid-row:3}
+.console-center{
+  min-width:0;
+  text-align:center;
+}
+.system-buttons{
+  display:flex;
+  justify-content:center;
+  gap:5px;
+}
+.system-buttons button{
+  height:24px;
+  padding:3px 6px;
+  border:1px solid var(--border);
+  border-radius:6px;
+  background:var(--surface-2);
+  font-size:8px;
+}
+.console-center .small{
+  display:block;
+  margin-top:2px;
+  font-size:8px;
+}
+.console-center strong{
+  display:block;
+  margin-top:2px;
+  font-size:15px;
+  line-height:1;
+}
+.action-buttons{
+  min-width:0;
+  display:flex;
+  justify-self:end;
+  gap:8px;
+}
+.action-buttons button{
+  width:46px;
+  height:46px;
+  flex:none;
+  border:1px solid var(--border);
+  border-radius:50%;
+  background:var(--surface-2);
+  font-size:20px;
+  font-weight:850;
+}
+.action-buttons button:active,
+.dpad button:active,
+.system-buttons button:active,
+.tab:active{
+  transform:scale(.97);
 }
 
+/* ---------------------------------------------------------------
+   Game surface
+   --------------------------------------------------------------- */
+.game-panel-head{
+  min-width:0;
+  min-height:16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin:0 2px 4px;
+}
+.game-panel-head>div{min-width:0}
+.game-panel-head strong{
+  display:block;
+  font-size:8px;
+  letter-spacing:.12em;
+}
+.game-panel-head span{
+  display:block;
+  color:var(--muted);
+  font-size:5px;
+  letter-spacing:.1em;
+  white-space:nowrap;
+}
+.game-status{
+  min-width:0;
+  max-width:48%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:6px;
+  color:#d8df68;
+}
+.game-board-wrap{
+  position:relative;
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  padding:0;
+  display:grid;
+  place-items:center;
+  background:#020304;
+}
+.game-board{
+  position:relative;
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#10161a;
+  touch-action:none;
+}
+.game-board canvas{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  image-rendering:pixelated;
+}
+.game-panel-stats{
+  position:absolute;
+  top:5px;
+  left:5px;
+  z-index:5;
+  display:block;
+  pointer-events:none;
+}
+.xyz-hud{
+  display:flex;
+  gap:5px;
+  width:max-content;
+  max-width:calc(100vw - 20px);
+  padding:3px 6px;
+  border:1px solid #ffffff2b;
+  border-radius:6px;
+  background:#05070bcc;
+  color:#fff;
+  font:700 9px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  backdrop-filter:blur(3px);
+  text-shadow:0 1px 2px #000;
+}
+.xyz-hud span{white-space:nowrap}
+.inspect-hud{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  margin-top:4px;
+  padding:4px 6px;
+  border:1px solid #ffffff2b;
+  border-radius:6px;
+  background:#05070bcc;
+  color:#dfe6ec;
+  font:700 8px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  backdrop-filter:blur(4px);
+}
+.inspect-hud b{width:100%;color:#fff}
+.inspect-hud span{color:#aeb9c4}
+.game-action{
+  min-width:0;
+  min-height:0;
+  margin:4px 0 0;
+  padding:4px 2px 1px;
+  border-top:1px solid #ffffff1c;
+  color:#d0d8df;
+  font-size:7px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* ---------------------------------------------------------------
+   Vision
+   --------------------------------------------------------------- */
+.vision-box{
+  margin:0;
+  padding:4px 6px;
+  border:1px solid #ffffff24;
+  border-radius:7px;
+  background:#05070bcc;
+  backdrop-filter:blur(4px);
+}
+.vision-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:3px;
+}
+.vision-head>div:first-child{
+  display:grid;
+  gap:1px;
+}
+.vision-head b{
+  color:#fff;
+  font:800 8px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.08em;
+}
+.vision-head span{
+  color:#8996a3;
+  font-size:7px;
+}
+.vision-current{
+  color:#d8df68;
+  font:800 7px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  text-transform:uppercase;
+}
+.vision-options{
+  display:flex;
+  flex-wrap:nowrap;
+  gap:3px;
+  overflow:hidden;
+}
+.vision-options button{
+  flex:0 0 auto;
+  min-height:0;
+  padding:2px 4px;
+  border:1px solid #ffffff1d;
+  border-radius:5px;
+  background:#0c1014;
+  color:#9ca8b3;
+  font-size:6px;
+  cursor:pointer;
+}
+.vision-options button.active{
+  border-color:#d8df68;
+  color:#fff;
+  background:#20261a;
+  box-shadow:0 0 0 1px #d8df6833 inset;
+}
+.vision-legend{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:3px 7px;
+  align-items:center;
+  margin-top:3px;
+}
+.vision-legend-title{
+  display:flex;
+  gap:4px;
+  align-items:baseline;
+  white-space:nowrap;
+}
+.vision-legend-title b{font-size:7px;color:#fff}
+.vision-legend-title span{font-size:6px;color:#8996a3}
+.vision-ramp{
+  grid-column:2;
+  height:5px;
+  border-radius:4px;
+  border:1px solid #ffffff18;
+}
+.vision-ends{
+  grid-column:2;
+  display:flex;
+  justify-content:space-between;
+  margin-top:-2px;
+  color:#77838e;
+  font:600 5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.vision-swatches{
+  grid-column:2;
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.vision-swatches span{
+  display:flex;
+  align-items:center;
+  gap:3px;
+  color:#8996a3;
+  font-size:6px;
+}
+.vision-swatches i{
+  width:7px;
+  height:7px;
+  border-radius:2px;
+  border:1px solid #ffffff2b;
+}
+
+/* ---------------------------------------------------------------
+   Observer content
+   --------------------------------------------------------------- */
+.site{
+  min-width:0;
+  min-height:0;
+  overflow:auto;
+  padding:10px 10px 16px;
+  overscroll-behavior:contain;
+}
+.site-inner{
+  min-width:0;
+  max-width:1100px;
+  margin:0 auto;
+}
+.hero{margin:2px 0 10px}
+.eyebrow{
+  color:var(--accent);
+  text-transform:uppercase;
+  letter-spacing:.09em;
+  font-size:9px;
+  font-weight:800;
+}
+h1{
+  margin:3px 0;
+  color:#eef3f7;
+  font-size:22px;
+  line-height:1.1;
+}
+h2{
+  margin:0;
+  color:#eef3f7;
+  font-size:15px;
+}
+.muted{color:#8996a3}
+.small{font-size:10px}
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+}
+.card{
+  min-width:0;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface);
+}
+.label{
+  color:#8996a3;
+  font-size:8px;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+  font-weight:800;
+}
+.value{
+  margin-top:3px;
+  color:#eef3f7;
+  font-size:12px;
+  font-weight:750;
+  overflow-wrap:anywhere;
+}
+.value.unknown{color:#8996a3}
+.status{
+  display:inline-flex;
+  padding:4px 7px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  font-size:9px;
+  font-weight:850;
+}
+.status.pass{color:var(--good)}
+.section{margin-top:10px}
+.section-head{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:6px;
+}
+.branch-list{display:grid;gap:5px}
+.branch{
+  display:grid;
+  grid-template-columns:28px 1fr auto;
+  gap:7px;
+  align-items:center;
+  padding:7px 8px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface);
+}
+.branch-layer,.branch-status{
+  color:#8996a3;
+  font-size:9px;
+}
+.branch-name{
+  min-width:0;
+  font-size:10px;
+  font-weight:650;
+}
+.controls{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-bottom:8px;
+}
+.field{display:grid;gap:4px}
+.field label{
+  color:#8996a3;
+  font-size:8px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+input{
+  width:100%;
+  height:34px;
+  padding:0 8px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface);
+  color:#eef3f7;
+}
+.device-badge{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  padding:6px 8px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--surface-2);
+  font-size:8px;
+}
+.metric-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  align-items:center;
+  padding:7px 0;
+  border-bottom:1px solid var(--border);
+}
+.metric-name{
+  min-width:0;
+  font-size:10px;
+  font-weight:650;
+}
+.metric-value{
+  max-width:58%;
+  color:#eef3f7;
+  font-size:10px;
+  text-align:right;
+  overflow-wrap:anywhere;
+}
+.test-list{display:grid;gap:4px}
+.test{
+  display:grid;
+  grid-template-columns:16px 1fr;
+  gap:7px;
+  padding:6px 0;
+  border-bottom:1px solid var(--border);
+}
+.test-note{
+  margin-top:2px;
+  color:#8996a3;
+  font-size:9px;
+}
+.test-icon{
+  color:var(--good);
+  font-weight:900;
+}
+
+/* ---------------------------------------------------------------
+   Section dock
+   --------------------------------------------------------------- */
+.cartridge-dock{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  min-width:0;
+  min-height:var(--dock-height);
+  height:var(--dock-height);
+  overflow:hidden;
+  padding:2px 4px;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  z-index:20;
+}
+.tab{
+  min-width:0;
+  min-height:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  gap:1px;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:#8996a3;
+  cursor:pointer;
+}
+.tab span,.tab b{pointer-events:none}
+.tab span{font-size:12px;line-height:1}
+.tab b{font-size:8px}
+.tab.active{
+  color:#10151b;
+  background:#eef2f5;
+}
+
+/* ---------------------------------------------------------------
+   World map
+   --------------------------------------------------------------- */
+.world-map-card{display:grid;gap:7px}
+.map-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.map-toolbar-group{
+  display:flex;
+  gap:4px;
+  align-items:center;
+}
+.map-tool{
+  padding:5px 7px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:var(--surface-2);
+  font-size:9px;
+  font-weight:800;
+}
+.map-tool.active{
+  border-color:#d8df68;
+  box-shadow:0 0 0 1px #d8df6833 inset;
+}
+.world-map-viewport{
+  position:relative;
+  width:100%;
+  height:min(48svh,520px);
+  min-height:250px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#050708;
+  touch-action:none;
+  user-select:none;
+  cursor:grab;
+}
+.world-map-viewport.dragging{cursor:grabbing}
+.world-map-grid{
+  position:absolute;
+  inset:8px;
+  display:grid;
+  grid-template-columns:repeat(25,minmax(0,1fr));
+  grid-template-rows:repeat(17,minmax(0,1fr));
+  gap:1px;
+  will-change:transform;
+}
+.world-map-cell{
+  position:relative;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  padding:0;
+  border:0;
+  border-radius:1px;
+}
+.map-center-cross{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:12px;
+  height:12px;
+  margin:-6px;
+  border:1px solid #ffffff66;
+  border-radius:50%;
+  z-index:7;
+  pointer-events:none;
+}
+.map-you{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:16px;
+  height:16px;
+  margin:-8px;
+  display:grid;
+  place-items:center;
+  z-index:8;
+  color:#fff;
+  font-size:13px;
+  text-shadow:0 1px 4px #000;
+  pointer-events:none;
+}
+.map-hud{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:6px;
+  align-items:center;
+  padding:7px 8px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface-2);
+}
+.map-hud strong{
+  font:800 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.map-hud span{
+  display:block;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:7px;
+}
+.map-target-card{
+  display:grid;
+  gap:5px;
+  padding:7px 8px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface);
+}
+.target-coords{
+  font:800 10px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.map-target-card .target-meta{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  color:var(--muted);
+  font-size:7px;
+}
+.map-help{color:var(--muted);font-size:7px}
+.map-legend{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  color:var(--muted);
+  font-size:7px;
+}
+.map-legend i{
+  display:inline-block;
+  width:8px;
+  height:8px;
+  margin-right:2px;
+  border-radius:2px;
+  vertical-align:-1px;
+}
+
+/* Map modal */
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:grid;
+  place-items:center;
+  padding:10px;
+  background:#0009;
+  backdrop-filter:blur(4px);
+}
+.modal-backdrop[hidden]{display:none!important}
+.teleport-dialog{
+  width:min(92vw,380px);
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--surface);
+  box-shadow:0 20px 60px #000b;
+}
+.modal-kicker{
+  color:var(--accent);
+  font-size:8px;
+  font-weight:850;
+  letter-spacing:.1em;
+}
+.teleport-dialog h2{margin:4px 0 10px}
+.teleport-details{display:grid}
+.teleport-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  padding:7px 0;
+  border-bottom:1px solid var(--border);
+}
+.teleport-row span{color:var(--muted);font-size:8px}
+.teleport-row strong{font-size:9px;text-align:right}
+.modal-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:12px;
+}
+.modal-button{
+  height:36px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  font-weight:850;
+}
+.modal-button.secondary{background:var(--surface-2)}
+.modal-button.primary{
+  background:#d8df68;
+  color:#111;
+}
+
+/* Loading */
+.world-loading{
+  width:min(92%,330px);
+  aspect-ratio:1.7;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  color:#c9d2dc;
+  text-align:center;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.world-loading .loader-icon{
+  font-size:28px;
+  animation:atlas-pulse 1s steps(2,end) infinite;
+}
+.world-loading strong{
+  font-size:11px;
+  letter-spacing:.12em;
+}
+.world-loading span,
+.world-loading small{
+  color:#8996a3;
+  font-size:8px;
+}
+.world-loading span{min-height:12px}
+.progress{
+  width:100%;
+  height:7px;
+  overflow:hidden;
+  border:1px solid #33404c;
+  border-radius:5px;
+  background:#0a0d10;
+}
+.progress i{
+  display:block;
+  height:100%;
+  background:#d8df68;
+  box-shadow:0 0 8px #d8df6866;
+  transition:width .18s linear;
+}
+@keyframes atlas-pulse{
+  50%{opacity:.35;transform:scale(.85)}
+}
+
+/* Simple DOM fallbacks / legacy detail classes retained for compatibility. */
+.game-tile{
+  position:relative;
+  overflow:hidden;
+}
+.terrain-glyph{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  color:#ffffffb8;
+  font-size:clamp(8px,2.1vw,16px);
+  font-weight:900;
+  line-height:1;
+  text-shadow:0 1px 3px #0009;
+  pointer-events:none;
+}
+.terrain-glyph.water{color:#dff8ffcc}
+.map-glyph{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  color:#ffffffcc;
+  font-size:clamp(8px,1.7vw,15px);
+  font-weight:900;
+  line-height:1;
+  text-shadow:0 1px 3px #0008;
+  pointer-events:none;
+}
+.td{display:none}
+
+/* Desktop */
+@media(min-width:700px){
+  .handheld{
+    max-width:980px;
+    margin:auto;
+    border-inline:1px solid var(--border);
+  }
+  .screen-frame{padding:12px 18px 14px}
+  .screen-bezel{
+    padding:11px;
+    border-radius:26px;
+  }
+  .site{padding:18px 16px 24px}
+  .card-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+
+/* Mobile tuning */
 @media(max-width:699px){
   .handheld.game-mode .screen-glow{
-    grid-template-rows:54% 8% minmax(0,1fr) 104px;
+    grid-template-rows:minmax(0,54%) minmax(0,8%) minmax(0,1fr) var(--control-height);
   }
-  .handheld.game-mode .controller{
-    min-height:104px;
-    height:104px;
-    padding:6px 10px;
-  }
+  .handheld.game-mode #game-panel{padding:3px 4px 4px}
+  .handheld.game-mode #game-vision{padding:2px 4px}
+  .handheld.game-mode #info-panel #site{padding:7px 7px 12px}
+  .handheld.game-mode #info-panel .cartridge-dock{height:46px;min-height:46px}
+  .handheld.game-mode .controller{height:104px;min-height:104px;padding:6px 10px}
+  .dpad{width:96px;height:68px}
+  .action-buttons button{width:46px;height:46px}
+  .vision-head b{font-size:7px}
+  .vision-head span{font-size:6px}
+  .vision-current{font-size:6px}
+  .vision-legend-title span{display:none}
+  .world-map-viewport{height:48svh;min-height:250px}
 }
 
-/* Keep the controls physically below the three screen regions in both modes. */
-.controller{
-  grid-column:1;
-  width:100%;
+/* Small phones: preserve the four-region structure, only compress controls. */
+@media(max-width:380px){
+  :root{--control-height:96px;--dock-height:44px}
+  .handheld.game-mode .screen-glow{
+    grid-template-rows:minmax(0,54%) minmax(0,8%) minmax(0,1fr) var(--control-height);
+  }
+  .handheld.game-mode #info-panel{grid-template-rows:minmax(0,1fr) var(--dock-height)}
+  .handheld.game-mode #info-panel .cartridge-dock{
+    height:var(--dock-height);
+    min-height:var(--dock-height);
+  }
+  .handheld.game-mode .controller{
+    height:var(--control-height);
+    min-height:var(--control-height);
+    padding-inline:7px;
+    gap:8px;
+  }
+  .action-buttons{gap:6px}
+  .action-buttons button{width:42px;height:42px;font-size:18px}
+  .dpad{width:88px;height:62px}
+  .console-center strong{font-size:13px}
 }
