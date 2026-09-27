@@ -95,3 +95,12 @@ Movement has separate authoritative and visual layers: the server accepts the on
 ## Chunk borders
 
 Every 16×16 chunk boundary is drawn on the game grid. This is a debug visualization of the same chunk coordinates used by the streaming cache.
+
+
+### Current runtime/performance work
+- Observer panels refresh from a lightweight realtime snapshot every 500 ms; the simulation clock remains server-authoritative at 20 TPS.
+- Movement is serialized client-side so concurrent input cannot apply stale responses out of order.
+- Root climate, terrain transforms, and tile self-tests use bounded LRU-style caches.
+- Neighboring 16×16 chunks are prefetched after a chunk transition so crossing a boundary does not need to present a generation screen.
+- Layer 6 now has a runtime data-first ECS core; spawning/species simulation is still separate and remains unimplemented.
+- Generated tiles now expose Layer 4 `landform`, `waterform`, and `surface` fields.
