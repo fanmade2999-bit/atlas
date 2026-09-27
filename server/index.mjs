@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeGameSnapshot, makeObserverSnapshot, makeRealtimeSnapshot } from './observer/snapshot.mjs';
-import { movePlayer, inspectPlayer, teleportPlayer } from './systems-state.mjs';
+import { movePlayer, inspectPlayer, teleportPlayer, transformTile, getTileState, recoverTile } from './systems-state.mjs';
 import { normalizeCoordinates, sampleClimate, classifyTerrain } from './root/climate.mjs';
 import { prefetchChunks } from './root/tile.mjs';
 
@@ -54,6 +54,37 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify(result));
       if(result.result?.ok){const from=result.result.from,to=result.result.to;const oldChunkX=Math.floor(from.x/16),oldChunkY=Math.floor(from.y/16),newChunkX=Math.floor(to.x/16),newChunkY=Math.floor(to.y/16);if(oldChunkX!==newChunkX||oldChunkY!==newChunkY)setImmediate(()=>prefetchChunks(result.player.seed,newChunkX,newChunkY,1));}
       return;
+    }
+    if (url.pathname === '/api/game/transform') {
+      const result = transformTile({
+        playerId: url.searchParams.get('playerId') || 'local-player',
+        seed: url.searchParams.get('seed') || 'atlas-root',
+        x: Number(url.searchParams.get('x') || 0),
+        y: Number(url.searchParams.get('y') || 10001500),
+        moveType: url.searchParams.get('moveType') || '',
+        transformId: url.searchParams.get('transformId') || null
+      });
+      res.writeHead(result.result.ok ? 200 : 400, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify(result)); return;
+    }
+    if (url.pathname === '/api/game/tile') {
+      const result = getTileState({
+        seed: url.searchParams.get('seed') || 'atlas-root',
+        x: Number(url.searchParams.get('x') || 0),
+        y: Number(url.searchParams.get('y') || 10001500)
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify(result)); return;
+    }
+    if (url.pathname === '/api/game/recover') {
+      const result = recoverTile(
+        url.searchParams.get('seed') || 'atlas-root',
+        Number(url.searchParams.get('x') || 0),
+        Number(url.searchParams.get('y') || 10001500),
+        Date.now()
+      );
+      res.writeHead(result.ok ? 200 : 400, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify(result)); return;
     }
     if (url.pathname === '/api/game/teleport') {
       const result = teleportPlayer({playerId:url.searchParams.get('playerId')||'local-player',seed:url.searchParams.get('seed')||'atlas-root',x:Number(url.searchParams.get('x')||0),y:Number(url.searchParams.get('y')||10001500)});
