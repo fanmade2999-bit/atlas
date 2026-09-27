@@ -17,7 +17,7 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
   const slots = makePlaceholderSlots({
     'world.seed': seed, 'world.tick': player.tick, 'world.time': '???',
     'player.position': `${player.position.x}, ${player.position.y}, z???`,
-    'climate.elevation': climate.elevation, 'climate.temperature': climate.temperature, 'climate.moisture': climate.moisture,
+    'climate.elevation': climate.elevation, 'climate.temperature': climate.temperature, 'climate.moisture': climate.moisture, 'terrain.biome': climate.biome,
     'system.socket': 'not plugged', 'system.database': 'not plugged', 'system.tickRate': '???',
     'interaction.lastAction': player.lastAction ? player.lastAction.type : '???',
     'location.continent': location.continent.name,
