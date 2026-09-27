@@ -73,3 +73,12 @@ Game input is app-scoped: while Game is active, D-pad/arrow input moves the play
 ## Screen architecture
 
 Game and Observer are now two app states inside one physical handheld screen. They are not separate screen documents: the shell stays mounted while `state.mode` switches the screen between `GAME` and `OBSERVER`. `/game.html` is only a compatibility entry that redirects into the same shell with `?app=game`.
+
+
+## Current implementation notes
+
+- The physical screen is fixed; the Observer information region scrolls independently; the physical gamepad is fixed.
+- D-pad/arrow movement is gameplay-only and never changes Observer sections. Observer sections are changed by the on-screen tabs/touch UI.
+- XYZ/tick is a compact HUD overlay on the world viewport.
+- World tiles are rendered as square cells.
+- Layer 3 Naming Hierarchy is now **PARTIAL**: deterministic physical tier naming is implemented and exposed through Observer (`Continent → Territory → Region → Tract → Area → Chunk → Tile`), while organic/directional split resolution remains to be completed because it depends on broader terrain variation data.
