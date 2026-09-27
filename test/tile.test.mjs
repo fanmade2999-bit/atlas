@@ -103,3 +103,32 @@ test('Layer 4 transformed chunk tiles remain addressable by coordinate', () => {
     assert.equal(applied.ok, false);
   }
 });
+
+
+test('Layer 4 invalidates a cached chunk after a terrain transform', () => {
+  const seed = 'l4-cache-invalidation';
+  const x = 33;
+  const y = 34;
+  const baselineChunk = getChunk(seed, 2, 2);
+  const baseline = getTile(seed, x, y);
+  const applied = applyTileTransform({
+    seed,
+    x,
+    y,
+    moveType: 'fire',
+    recovery: { type: 'timer', durationMs: 1000 }
+  });
+
+  if (baseline.surface === 'grass') {
+    assert.equal(applied.ok, true);
+    const refreshed = getChunk(seed, 2, 2);
+    const tile = refreshed.tiles.find(item => item.x === x && item.y === y);
+    assert.equal(tile?.surface, 'scorched-dirt');
+    recoverTileTransform(seed, x, y, { tile, now: Date.now() + 1001 });
+    const restored = getChunk(seed, 2, 2).tiles.find(item => item.x === x && item.y === y);
+    assert.equal(restored?.surface, 'grass');
+  } else {
+    assert.equal(applied.ok, false);
+    assert.deepEqual(getChunk(seed, 2, 2), baselineChunk);
+  }
+});
