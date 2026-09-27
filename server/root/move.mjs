@@ -4,7 +4,7 @@
  * Movement is intentionally small and data-first: one input produces one tile
  * transition. Coordinate normalization remains owned by Root Climate.
  */
-import { normalizeCoordinates, sampleClimate, WORLD_HEIGHT, WORLD_WIDTH } from './climate.mjs';
+import { normalizeCoordinates, sampleClimate, classifyTerrain, WORLD_HEIGHT, WORLD_WIDTH } from './climate.mjs';
 
 export const MOVE_ACTIONS = Object.freeze({
   up: [0, -1],
@@ -26,5 +26,5 @@ export function movePosition(x, y, direction) {
 export function inspectPosition(x, y, seed = 'atlas-root') {
   const position = normalizeCoordinates(x, y);
   const climate = sampleClimate(seed, position.x, position.y);
-  return { position, climate, world: { width: WORLD_WIDTH, height: WORLD_HEIGHT, xWraps: true, yWraps: false } };
+  const terrain = classifyTerrain(seed, position.x, position.y);\n  return { position, climate, terrain, world: { width: WORLD_WIDTH, height: WORLD_HEIGHT, xWraps: true, yWraps: false } };
 }
