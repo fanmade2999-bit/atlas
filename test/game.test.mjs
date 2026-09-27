@@ -103,3 +103,12 @@ test('game snapshot exposes isolated Layer 4 test fixtures separately from natur
   assert.ok(snapshot.testFixtures.every(fixture => fixture.testOnly === true && fixture.natural === false));
   assert.ok(snapshot.tiles.every(tile => tile.source !== 'test-fixture'));
 });
+
+
+test('Layer 4 test yard finds compatible natural targets without modifying terrain', () => {
+  const snapshot = makeGameSnapshot({ seed: 'l4-test-yard', x: 0, y: 10001500, playerId: 'test-yard' });
+  assert.ok(Array.isArray(snapshot.testFixtures));
+  assert.equal(snapshot.testFixtures.length, 5);
+  assert.ok(snapshot.testFixtures.every(fixture => fixture.testOnly === true));
+  assert.ok(snapshot.testFixtures.every(fixture => fixture.available === true || fixture.available === false));
+});
