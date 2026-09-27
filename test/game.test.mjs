@@ -9,7 +9,7 @@ test('game viewport reads deterministic root tiles', () => {
   assert.deepEqual(a.tiles, b.tiles);
   assert.deepEqual(a.center, b.center);
   assert.deepEqual(a.stream, b.stream);
-  assert.equal(a.tiles.length, 99);
+  assert.equal(a.tiles.length, 225);
   assert.equal(a.center.x, 10);
   assert.equal(a.center.y, 20);
 });
