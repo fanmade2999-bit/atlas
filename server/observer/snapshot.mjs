@@ -4,6 +4,7 @@ import { CHUNK_SIZE, getCachedChunk, getTile, rootTileSelfTest, worldCacheStats 
 import { getPlayerState } from '../systems-state.mjs';
 import { getLocationNames, namingSelfTest, namingSignature } from '../root/naming.mjs';
 import { ecsSelfTest, ecsStats } from '../root/ecs.mjs';
+import { terrainTransformState } from '../root/tile.mjs';
 
 export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WORLD_HEIGHT / 2), playerId = 'local-player' } = {}) {
   const player = getPlayerState({ playerId, seed, x, y });
@@ -19,11 +20,12 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
   const chunk = getCachedChunk(seed, chunkX, chunkY).chunk;
   const location = getLocationNames(seed, climate.x, climate.y);
   const terrain = classifyTerrain(seed, climate.x, climate.y);
+  const transformState = terrainTransformState(seed, climate.x, climate.y);
   const slots = makePlaceholderSlots({
     'world.seed': seed, 'world.tick': player.tick, 'world.time': player.simulationTime,
     'player.position': `${player.position.x}, ${player.position.y}, z???`, 'player.area': location.area.name,
     'climate.elevation': climate.elevation, 'climate.temperature': climate.temperature, 'climate.moisture': climate.moisture, 'terrain.biome': climate.biome, 'terrain.landform': terrain.landform, 'terrain.waterform': terrain.waterform,
-    'system.socket': 'not plugged', 'system.database': 'not plugged', 'system.tickRate': player.tickRate, 'system.ecs': 'online',
+    'system.socket': 'not plugged', 'system.database': 'not plugged', 'system.tickRate': player.tickRate, 'system.ecs': 'online', 'terrain.activeTransform': transformState.active?.transformId || 'none',
     'interaction.lastAction': player.lastAction ? player.lastAction.type : '???',
     'location.continent': location.continent.name,
     'location.territory': location.territory.name,
@@ -40,7 +42,7 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
     tile: { layer: 2, chunkSize: CHUNK_SIZE, chunkX, chunkY, origin: chunk.origin, tileCount: chunk.tiles.length, source: chunk.tiles[0]?.source || '???', status: tileRoot.passed ? 'PASS' : 'FAIL', checks: tileRoot.checks },
     root: { layer: 1, name: 'Root Climate', status: root.passed ? 'PASS' : 'FAIL', checks: root.checks, samples: root.samples },
     naming: { layer: 3, status: namingRoot.passed ? 'PASS' : 'FAIL', signature: namingSignature(seed, climate.x, climate.y), checks: namingRoot.checks },
-    terrain: { layer: 4, status: terrainRoot.passed ? 'PASS' : 'FAIL', signature: terrainTransformSignature(seed, climate.x, climate.y), checks: terrainRoot.checks },
+    terrain: { layer: 4, status: terrainRoot.passed ? 'PASS' : 'FAIL', signature: terrainTransformSignature(seed, climate.x, climate.y), checks: terrainRoot.checks, transform: { active: transformState.active?.transformId || null, record: transformState.active } },
     cache: worldCacheStats(),
     branches: [
       { layer: 2, name: 'Tile & chunk generation', status: 'PASS' },
