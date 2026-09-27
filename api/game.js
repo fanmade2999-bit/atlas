@@ -1,0 +1,2 @@
+import { makeGameSnapshot } from '../server/observer/snapshot.mjs';
+export default function handler(req,res){const q=req.query||{};const body=makeGameSnapshot({seed:q.seed||'atlas-root',x:Number(q.x||0),y:Number(q.y||10001500),playerId:q.playerId||'local-player'});res.setHeader('Cache-Control','no-store');res.status(200).json(body);}
