@@ -67,7 +67,7 @@ export function makeRealtimeSnapshot({ seed='atlas-root', playerId='local-player
     'player.position':player.position.x+', '+player.position.y+', z???','player.area':location.area.name,
     'climate.elevation':focus.elevation,'climate.temperature':focus.temperature,'climate.moisture':focus.moisture,
     'terrain.biome':focus.biome,'terrain.landform':terrain.landform,'terrain.waterform':terrain.waterform,
-    'system.socket':'not plugged','system.database':'not plugged','system.tickRate':player.tickRate,
+    'system.socket':'not plugged','system.database':'not plugged','system.tickRate':player.tickRate,'system.ecs':'online',
     'interaction.lastAction':player.lastAction?player.lastAction.type:'???',
     'location.continent':location.continent.name,'location.territory':location.territory.name,
     'location.region':location.region.name,'location.tract':location.tract.name,'location.area':location.area.name
