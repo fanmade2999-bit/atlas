@@ -94,3 +94,12 @@ test('game snapshot carries an active Layer 4 transform to the graphical rendere
 
   recoverTileTransform(seed, target.x, target.y, { tile: transformed, now: Date.now() + 10001 });
 });
+
+
+test('game snapshot exposes isolated Layer 4 test fixtures separately from natural terrain', () => {
+  const snapshot = makeGameSnapshot({ seed: 'l4-fixture-view', x: 100, y: 200, playerId: 'fixture-view' });
+  assert.ok(Array.isArray(snapshot.testFixtures));
+  assert.equal(snapshot.testFixtures.length, 5);
+  assert.ok(snapshot.testFixtures.every(fixture => fixture.testOnly === true && fixture.natural === false));
+  assert.ok(snapshot.tiles.every(tile => tile.source !== 'test-fixture'));
+});
