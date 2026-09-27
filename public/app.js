@@ -245,8 +245,7 @@ function action(a){
     if(state.mode==='game')enterObserver();
     return;
   }
-}function animateMotion(){}
-async function realtime(){if(state.realtimeBusy)return;state.realtimeBusy=true;try{const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY}),r=await fetch('/api/realtime?'+p,{cache:'no-store'});if(!r.ok)throw Error('Realtime API '+r.status);const z=await r.json();if(z.player){const changed=state.gameX!==z.player.position.x||state.gameY!==z.player.position.y;state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;if(state.snapshot){state.snapshot.player=z.player;state.snapshot.focus=z.focus;state.snapshot.grid=z.grid;state.snapshot.location=z.location;state.snapshot.cache=z.cache;state.snapshot.tile=z.tile;state.snapshot.slots=z.slots;state.snapshot.world=z.world}if(state.gameSnapshot){state.gameSnapshot.player=z.player;state.gameSnapshot.center=z.player.position;if(state.mode==='game'&&changed)game(false).catch(error);else if(state.mode==='game')renderGamePanel()}}if(state.mode==='observer'&&state.snapshot&&state.site!=='map')render()}catch(e){console.warn(e)}finally{state.realtimeBusy=false}}
+}async function realtime(){if(state.realtimeBusy)return;state.realtimeBusy=true;try{const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY}),r=await fetch('/api/realtime?'+p,{cache:'no-store'});if(!r.ok)throw Error('Realtime API '+r.status);const z=await r.json();if(z.player){const changed=state.gameX!==z.player.position.x||state.gameY!==z.player.position.y;state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;if(state.snapshot){state.snapshot.player=z.player;state.snapshot.focus=z.focus;state.snapshot.grid=z.grid;state.snapshot.location=z.location;state.snapshot.cache=z.cache;state.snapshot.tile=z.tile;state.snapshot.slots=z.slots;state.snapshot.world=z.world}if(state.gameSnapshot){state.gameSnapshot.player=z.player;state.gameSnapshot.center=z.player.position;if(state.mode==='game'&&changed)game(false).catch(error);else if(state.mode==='game')renderGamePanel()}}if(state.mode==='observer'&&state.snapshot&&state.site!=='map')render()}catch(e){console.warn(e)}finally{state.realtimeBusy=false}}
 
 function pressed(g,i){return !!g.buttons?.[i]?.pressed}
 function edge(name,value){const was=!!gamepadPrev[name];gamepadPrev[name]=value;return value&&!was}
@@ -279,19 +278,42 @@ addEventListener('gamepaddisconnected',()=>{releaseDirection('gamepad');lastGame
 function nav(d){shell(order[(order.indexOf(state.site)+d+order.length)%order.length]);render()}
 tabs.forEach(t=>t.onclick=()=>{shell(t.dataset.site);if(state.snapshot||state.gameSnapshot)render();});
 document.querySelectorAll('[data-action="start"],[data-action="select"],[data-action="a"],[data-action="b"]').forEach(b=>b.onclick=()=>action(b.dataset.action));
-document.querySelectorAll('[data-direction]').forEach(b=>{
-  const direction=b.dataset.direction;
-  const source='dpad:'+direction;
-  b.addEventListener('pointerdown',e=>{
+const controller=document.querySelector('.controller');
+let dpadPointerId=null;
+
+function directionAtPoint(clientX,clientY){
+  const target=document.elementFromPoint(clientX,clientY)?.closest?.('[data-direction]');
+  return target?.dataset.direction||null;
+}
+
+function finishDpadPointer(pointerId){
+  if(dpadPointerId!==pointerId)return;
+  dpadPointerId=null;
+  releaseDirection('dpad');
+}
+
+if(controller){
+  controller.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    const direction=directionAtPoint(e.clientX,e.clientY);
+    if(!direction)return;
     e.preventDefault();
-    try{b.setPointerCapture?.(e.pointerId)}catch{}
-    holdDirection(source,direction);
+    dpadPointerId=e.pointerId;
+    holdDirection('dpad',direction);
   });
-  const release=()=>releaseDirection(source);
-  b.addEventListener('pointerup',release);
-  b.addEventListener('pointercancel',release);
-  b.addEventListener('lostpointercapture',release);
-});
+  document.addEventListener('pointermove',e=>{
+    if(dpadPointerId!==e.pointerId)return;
+    e.preventDefault();
+    const direction=directionAtPoint(e.clientX,e.clientY);
+    if(direction)holdDirection('dpad',direction);
+    else releaseDirection('dpad');
+  },{passive:false});
+  document.addEventListener('pointerup',e=>finishDpadPointer(e.pointerId));
+  document.addEventListener('pointercancel',e=>finishDpadPointer(e.pointerId));
+  controller.addEventListener('contextmenu',e=>e.preventDefault());
+  controller.addEventListener('selectstart',e=>e.preventDefault());
+  controller.addEventListener('dragstart',e=>e.preventDefault());
+}
 
 const keyDirections={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
 document.onkeydown=e=>{
