@@ -37,7 +37,7 @@ function makeL4TestFixtures(seed, x, y) {
     if (match) occupied.add(match.x + '|' + match.y);
     found.push({
       ...spec,
-      ...(match || { x:x, y:y, naturalSurface:null, naturalWaterform:null }),
+      ...(match || { x:null, y:null, naturalSurface:null, naturalWaterform:null }),
       natural: false,
       naturalTarget: !!match,
       testOnly: true,
