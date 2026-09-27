@@ -146,7 +146,33 @@ function renderGamePanel(){
   if(!visionEl)throw new Error('Game Vision panel is missing from the handheld screen');
   const g=state.gameSnapshot,modeName=state.vision||'normal';
   board.querySelector('.world-loading')?.remove();
-  try{mountPhaserWorld(board,g,modeName)}catch(e){error(e);return}
+  try{
+    mountPhaserWorld(board,g,modeName,async hit=>{
+      if(hit?.kind!=='fixture')return;
+      const fixture=hit.fixture;
+      if(!fixture.available){
+        status.textContent=fixture.label+' TEST · NO COMPATIBLE NATURAL TILE NEARBY';
+        return;
+      }
+      status.textContent=fixture.label+' TEST · APPLYING…';
+      try{
+        const p=new URLSearchParams({
+          playerId:state.playerId,
+          seed:state.seed,
+          x:fixture.x,
+          y:fixture.y,
+          moveType:fixture.moveType
+        });
+        const r=await fetch('/api/game/transform?'+p,{cache:'no-store'});
+        const z=await r.json();
+        if(!r.ok||!z.result?.ok)throw Error(z.result?.reason||'Transform rejected');
+        status.textContent=fixture.label+' TEST · '+(z.result.transform?.id||'TRANSFORMED')+' · '+fixture.x+','+fixture.y;
+        await game(false);
+      }catch(e){
+        status.textContent=fixture.label+' TEST · '+e.message;
+      }
+    });
+  }catch(e){error(e);return}
   status.textContent=g.width+'×'+g.height+' WORLD · '+(modeName==='normal'?'PHASER TERRAIN':'VIEW '+modeName.toUpperCase())+' · CHUNK '+Math.floor(g.center.x/16)+','+Math.floor(g.center.y/16)+' · '+(g.stream?.reused?.length??0)+' cached';
   const inspected=g.player?.lastInspection?.climate;
   const terrain=g.player?.lastInspection?.terrain;
