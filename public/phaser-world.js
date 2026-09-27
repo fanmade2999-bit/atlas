@@ -91,10 +91,13 @@ class AtlasScene extends PhaserLib.Scene{
     const size=Math.max(1,Math.floor(Math.min(this.scale.width/cols,this.scale.height/rows)));
     const ox=Math.floor((this.scale.width-cols*size)/2),oy=Math.floor((this.scale.height-rows*size)/2);
     this.g.clear();
-    snapshot.tiles.forEach(t=>drawTile(this,t,t.dx+Math.floor(cols/2),t.dy+Math.floor(rows/2),size,this.mode));
+    snapshot.tiles.forEach(t=>{
+      const dx=t.dx+Math.floor(cols/2),dy=t.dy+Math.floor(rows/2);
+      drawTile(this,t,dx+ox/size,dy+oy/size,size,this.mode);
+    });
     const p=snapshot.player?.position||snapshot.center;
     const pdx=p.x-snapshot.center.x,pdy=p.y-snapshot.center.y;
-    drawPlayer(this,Math.floor(cols/2)+pdx,Math.floor(rows/2)+pdy,size);
+    drawPlayer(this,Math.floor(cols/2)+pdx+ox/size,Math.floor(rows/2)+pdy+oy/size,size);
     this.lastLayout={size,ox,oy,cols,rows};
   }
   resize(){if(this.snapshot)this.updateWorld(this.snapshot,this.mode,this.onTap)}
