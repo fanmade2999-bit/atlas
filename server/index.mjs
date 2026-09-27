@@ -66,9 +66,12 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify(result)); return;
     }
     if (url.pathname === '/api/game') {
+      const started = performance.now();
       const snapshot = makeGameSnapshot({ seed: url.searchParams.get('seed') || 'atlas-root', x: Number(url.searchParams.get('x') || 0), y: Number(url.searchParams.get('y') || 10001500), playerId: url.searchParams.get('playerId') || 'local-player' });
-      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
-      res.end(JSON.stringify(snapshot)); return;
+      const body = JSON.stringify(snapshot);
+      const elapsed = performance.now() - started;
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*', 'X-Atlas-Game-Ms': elapsed.toFixed(1), 'X-Atlas-Game-Bytes': String(Buffer.byteLength(body)) });
+      res.end(body); return;
     }
     if (url.pathname === '/api/observer') {
       const snapshot = makeObserverSnapshot({ seed: url.searchParams.get('seed') || 'atlas-root', x: Number(url.searchParams.get('x') || 0), y: Number(url.searchParams.get('y') || 10001500), playerId: url.searchParams.get('playerId') || 'local-player' });
