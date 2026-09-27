@@ -627,3 +627,104 @@
   display:grid !important;
   visibility:visible;
 }
+
+
+/* =================================================================
+   UNIFIED INFO / OBSERVER PANEL
+   The panel owns its content viewport and its section dock.
+   Nothing inside it can resize, overlay, or replace the World/Vision
+   panels above it.
+   ================================================================= */
+.info-panel{
+  min-width:0;
+  min-height:0;
+  height:100%;
+  overflow:hidden;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  contain:layout paint;
+  background:#050708;
+}
+.info-panel>.site{
+  min-width:0;
+  min-height:0;
+  height:100%;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:auto;
+  scrollbar-color:#53616d #080b0e;
+  padding:8px 8px 14px;
+}
+.info-panel>.site .site-inner{
+  min-width:0;
+  max-width:none;
+}
+.info-panel>.cartridge-dock{
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  min-width:0;
+  min-height:48px;
+  height:48px;
+  flex:none;
+  overflow:hidden;
+  padding:2px 4px;
+  border-top:1px solid var(--border);
+  background:var(--surface);
+  z-index:5;
+}
+.info-panel>.cartridge-dock .tab{
+  min-width:0;
+  min-height:42px;
+  height:42px;
+}
+.info-panel>.cartridge-dock .tab span,
+.info-panel>.cartridge-dock .tab b{
+  pointer-events:none;
+}
+.info-panel>.cartridge-dock .tab b{font-size:8px}
+
+/* Game composition is always three height-owned rows; Info never leaks. */
+.handheld.game-mode .screen-glow{
+  grid-template-rows:minmax(0,56%) minmax(0,8%) minmax(0,36%);
+}
+.handheld.game-mode .game-panel,
+.handheld.game-mode .game-vision,
+.handheld.game-mode .info-panel{
+  min-height:0;
+  min-width:0;
+  overflow:hidden;
+}
+.handheld.game-mode .info-panel{
+  grid-row:3;
+}
+.handheld.game-mode .game-vision{
+  grid-row:2;
+}
+.handheld.game-mode .game-panel{
+  grid-row:1;
+}
+
+/* The original Observer content is the Info content. It scrolls;
+   only the four section buttons stay locked at the bottom. */
+.handheld.game-mode .info-panel>.site{
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+.handheld.game-mode .info-panel>.cartridge-dock{
+  position:relative;
+  bottom:auto;
+  left:auto;
+  right:auto;
+}
+@media(max-width:699px){
+  .handheld.game-mode .info-panel>.cartridge-dock{
+    min-height:46px;
+    height:46px;
+  }
+  .handheld.game-mode .info-panel>.cartridge-dock .tab{
+    min-height:40px;
+    height:40px;
+  }
+}
