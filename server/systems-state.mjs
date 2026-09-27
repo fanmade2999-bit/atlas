@@ -47,6 +47,28 @@ export function teleportPlayer({ playerId, seed, x, y }) {
   return { player, result: { ok: true, type: 'teleport', from, to } };
 }
 
+export const TERRAIN_ACTIONS = Object.freeze({
+  fire: 'fire',
+  ice: 'ice',
+  rock: 'rock-ground',
+  water: 'water',
+  grass: 'grass'
+});
+
+export function transformPlayerTile({ playerId, seed, moveType, transformId = null, recovery = null } = {}) {
+  const player = getPlayerState({ playerId, seed });
+  const normalizedMove = TERRAIN_ACTIONS[moveType] || moveType;
+  return transformTile({
+    playerId,
+    seed,
+    x: player.position.x,
+    y: player.position.y,
+    moveType: normalizedMove,
+    transformId,
+    recovery
+  });
+}
+
 export function transformTile({ playerId, seed, x, y, moveType, transformId = null, recovery = null } = {}) {
   const player = getPlayerState({ playerId, seed, x, y });
   const result = applyTileTransform({
