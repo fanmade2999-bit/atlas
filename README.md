@@ -58,3 +58,13 @@ Player persistence is intentionally not implemented yet; development state is in
 ## Direct game screen
 
 The playable handheld world is also available directly at `/game.html`. It uses the same `/api/game` and movement/inspect endpoints as the main shell, so a deployment can open the game screen immediately.
+
+## Application routes
+
+- `/` → Game application (playable world)
+- `/game.html` → Game application directly
+- `/observer.html` → Observer application
+- `/api/game`, `/api/game/move`, `/api/game/inspect` → Game API routes for static/serverless deployment
+- `/api/observer` → Observer API route
+
+Game input is app-scoped: while Game is active, D-pad/arrow input moves the player; A inspects; B/START/SELECT return to Observer. The Game app also polls the browser Gamepad API rather than relying on keyboard events.
