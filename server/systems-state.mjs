@@ -35,6 +35,17 @@ export function movePlayer({ playerId, seed, x, y, direction }) {
   return { player, result };
 }
 
+export function teleportPlayer({ playerId, seed, x, y }) {
+  const player = getPlayerState({ playerId, seed });
+  const from = player.position;
+  const to = normalizeCoordinates(x, y);
+  player.position = to;
+  player.tick = Math.floor((Date.now() - player.startedAt) / TICK_MS);
+  player.lastAction = { type: 'teleport', from, to, tick: player.tick };
+  player.lastInspection = null;
+  return { player, result: { ok: true, type: 'teleport', from, to } };
+}
+
 export function inspectPlayer({ playerId, seed, x, y }) {
   const player = getPlayerState({ playerId, seed, x, y });
   player.lastInspection = inspectPosition(player.position.x, player.position.y, seed);
