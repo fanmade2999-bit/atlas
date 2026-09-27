@@ -243,3 +243,15 @@
     padding: 3px 5px;
   }
 }
+
+/* Vision is fixed; it never becomes a scroll container. Wrap its options instead. */
+.handheld.game-mode .game-vision .vision-options {
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+@media (max-width: 699px) {
+  .handheld.game-mode .game-vision .vision-options button {
+    padding: 2px 3px;
+    font-size: 6px;
+  }
+}
