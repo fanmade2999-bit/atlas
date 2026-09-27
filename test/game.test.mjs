@@ -34,6 +34,9 @@ test('move system uses root X wrap and Y cap', () => {
 test('inspect system reports normalized position without inventing terrain', () => {
   const result = inspectPosition(WORLD_WIDTH, WORLD_HEIGHT + 5);
   assert.deepEqual(result.position, { x: 0, y: WORLD_HEIGHT - 1 });
+  assert.ok(result.terrain);
+  assert.equal(typeof result.terrain.landform, 'string');
+  assert.equal(typeof result.terrain.waterform, 'string');
 });
 
 test('game snapshot exposes persistent player state', () => {
