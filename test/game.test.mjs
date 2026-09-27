@@ -60,3 +60,11 @@ test('teleport is explicit and normalizes destination coordinates', () => {
   assert.deepEqual(result.player.position, { x: 0, y: WORLD_HEIGHT - 1 });
   assert.equal(result.player.lastAction.type, 'teleport');
 });
+
+
+test('game and map use the same deterministic world vocabulary', () => {
+  const a = makeGameSnapshot({ seed: 'linked-test', x: 1234, y: 5678 });
+  assert.equal(typeof a.center.x, 'number');
+  assert.equal(typeof a.center.y, 'number');
+  assert.ok(a.tiles.some(t => t.biome === a.center.biome));
+});
