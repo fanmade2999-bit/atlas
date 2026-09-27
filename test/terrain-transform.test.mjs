@@ -120,3 +120,37 @@ test('permanent transforms never self-recover', () => {
 test('Layer 4 self-test passes', () => {
   assert.equal(terrainTransformSelfTest('test-seed').passed, true);
 });
+
+
+test('multiple coordinates can hold independent active transform records', () => {
+  const store = createTransformStore();
+  const a = { x: 1, y: 2, surface: 'grass', waterform: 'None' };
+  const b = { x: 2, y: 2, surface: 'grass', waterform: 'None' };
+
+  const first = applyTransform({ store, seed: 'multi', x: 1, y: 2, tile: a, moveType: 'fire', at: 100 });
+  const second = applyTransform({ store, seed: 'multi', x: 2, y: 2, tile: b, moveType: 'fire', at: 200 });
+
+  assert.equal(first.ok, true);
+  assert.equal(second.ok, true);
+  assert.equal(getActiveTransform(store, 'multi', 1, 2)?.transformId, 'fire-grass-scorch');
+  assert.equal(getActiveTransform(store, 'multi', 2, 2)?.transformId, 'fire-grass-scorch');
+});
+
+test('a second transform cannot overwrite an active transform at the same coordinate', () => {
+  const store = createTransformStore();
+  const tile = { x: 3, y: 4, surface: 'grass', waterform: 'None' };
+
+  assert.equal(applyTransform({ store, seed: 'single', x: 3, y: 4, tile, moveType: 'fire', at: 100 }).ok, true);
+  const second = applyTransform({ store, seed: 'single', x: 3, y: 4, tile, moveType: 'fire', at: 200 });
+  assert.equal(second.ok, false);
+  assert.equal(second.reason, 'active-transform-exists');
+});
+
+test('active transform store is isolated by seed', () => {
+  const store = createTransformStore();
+  const tile = { x: 5, y: 6, surface: 'grass', waterform: 'None' };
+
+  assert.equal(applyTransform({ store, seed: 'alpha', x: 5, y: 6, tile, moveType: 'fire', at: 100 }).ok, true);
+  assert.equal(getActiveTransform(store, 'alpha', 5, 6)?.transformId, 'fire-grass-scorch');
+  assert.equal(getActiveTransform(store, 'beta', 5, 6), null);
+});
