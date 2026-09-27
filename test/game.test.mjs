@@ -50,3 +50,13 @@ test('game snapshot exposes persistent player state', () => {
   assert.ok(Array.isArray(a.stream.generated));
   assert.ok(Array.isArray(a.stream.reused));
 });
+
+
+import { teleportPlayer } from '../server/systems-state.mjs';
+
+test('teleport is explicit and normalizes destination coordinates', () => {
+  const result = teleportPlayer({ playerId: 'teleport-test', seed: 'game-test', x: WORLD_WIDTH, y: WORLD_HEIGHT + 99 });
+  assert.equal(result.result.ok, true);
+  assert.deepEqual(result.player.position, { x: 0, y: WORLD_HEIGHT - 1 });
+  assert.equal(result.player.lastAction.type, 'teleport');
+});
