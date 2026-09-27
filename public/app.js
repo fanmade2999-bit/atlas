@@ -9,10 +9,10 @@ const coord=v=>{const n=Number(v);const a=Math.abs(n);if(a>=1000000)return (n/10
 const slot=(s,id)=>s.slots[id]?.value??null;
 function shell(id){state.site=id;if(address)address.textContent=`atlas://${id}`;tabs.forEach(t=>t.classList.toggle('active',t.dataset.site===id));}
 function applyScreenMode(m){
-  const gameIds=['#game-panel','#game-vision','#game-info'];
-  const observerIds=['#site','.cartridge-dock'];
+  const gameIds=['#game-panel','#game-vision'];
   gameIds.forEach(sel=>{const el=document.querySelector(sel);if(el)el.hidden=m!=='game'});
-  observerIds.forEach(sel=>{const el=document.querySelector(sel);if(el)el.hidden=m==='game'});
+  const info=document.querySelector('#info-panel');
+  if(info)info.hidden=false;
   document.querySelector('#app')?.classList.toggle('game-mode',m==='game');
   document.querySelector('#app-mode-label').textContent=m==='game'?'GAME':'OBSERVER';
 }
