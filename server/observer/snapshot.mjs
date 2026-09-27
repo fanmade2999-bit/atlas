@@ -8,19 +8,42 @@ import { terrainTransformState } from '../root/tile.mjs';
 
 
 function makeL4TestFixtures(seed, x, y) {
-  return [
-    { id:'l4-fire-grass', dx:-3, dy:0, label:'FIRE', moveType:'fire', target:'grass', expected:'scorched-dirt', mode:'modified-test' },
-    { id:'l4-ice-water', dx:-1, dy:0, label:'ICE', moveType:'ice', target:'water', expected:'ice', mode:'modified-test' },
-    { id:'l4-rock-dirt', dx:1, dy:0, label:'ROCK', moveType:'rock-ground', target:'dirt', expected:'stone-wall', mode:'modified-test' },
-    { id:'l4-water-dirt', dx:3, dy:0, label:'WATER', moveType:'water', target:'dirt', expected:'water-pond', mode:'modified-test' },
-    { id:'l4-grass-dirt', dx:5, dy:0, label:'GRASS', moveType:'grass', target:'dirt', expected:'BerryTree', mode:'modified-test' }
-  ].map(fixture => ({
-    ...fixture,
-    x: normalizeCoordinates(x + fixture.dx, y + fixture.dy).x,
-    y: normalizeCoordinates(x + fixture.dx, y + fixture.dy).y,
-    natural: false,
-    testOnly: true
-  }));
+  const wanted = [
+    { id:'l4-fire-grass', label:'FIRE', moveType:'fire', target:{surface:'grass'}, expected:'scorched-dirt' },
+    { id:'l4-ice-water', label:'ICE', moveType:'ice', target:{waterform:['Ocean','Shallows','Lake','River']}, expected:'ice' },
+    { id:'l4-rock-dirt', label:'ROCK', moveType:'rock-ground', target:{surface:'dirt'}, expected:'stone-wall' },
+    { id:'l4-water-dirt', label:'WATER', moveType:'water', target:{surface:'dirt'}, expected:'water-pond' },
+    { id:'l4-grass-dirt', label:'GRASS', moveType:'grass', target:{surface:'dirt'}, expected:'BerryTree' }
+  ];
+  const found = [];
+  const occupied = new Set();
+  for (const spec of wanted) {
+    let match = null;
+    for (let radius = 1; radius <= 7 && !match; radius += 1) {
+      for (let dy = -radius; dy <= radius && !match; dy += 1) {
+        const dxLimit = radius - Math.abs(dy);
+        for (const dx of [-dxLimit, dxLimit]) {
+          const p = normalizeCoordinates(x + dx, y + dy);
+          const key = p.x + '|' + p.y;
+          if (occupied.has(key)) continue;
+          const tile = getTile(seed, p.x, p.y);
+          const target = spec.target;
+          const values = Object.entries(target);
+          const ok = values.every(([field, expected]) => Array.isArray(expected) ? expected.includes(tile?.[field]) : tile?.[field] === expected);
+          if (ok) match = { x:p.x, y:p.y, naturalSurface:tile.surface, naturalWaterform:tile.waterform };
+        }
+      }
+    }
+    if (match) occupied.add(match.x + '|' + match.y);
+    found.push({
+      ...spec,
+      ...(match || { x:x, y:y, naturalSurface:null, naturalWaterform:null }),
+      natural: true,
+      testOnly: true,
+      available: !!match
+    });
+  }
+  return found;
 }
 
 export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WORLD_HEIGHT / 2), playerId = 'local-player' } = {}) {
