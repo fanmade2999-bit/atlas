@@ -72,3 +72,12 @@
 .handheld.game-mode .game-info-grid b{display:block;margin-top:2px;font-size:7px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .handheld.game-mode .screen-glow{grid-template-rows:minmax(0,1fr) auto auto}
 .handheld.game-mode .game-panel{height:auto;min-height:0}
+
+
+/* Observer and Game are separate applications sharing the physical screen. */
+.handheld:not(.game-mode) #game-panel{display:none}
+.handheld:not(.game-mode) #site{display:block}
+.handheld.game-mode #game-panel{display:grid}
+.handheld.game-mode #site{display:block}
+.handheld.game-mode .cartridge-dock{display:none}
+.handheld.game-mode .site{overflow:hidden;overscroll-behavior:none}
