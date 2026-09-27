@@ -19,7 +19,7 @@ export function getTile(seed, x, y, overrides = null) {
   const key = tileKey(position.x, position.y);
   const override = overrides?.[key];
   if (override) return { ...position, ...override, source: 'override' };
-  return { ...position, ...sampleClimate(seed, position.x, position.y), source: 'baseline' };
+  const climate=sampleClimate(seed, position.x, position.y); return { ...position, ...climate, source: 'baseline' };
 }
 
 export function chunkOrigin(chunkX, chunkY) {
