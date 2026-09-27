@@ -151,23 +151,79 @@ function renderGamePanel(){
   visionEl.innerHTML=renderVisionControls();
   visionEl.querySelectorAll('[data-vision]').forEach(b=>b.onclick=()=>{state.vision=b.dataset.vision;renderGamePanel()});
 }
+const MOVE_REPEAT_MS=125;
+const INPUT_SOURCES=new Map();
+let inputSequence=0;
+let movementLoopRunning=false;
+let lastMoveIssuedAt=0;
+
+function holdDirection(source,direction){
+  if(state.mode!=='game')return;
+  const current=INPUT_SOURCES.get(source);
+  if(current?.direction===direction)return;
+  INPUT_SOURCES.set(source,{direction,sequence:++inputSequence});
+  startMovementLoop();
+}
+
+function releaseDirection(source){
+  INPUT_SOURCES.delete(source);
+}
+
+function activeHeldDirection(){
+  let active=null;
+  for(const [source,value] of INPUT_SOURCES){
+    if(!active||value.sequence>active.sequence)active={source,...value};
+  }
+  return active?.direction||null;
+}
+
+function clearHeldDirections(){
+  INPUT_SOURCES.clear();
+}
+
+function startMovementLoop(){
+  if(movementLoopRunning)return;
+  movementLoopRunning=true;
+  const frame=now=>{
+    if(state.mode!=='game'||INPUT_SOURCES.size===0){
+      movementLoopRunning=false;
+      lastMoveIssuedAt=0;
+      return;
+    }
+    const direction=activeHeldDirection();
+    if(direction&&!state.moveBusy&&(lastMoveIssuedAt===0||now-lastMoveIssuedAt>=MOVE_REPEAT_MS)){
+      const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[direction];
+      if(v){
+        lastMoveIssuedAt=now;
+        move(...v).catch(error);
+      }
+    }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+
 async function move(dx,dy){
   if(state.mode!=='game'){enterGame();return}
   if(state.moveBusy)return;
+  const direction=dx===1?'right':dx===-1?'left':dy===1?'down':'up';
   state.moveBusy=true;
   try{
-    const direction=dx===1?'right':dx===-1?'left':dy===1?'down':'up';
     const from={x:state.gameX,y:state.gameY};
-    const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY,direction}),r=await fetch('/api/game/move?'+p);
+    const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY,direction});
+    const r=await fetch('/api/game/move?'+p,{cache:'no-store'});
     if(!r.ok)throw Error('Move API '+r.status);
     const z=await r.json();
-    state.motion={direction,from,to:z.player.position,startedAt:performance.now(),duration:140};
-    state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;
+    const to=z.player.position;
+    state.motion={direction,from,to,startedAt:performance.now(),duration:110};
+    state.gameX=to.x;state.gameY=to.y;state.x=state.gameX;state.y=state.gameY;
     if(state.gameSnapshot)state.gameSnapshot.player=z.player;
     renderGamePanel();
-    animateMotion();
     game(false).catch(error);
-  }finally{state.moveBusy=false}
+  }finally{
+    state.moveBusy=false;
+    if(INPUT_SOURCES.size)startMovementLoop();
+  }
 }
 async function inspect(){const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:state.gameX,y:state.gameY}),r=await fetch('/api/game/inspect?'+p);if(!r.ok)throw Error('Inspect API '+r.status);const z=await r.json();state.gameSnapshot.player=z.player;render()}
 function action(a){
@@ -190,14 +246,66 @@ async function realtime(){if(state.realtimeBusy)return;state.realtimeBusy=true;t
 function pressed(g,i){return !!g.buttons?.[i]?.pressed}
 function edge(name,value){const was=!!gamepadPrev[name];gamepadPrev[name]=value;return value&&!was}
 let gamepadPrev={},lastGamepadId='';
-function pollGamepad(){const pads=navigator.getGamepads?.()||[];const g=[...pads].find(Boolean);if(!g){requestAnimationFrame(pollGamepad);return}if(g.id!==lastGamepadId){lastGamepadId=g.id;gamepadPrev={};document.querySelector('#app-mode-label').textContent='GAMEPAD CONNECTED'}const axX=g.axes?.[0]??0,axY=g.axes?.[1]??0;const left=pressed(g,14)||axX<-.5,right=pressed(g,15)||axX>.5,up=pressed(g,12)||axY<-.5,down=pressed(g,13)||axY>.5;if(edge('left',left))move(-1,0).catch(error);if(edge('right',right))move(1,0).catch(error);if(edge('up',up))move(0,-1).catch(error);if(edge('down',down))move(0,1).catch(error);if(edge('start',pressed(g,9)))action('start');if(edge('select',pressed(g,8)))action('select');requestAnimationFrame(pollGamepad)}
+function pollGamepad(){
+  const pads=navigator.getGamepads?.()||[];
+  const g=[...pads].find(Boolean);
+  if(!g){releaseDirection('gamepad');requestAnimationFrame(pollGamepad);return}
+  if(g.id!==lastGamepadId){
+    lastGamepadId=g.id;
+    gamepadPrev={};
+    document.querySelector('#app-mode-label').textContent='GAMEPAD CONNECTED';
+  }
+  const axX=g.axes?.[0]??0,axY=g.axes?.[1]??0;
+  const left=pressed(g,14)||axX<-.5,right=pressed(g,15)||axX>.5,up=pressed(g,12)||axY<-.5,down=pressed(g,13)||axY>.5;
+  let gamepadDirection=null;
+  if(Math.abs(axX)>=Math.abs(axY)&&Math.abs(axX)>=.5)gamepadDirection=axX<0?'left':'right';
+  else if(Math.abs(axY)>=.5)gamepadDirection=axY<0?'up':'down';
+  else if(left)gamepadDirection='left';
+  else if(right)gamepadDirection='right';
+  else if(up)gamepadDirection='up';
+  else if(down)gamepadDirection='down';
+  if(gamepadDirection)holdDirection('gamepad',gamepadDirection);else releaseDirection('gamepad');
+  if(edge('start',pressed(g,9)))action('start');
+  if(edge('select',pressed(g,8)))action('select');
+  requestAnimationFrame(pollGamepad);
+}
 addEventListener('gamepadconnected',e=>{lastGamepadId=e.gamepad.id;gamepadPrev={};document.querySelector('#app-mode-label').textContent='GAMEPAD CONNECTED'});
-addEventListener('gamepaddisconnected',()=>{lastGamepadId='';document.querySelector('#app-mode-label').textContent='GAME + INFO'});
+addEventListener('gamepaddisconnected',()=>{releaseDirection('gamepad');lastGamepadId='';document.querySelector('#app-mode-label').textContent='GAME + INFO'});
 function nav(d){shell(order[(order.indexOf(state.site)+d+order.length)%order.length]);render()}
 tabs.forEach(t=>t.onclick=()=>{shell(t.dataset.site);if(state.snapshot||state.gameSnapshot)render();});
 document.querySelectorAll('[data-action="start"],[data-action="select"],[data-action="a"],[data-action="b"]').forEach(b=>b.onclick=()=>action(b.dataset.action));
-document.querySelectorAll('[data-direction]').forEach(b=>b.onclick=()=>{const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.direction];move(...v).catch(error)});
-document.onkeydown=e=>{const d={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(d){e.preventDefault();const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[d];move(...v).catch(error)}else if(e.key==='Enter'){e.preventDefault();action('a')}else if(e.key==='Escape'){e.preventDefault();action('b')}else if(e.key==='Tab'){e.preventDefault();action('start')}};
+document.querySelectorAll('[data-direction]').forEach(b=>{
+  const direction=b.dataset.direction;
+  const source='dpad:'+direction;
+  b.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    try{b.setPointerCapture?.(e.pointerId)}catch{}
+    holdDirection(source,direction);
+  });
+  const release=()=>releaseDirection(source);
+  b.addEventListener('pointerup',release);
+  b.addEventListener('pointercancel',release);
+  b.addEventListener('lostpointercapture',release);
+});
+
+const keyDirections={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
+document.onkeydown=e=>{
+  const d=keyDirections[e.key];
+  if(d){
+    e.preventDefault();
+    if(!e.repeat)holdDirection('key:'+e.key,d);
+    return;
+  }
+  if(e.key==='Enter'){e.preventDefault();action('a')}
+  else if(e.key==='Escape'){e.preventDefault();action('b')}
+  else if(e.key==='Tab'){e.preventDefault();action('start')}
+};
+document.onkeyup=e=>{
+  const d=keyDirections[e.key];
+  if(d){e.preventDefault();releaseDirection('key:'+e.key)}
+};
+addEventListener('blur',clearHeldDirections);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearHeldDirections()});
 if(refreshButton)refreshButton.onclick=()=>Promise.all([snapshot(),game()]).catch(error);
 shell('world');
 const initialMode=new URLSearchParams(location.search).get('app')==='observer'?'observer':'game';
