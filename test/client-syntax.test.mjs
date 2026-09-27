@@ -18,5 +18,12 @@ test('browser clients parse as JavaScript', () => {
   assert.equal(/action\(['"]a['"]\)/.test(app), false);
   assert.equal(/action\(['"]b['"]\)/.test(app), false);
   assert.doesNotThrow(() => new vm.Script(map.replace(/^export /gm, ''), { filename: 'public/map.js' }));
-  assert.doesNotThrow(() => new vm.Script(phaser, { filename: 'public/phaser-world.js' }));
+  assert.match(app, /const MOVE_REPEAT_MS=125/);
+  assert.match(app, /pointerdown/);
+  assert.match(app, /document\.onkeyup/);
+  assert.match(app, /activeHeldDirection/);
+  assert.match(app, /holdDirection\('gamepad',gamepadDirection\)/);
+  assert.match(phaser, /visualPlayer/);
+  assert.match(phaser, /cameraTarget/);
+    assert.doesNotThrow(() => new vm.Script(phaser, { filename: 'public/phaser-world.js' }));
 });
