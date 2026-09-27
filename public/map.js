@@ -11,6 +11,17 @@ function biomeColor(b){
   const colors={Ocean:'#155fa3',Alpine:'#e4e9ed',Highlands:'#8d795e',Tundra:'#91b9bb','Cold Steppe':'#7d987e',Desert:'#d0ad5a','Tropical Forest':'#187c48',Wetland:'#3c8c73',Grassland:'#88a944','Temperate Forest':'#397540'};
   return colors[b]||'#65705c';
 }
+function mapGlyph(c,zoom){
+  if(zoom<4)return '';
+  const water=c.waterform||'None';
+  if(water==='Ocean'||water==='Shallows'||water==='Lake'||water==='River')return '≈';
+  if(water==='Swamp')return '≋';
+  if(c.landform==='Peak'||c.landform==='Mountain')return '▲';
+  if(c.biome==='Alpine')return '❄';
+  if(c.biome==='Desert')return '·';
+  if(c.biome==='Tropical Forest'||c.biome==='Temperate Forest'||c.biome==='Wetland')return '♣';
+  return '·';
+}
 function layerColor(c,layer){
   if(layer==='normal') return 'linear-gradient(135deg,'+biomeColor(c.biome)+','+biomeColor(c.biome)+'cc)';
   if(layer==='elevation') return ramp(c.elevation,[[28,76,45],[110,150,65],[205,190,100],[150,105,65],[235,235,235]]);
@@ -53,7 +64,7 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
     let cells='';
     for(let i=0;i<d.cells.length;i++){
       const c=d.cells[i];
-      cells+='<div class="world-map-cell" data-index="'+i+'" style="background:'+layerColor(c,map.layer)+'" title="X '+c.x+' · Y '+c.y+' · '+esc(c.biome)+'"></div>';
+      cells+='<div class="world-map-cell" data-index="'+i+'" style="background:'+layerColor(c,map.layer)+'" title="X '+c.x+' · Y '+c.y+' · '+esc(c.biome)+' · '+esc(c.landform||'???')+' · '+esc(c.waterform||'???')+'"><span class="map-glyph">'+mapGlyph(c,d.zoom)+'</span></div>';
     }
     const target=map.target;
     root.innerHTML=layout('World Map','big-picture navigation',
