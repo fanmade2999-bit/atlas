@@ -17,6 +17,11 @@ function clamp01(value) {
   return Math.max(0, Math.min(1, value));
 }
 
+const CLIMATE_CACHE_LIMIT=8192;
+const elevationCache=new Map(),moistureCache=new Map(),temperatureCache=new Map(),climateCache=new Map(),terrainCache=new Map();
+function cached(cache,key,compute){const hit=cache.get(key);if(hit!==undefined){cache.delete(key);cache.set(key,hit);return hit;}const value=compute();cache.set(key,value);while(cache.size>CLIMATE_CACHE_LIMIT)cache.delete(cache.keys().next().value);return value;}
+function sampleKey(seed,x,y){return String(seed)+'|'+x+'|'+y;}
+
 function fade(t) {
   return t * t * (3 - 2 * t);
 }
