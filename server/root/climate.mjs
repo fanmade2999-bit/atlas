@@ -18,7 +18,7 @@ function clamp01(value) {
 }
 
 const CLIMATE_CACHE_LIMIT=8192;
-const elevationCache=new Map(),moistureCache=new Map(),temperatureCache=new Map(),climateCache=new Map(),terrainCache=new Map();
+const elevationCache=new Map(),moistureCache=new Map(),temperatureCache=new Map(),climateCache=new Map(),terrainCache=new Map(),hydrologyCache=new Map(),flowStepCache=new Map();
 function cached(cache,key,compute){const hit=cache.get(key);if(hit!==undefined){cache.delete(key);cache.set(key,hit);return hit;}const value=compute();cache.set(key,value);while(cache.size>CLIMATE_CACHE_LIMIT)cache.delete(cache.keys().next().value);return value;}
 function sampleKey(seed,x,y){return String(seed)+'|'+x+'|'+y;}
 
@@ -194,13 +194,15 @@ export function classifyLandform(seed='atlas-root',x=0,y=0,elevation=sampleEleva
 }
 
 function downhillStep(seed,x,y,elevation){
+  const p0=normalizeCoordinates(x,y),cacheKey=sampleKey(seed,p0.x,p0.y),cachedStep=flowStepCache.get(cacheKey);
+  if(cachedStep!==undefined)return cachedStep;
   let best=null;
   for(const [dx,dy] of FLOW_NEIGHBORS){
     const p=normalizeCoordinates(x+dx,y+dy);
     const e=sampleElevation(seed,p.x,p.y);
     if(e<elevation-0.000001&&(!best||e<best.elevation))best={x:p.x,y:p.y,elevation:e,dx,dy};
   }
-  return best;
+  flowStepCache.set(cacheKey,best||null);while(flowStepCache.size>CLIMATE_CACHE_LIMIT)flowStepCache.delete(flowStepCache.keys().next().value);return best;
 }
 
 function flowTrace(seed,x,y,elevation,maxSteps=96){
@@ -243,12 +245,13 @@ function watershedId(trace){
 }
 
 export function classifyHydrology(seed='atlas-root',x=0,y=0){
-  const normalized=normalizeCoordinates(x,y);
+  const normalized=normalizeCoordinates(x,y),cacheKey=sampleKey(seed,normalized.x,normalized.y),cachedHydro=hydrologyCache.get(cacheKey);
+  if(cachedHydro!==undefined)return cachedHydro;
   const elevation=sampleElevation(seed,normalized.x,normalized.y);
-  if(elevation<0.30)return Object.freeze({
+  if(elevation<0.30){const ocean=Object.freeze({
     waterform:'Ocean',flowDirection:'ocean',flowSteps:0,flowAccumulation:0,upstreamCount:0,
     watershedId:'ocean',isSink:false,reachesOcean:true
-  });
+  });hydrologyCache.set(cacheKey,ocean);return ocean;}
   const trace=flowTrace(seed,normalized.x,normalized.y,elevation);
   const next=downhillStep(seed,normalized.x,normalized.y,elevation);
   const upstreamCount=immediateUpstreamCount(seed,normalized.x,normalized.y,elevation);
@@ -259,7 +262,7 @@ export function classifyHydrology(seed='atlas-root',x=0,y=0){
   else if(sink && elevation<0.70) waterform='Lake';
   else if(elevation<0.44 && sampleMoisture(seed,normalized.x,normalized.y)>0.78) waterform='Swamp';
   else if(trace.steps>0 && trace.reachesOcean && sampleMoisture(seed,normalized.x,normalized.y)>0.55 && (upstreamCount>0 || slope>0.0015)) waterform='River';
-  return Object.freeze({
+  const result=Object.freeze({
     waterform,
     flowDirection:next?next.dx+','+next.dy:(sink?'sink':'unknown'),
     flowSteps:trace.steps,
@@ -269,6 +272,7 @@ export function classifyHydrology(seed='atlas-root',x=0,y=0){
     isSink:sink,
     reachesOcean:trace.reachesOcean
   });
+  hydrologyCache.set(cacheKey,result);while(hydrologyCache.size>CLIMATE_CACHE_LIMIT)hydrologyCache.delete(hydrologyCache.keys().next().value);return result;
 }
 
 export function classifyTerrain(seed='atlas-root',x=0,y=0){
