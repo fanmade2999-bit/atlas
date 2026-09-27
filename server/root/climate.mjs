@@ -156,7 +156,7 @@ export function rootSelfTest(seed = 'atlas-root') {
 }
 
 
-export const TERRAIN_TRANSFORMS = Object.freeze([
+export const LANDFORM_BANDS = Object.freeze([
   {landform:'Ocean',min:0,max:0.30,waterform:'Ocean'},
   {landform:'Coast',min:0.30,max:0.38,waterform:'Shallows'},
   {landform:'Plains',min:0.38,max:0.55,waterform:'None'},
@@ -301,7 +301,7 @@ export function terrainSelfTest(seed='atlas-root'){
   for(const [x,y] of points){
     const a=classifyTerrain(seed,x,y),b=classifyTerrain(seed,x,y);
     checks.push({id:'terrain-determinism',ok:JSON.stringify(a)===JSON.stringify(b),note:'terrain and hydrology are deterministic'});
-    checks.push({id:'landform-band',ok:TERRAIN_TRANSFORMS.some(t=>a.elevation>=t.min&&a.elevation<t.max),note:'elevation maps to a landform band'});
+    checks.push({id:'landform-band',ok:LANDFORM_BANDS.some(t=>a.elevation>=t.min&&a.elevation<t.max),note:'elevation maps to a landform band'});
     checks.push({id:'waterform-valid',ok:['None','Ocean','Shallows','Lake','River','Swamp'].includes(a.waterform),note:'waterform is from the Layer 4 vocabulary'});
     checks.push({id:'watershed',ok:typeof a.hydrology.watershedId==='string'&&a.hydrology.watershedId.length>0,note:'every land tile has a deterministic drainage outlet id'});
   }
