@@ -169,7 +169,7 @@ button{color:inherit}
 }
 .handheld.game-mode .screen-glow{
   grid-template-rows:
-    minmax(0,48%)
+    minmax(0,40%)
     minmax(0,8%)
     minmax(0,1fr)
     var(--control-height);
@@ -241,6 +241,11 @@ button{color:inherit}
   border-top:1px solid var(--border);
   border-bottom:0;
   z-index:10;
+}
+.handheld.game-mode #info-panel .cartridge-dock .tab{
+  height:40px;
+  min-height:40px;
+  align-self:center;
 }
 .handheld.game-mode #info-panel .tab{
   min-width:0;
@@ -1064,7 +1069,7 @@ input{
 /* Mobile tuning */
 @media(max-width:699px){
   .handheld.game-mode .screen-glow{
-    grid-template-rows:minmax(0,48%) minmax(0,8%) minmax(0,1fr) var(--control-height);
+    grid-template-rows:minmax(0,40%) minmax(0,8%) minmax(0,1fr) var(--control-height);
   }
   .handheld.game-mode #game-panel{padding:3px 4px 4px}
   .handheld.game-mode #game-vision{padding:2px 4px}
