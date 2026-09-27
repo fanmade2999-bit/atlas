@@ -10,7 +10,7 @@ const slot=(s,id)=>s.slots[id]?.value??null;
 function shell(id){state.site=id;if(address)address.textContent=`atlas://${id}`;tabs.forEach(t=>t.classList.toggle('active',t.dataset.site===id));}
 function applyScreenMode(m){
   const gameIds=['#game-panel','#game-vision','#game-info'];
-  const observerIds=['#site','#cartridge-dock'];
+  const observerIds=['#site','.cartridge-dock'];
   gameIds.forEach(sel=>{const el=document.querySelector(sel);if(el)el.hidden=m!=='game'});
   observerIds.forEach(sel=>{const el=document.querySelector(sel);if(el)el.hidden=m==='game'});
   document.querySelector('#app')?.classList.toggle('game-mode',m==='game');
