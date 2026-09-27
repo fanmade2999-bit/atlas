@@ -31,3 +31,4 @@
 .player-marker-step{animation:atlas-marker-step .14s ease-out both}
 @keyframes atlas-marker-step{from{transform:translate(var(--move-x),var(--move-y)) scale(.72);opacity:.65}to{transform:translate(0,0) scale(1);opacity:1}}
 @media(max-width:699px){.vision-box{padding:4px 5px}.vision-options button{padding:3px 4px}.vision-legend-title span{display:none}}
+.vision-swatches{grid-column:2;display:flex;gap:6px;flex-wrap:wrap}.vision-swatches span{display:flex;align-items:center;gap:3px;color:#8996a3;font-size:6px}.vision-swatches i{width:7px;height:7px;border-radius:2px;border:1px solid #ffffff2b;display:inline-block}
