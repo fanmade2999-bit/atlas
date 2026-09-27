@@ -7,7 +7,7 @@
  */
 import { normalizeCoordinates, sampleClimate, classifyTerrain, WORLD_HEIGHT, WORLD_WIDTH } from './climate.mjs';
 import { getTileDetail } from './detail.mjs';
-import { createTransformStore, applyTransform, recoverTransform, getEffectiveTile, getActiveTransform, terrainTransformSelfTest } from './terrain-transform.mjs';
+import { createTransformStore, applyTransform, recoverTransform, getEffectiveTile, getActiveTransform, terrainTransformSelfTest, transformStoreStats } from './terrain-transform.mjs';
 
 export const CHUNK_SIZE = 16;
 
@@ -95,6 +95,7 @@ export function getTileTransform(seed, x, y) {
 export function terrainTransformState(seed = 'atlas-root', x = 0, y = 0) {
   return {
     active: getTileTransform(seed, x, y),
+    stats: transformStoreStats(terrainTransformStore, seed),
     selfTest: terrainTransformSelfTest(seed)
   };
 }
