@@ -16,10 +16,10 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
   const location = getLocationNames(seed, climate.x, climate.y);
   const terrain = classifyTerrain(seed, climate.x, climate.y);
   const slots = makePlaceholderSlots({
-    'world.seed': seed, 'world.tick': player.tick, 'world.time': '???',
+    'world.seed': seed, 'world.tick': player.tick, 'world.time': player.simulationTime,
     'player.position': `${player.position.x}, ${player.position.y}, z???`, 'player.area': location.area.name,
     'climate.elevation': climate.elevation, 'climate.temperature': climate.temperature, 'climate.moisture': climate.moisture, 'terrain.biome': climate.biome, 'terrain.landform': terrain.landform, 'terrain.waterform': terrain.waterform,
-    'system.socket': 'not plugged', 'system.database': 'not plugged', 'system.tickRate': '???',
+    'system.socket': 'not plugged', 'system.database': 'not plugged', 'system.tickRate': player.tickRate,
     'interaction.lastAction': player.lastAction ? player.lastAction.type : '???',
     'location.continent': location.continent.name,
     'location.territory': location.territory.name,
@@ -30,14 +30,14 @@ export function makeObserverSnapshot({ seed = 'atlas-root', x = 0, y = Math.floo
   return {
     observer: { version: '0.1.0', mode: 'development', shell: 'Atlas Observer', philosophy: 'sites-inside-browser-shell' },
     world: { width: WORLD_WIDTH, height: WORLD_HEIGHT, xWraps: true, yWraps: false },
-    player: { id: player.id, position: player.position, tick: player.tick, lastAction: player.lastAction, lastInspection: player.lastInspection },
+    player: { id: player.id, position: player.position, tick: player.tick, simulationTime: player.simulationTime, tickRate: player.tickRate, lastAction: player.lastAction, lastInspection: player.lastInspection },
     focus: { ...climate, terrain }, grid, slots, location,
     tile: { layer: 2, chunkSize: CHUNK_SIZE, chunkX, chunkY, origin: chunk.origin, tileCount: chunk.tiles.length, source: chunk.tiles[0]?.source || '???', status: tileRoot.passed ? 'PASS' : 'FAIL', checks: tileRoot.checks },
-    root: { layer: 1, name: 'Root Climate', status: root.passed ? 'PASS' : 'FAIL', checks: root.checks, samples: root.samples }, terrain: { layer: 4, status: 'PASS', signature: terrainTransformSignature(seed, climate.x, climate.y) }, cache: worldCacheStats(),
+    root: { layer: 1, name: 'Root Climate', status: root.passed ? 'PASS' : 'FAIL', checks: root.checks, samples: root.samples }, terrain: { layer: 4, status: 'PARTIAL', signature: terrainTransformSignature(seed, climate.x, climate.y) }, cache: worldCacheStats(),
     branches: [
       { layer: 2, name: 'Tile & chunk generation', status: 'PASS' },
       { layer: 3, name: 'Naming hierarchy', status: 'PARTIAL' },
-      { layer: 4, name: 'Terrain transform table', status: 'PASS' },
+      { layer: 4, name: 'Terrain transform table', status: 'PARTIAL' },
       { layer: 5, name: 'Interaction & Move system', status: 'PASS' },
       { layer: 6, name: 'Pokémon ECS', status: 'UNPLUGGED' },
       { layer: 7, name: 'Spawning & population', status: 'UNPLUGGED' },
