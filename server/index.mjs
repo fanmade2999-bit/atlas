@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeGameSnapshot, makeObserverSnapshot, makeRealtimeSnapshot } from './observer/snapshot.mjs';
 import { movePlayer, inspectPlayer } from './systems-state.mjs';
+import { prefetchChunks } from './root/tile.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, '../public');
@@ -34,7 +35,9 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/game/move') {
       const result = movePlayer({ playerId: url.searchParams.get('playerId') || 'local-player', seed: url.searchParams.get('seed') || 'atlas-root', x: Number(url.searchParams.get('x') || 0), y: Number(url.searchParams.get('y') || 10001500), direction: url.searchParams.get('direction') || '' });
       res.writeHead(result.result.ok ? 200 : 400, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
-      res.end(JSON.stringify(result)); return;
+      res.end(JSON.stringify(result));
+      if(result.result?.ok){const from=result.result.from,to=result.result.to;const oldChunkX=Math.floor(from.x/16),oldChunkY=Math.floor(from.y/16),newChunkX=Math.floor(to.x/16),newChunkY=Math.floor(to.y/16);if(oldChunkX!==newChunkX||oldChunkY!==newChunkY)setImmediate(()=>prefetchChunks(result.player.seed,newChunkX,newChunkY,1));}
+      return;
     }
     if (url.pathname === '/api/game/inspect') {
       const result = inspectPlayer({ playerId: url.searchParams.get('playerId') || 'local-player', seed: url.searchParams.get('seed') || 'atlas-root', x: Number(url.searchParams.get('x') || 0), y: Number(url.searchParams.get('y') || 10001500) });
