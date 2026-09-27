@@ -3,7 +3,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeGameSnapshot, makeObserverSnapshot, makeRealtimeSnapshot } from './observer/snapshot.mjs';
-import { movePlayer, inspectPlayer } from './systems-state.mjs';
+import { movePlayer, inspectPlayer, teleportPlayer } from './systems-state.mjs';
+import { normalizeCoordinates, sampleClimate } from './root/climate.mjs';
 import { prefetchChunks } from './root/tile.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -32,12 +33,31 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200,{ 'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*' });
       res.end(JSON.stringify(snapshot)); return;
     }
+    if (url.pathname === '/api/world-map') {
+      const seed = url.searchParams.get('seed') || 'atlas-root';
+      const center = normalizeCoordinates(Number(url.searchParams.get('x') || 0), Number(url.searchParams.get('y') || 10001500));
+      const zoom = Math.max(0, Math.min(4, Number(url.searchParams.get('zoom') || 0)));
+      const width = 25, height = 17, scales = [65536, 8192, 1024, 128, 16];
+      const scale = scales[zoom], cells = [];
+      const startX = center.x - Math.floor(width / 2) * scale, startY = center.y - Math.floor(height / 2) * scale;
+      for (let row = 0; row < height; row += 1) for (let col = 0; col < width; col += 1) {
+        const p = normalizeCoordinates(startX + col * scale, startY + row * scale), c = sampleClimate(seed, p.x, p.y);
+        cells.push({x:p.x,y:p.y,chunkX:Math.floor(p.x/16),chunkY:Math.floor(p.y/16),elevation:c.elevation,temperature:c.temperature,moisture:c.moisture,biome:c.biome});
+      }
+      res.writeHead(200,{ 'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*' });
+      res.end(JSON.stringify({seed,center,zoom,scale,width,height,cells})); return;
+    }
     if (url.pathname === '/api/game/move') {
       const result = movePlayer({ playerId: url.searchParams.get('playerId') || 'local-player', seed: url.searchParams.get('seed') || 'atlas-root', x: Number(url.searchParams.get('x') || 0), y: Number(url.searchParams.get('y') || 10001500), direction: url.searchParams.get('direction') || '' });
       res.writeHead(result.result.ok ? 200 : 400, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify(result));
       if(result.result?.ok){const from=result.result.from,to=result.result.to;const oldChunkX=Math.floor(from.x/16),oldChunkY=Math.floor(from.y/16),newChunkX=Math.floor(to.x/16),newChunkY=Math.floor(to.y/16);if(oldChunkX!==newChunkX||oldChunkY!==newChunkY)setImmediate(()=>prefetchChunks(result.player.seed,newChunkX,newChunkY,1));}
       return;
+    }
+    if (url.pathname === '/api/game/teleport') {
+      const result = teleportPlayer({playerId:url.searchParams.get('playerId')||'local-player',seed:url.searchParams.get('seed')||'atlas-root',x:Number(url.searchParams.get('x')||0),y:Number(url.searchParams.get('y')||10001500)});
+      res.writeHead(result.result.ok?200:400,{ 'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*' });
+      res.end(JSON.stringify(result)); return;
     }
     if (url.pathname === '/api/game/inspect') {
       const result = inspectPlayer({ playerId: url.searchParams.get('playerId') || 'local-player', seed: url.searchParams.get('seed') || 'atlas-root', x: Number(url.searchParams.get('x') || 0), y: Number(url.searchParams.get('y') || 10001500) });
