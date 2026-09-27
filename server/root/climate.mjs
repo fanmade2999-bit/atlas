@@ -130,7 +130,11 @@ export function sampleGrid(seed, centerX, centerY, radius = 4) {
   return { size, cells };
 }
 
+const rootSelfTestCache=new Map();
+
 export function rootSelfTest(seed = 'atlas-root') {
+  const cached=rootSelfTestCache.get(seed);
+  if(cached)return cached;
   const equator = sampleTemperature(seed, Math.floor(WORLD_WIDTH / 2), Math.floor(WORLD_HEIGHT / 2));
   const northPole = sampleTemperature(seed, 0, 0);
   const southPole = sampleTemperature(seed, 0, WORLD_HEIGHT - 1);
@@ -141,7 +145,9 @@ export function rootSelfTest(seed = 'atlas-root') {
     { id: 'latitude', ok: equator > northPole && equator > southPole, note: `equator ${equator.toFixed(3)} > poles ${northPole.toFixed(3)}, ${southPole.toFixed(3)}` },
     { id: 'x-wrap', ok: JSON.stringify(seamA) === JSON.stringify(seamB), note: 'x=0 matches x=W at the wrap seam' }
   ];
-  return { passed: checks.every((check) => check.ok), checks, samples: { equator, northPole, southPole } };
+  const result={ passed: checks.every((check) => check.ok), checks, samples: { equator, northPole, southPole } };
+  rootSelfTestCache.set(seed,result);
+  return result;
 }
 
 
