@@ -160,7 +160,7 @@ class AtlasScene extends PhaserLib.Scene{
       const center=this.cameraNow();
       const wx=Math.round(center.x+(sx-Math.floor(cols/2)));
       const wy=Math.round(center.y+(sy-Math.floor(rows/2)));
-      const fixture=(this.snapshot.testFixtures||[]).find(f=>{
+      const fixture=(this.snapshot.testFixtures||[]).find(f=>f.available&&f.testOnly===true&&{
         const fx=worldDelta(f.x,center.x,40075000)+Math.floor(cols/2);
         const fy=(f.y-center.y)+Math.floor(rows/2);
         return Math.round(fx)===sx&&Math.round(fy)===sy;
