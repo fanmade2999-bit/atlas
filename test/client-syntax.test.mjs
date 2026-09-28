@@ -33,4 +33,6 @@ test('browser clients parse as JavaScript', () => {
   assert.match(app, /holdDirection\('gamepad',gamepadDirection\)/);
   assert.match(phaser, /visualPlayer/);
   assert.match(phaser, /cameraTarget/);
+  assert.match(app, /await game\(false\)/);
+  assert.equal(/state\.gameSnapshot=null/.test(map), false);
 });
