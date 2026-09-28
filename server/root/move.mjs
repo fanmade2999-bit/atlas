@@ -25,6 +25,26 @@ export function movePosition(x, y, direction) {
     cappedY: delta[1] !== 0 && to.y !== from.y + delta[1] };
 }
 
+export function resolveMove(x, y, direction, seed = 'atlas-root', tileReader = getTile) {
+  const result = movePosition(x, y, direction);
+  if (!result.ok) return result;
+  const destinationTile = tileReader(seed, result.to.x, result.to.y);
+  if (!isTilePassable(destinationTile)) {
+    return {
+      ...result,
+      ok: false,
+      reason: 'blocked-tile',
+      tile: destinationTile,
+      passable: false
+    };
+  }
+  return {
+    ...result,
+    tile: destinationTile,
+    passable: true
+  };
+}
+
 export function inspectPosition(x, y, seed = 'atlas-root') {
   const position = normalizeCoordinates(x, y);
   const climate = sampleClimate(seed, position.x, position.y);
