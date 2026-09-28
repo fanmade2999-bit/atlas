@@ -118,7 +118,8 @@ export function getActiveTransform(store, seed, x, y) {
 function effectiveResult(tile, transform) {
   if (!transform) return { ...tile };
   const out = { ...tile };
-  for (const [field, value] of Object.entries(transform.result || {})) out[field] = clone(value);
+  const definition = getTransformDefinition(transform.transformId);
+  for (const [field, value] of Object.entries(definition?.result || {})) out[field] = clone(value);
   out.transform = {
     id: transform.transformId,
     appliedAt: transform.appliedAt,
