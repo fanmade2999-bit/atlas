@@ -4,11 +4,15 @@ import { makeGameSnapshot } from '../server/observer/snapshot.mjs';
 import { WORLD_HEIGHT, WORLD_WIDTH } from '../server/root/climate.mjs';
 
 test('game viewport reads deterministic root tiles', () => {
-  const a = makeGameSnapshot({ seed: 'game-test', x: 10, y: 20 });
-  const b = makeGameSnapshot({ seed: 'game-test', x: 10, y: 20 });
+  const a = makeGameSnapshot({ seed: 'game-stream-regression', x: 10, y: 20 });
+  const b = makeGameSnapshot({ seed: 'game-stream-regression', x: 10, y: 20 });
   assert.deepEqual(a.tiles, b.tiles);
   assert.deepEqual(a.center, b.center);
-  assert.deepEqual(a.stream, b.stream);
+  assert.notDeepEqual(a.stream, b.stream);
+  assert.deepEqual(a.stream.generated, ['0,0', '1,0', '0,1', '1,1']);
+  assert.deepEqual(a.stream.reused, []);
+  assert.deepEqual(b.stream.generated, []);
+  assert.deepEqual(b.stream.reused, ['0,0', '1,0', '0,1', '1,1']);
   assert.equal(a.tiles.length, 225);
   assert.equal(a.center.x, 10);
   assert.equal(a.center.y, 20);
@@ -39,6 +43,7 @@ test('inspect system reports normalized position without inventing terrain', () 
   assert.ok(result.terrain);
   assert.equal(typeof result.terrain.landform, 'string');
   assert.equal(typeof result.terrain.waterform, 'string');
+  assert.equal(typeof result.tile.passable, 'boolean');
 });
 
 test('game snapshot exposes persistent player state', () => {
@@ -64,38 +69,35 @@ test('teleport is explicit and normalizes destination coordinates', () => {
 
 
 test('game and map use the same deterministic world vocabulary', () => {
-  const a = makeGameSnapshot({ seed: 'linked-test', x: 1234, y: 5678 });
+  const a = makeGameSnapshot({ seed: 'linked-test', x: 1234, y: 5678, playerId: 'linked-world' });
   assert.equal(typeof a.center.x, 'number');
   assert.equal(typeof a.center.y, 'number');
-  assert.ok(a.tiles.some(t => t.biome === a.center.biome));
+  assert.ok(a.tiles.some(t => t.biome === a.focus.biome));
 });
 
 
 test('game snapshot carries an active Layer 4 transform to the graphical renderer', () => {
   const seed = 'l4-graphics-link';
-  const base = makeGameSnapshot({ seed, x: 0, y: 10001500, playerId: 'l4-graphics' });
-  const fixture = base.testFixtures.find(item => item.id === 'l4-fire-grass' && item.available);
-  assert.ok(fixture, 'expected a visible natural grass fixture for the fire transform');
-
-  const target = base.tiles.find(tile => tile.x === fixture.x && tile.y === fixture.y);
+  const base = makeGameSnapshot({ seed, x: 0, y: 17430000, playerId: 'l4-graphics' });
+  const target = base.tiles.find(tile => tile.dx === 0 && tile.dy === 0);
   assert.equal(target?.surface, 'grass');
 
   const applied = applyTileTransform({
     seed,
-    x: fixture.x,
-    y: fixture.y,
+    x: target.x,
+    y: target.y,
     moveType: 'fire',
     sourceEntityId: 'l4-graphics',
     recovery: { type: 'timer', durationMs: 10000 }
   });
   assert.equal(applied.ok, true);
 
-  const next = makeGameSnapshot({ seed, x: 0, y: 10001500, playerId: 'l4-graphics' });
-  const transformed = next.tiles.find(tile => tile.x === fixture.x && tile.y === fixture.y);
+  const next = makeGameSnapshot({ seed, x: 0, y: 17430000, playerId: 'l4-graphics' });
+  const transformed = next.tiles.find(tile => tile.x === target.x && tile.y === target.y);
   assert.equal(transformed?.surface, 'scorched-dirt');
   assert.equal(transformed?.transform?.id, 'fire-grass-scorch');
 
-  recoverTileTransform(seed, fixture.x, fixture.y, { tile: transformed, now: Date.now() + 10001 });
+  recoverTileTransform(seed, target.x, target.y, { tile: transformed, now: Date.now() + 10001 });
 });
 
 
@@ -115,4 +117,25 @@ test('Layer 4 test yard finds compatible natural targets without modifying terra
   assert.equal(snapshot.testFixtures.length, 5);
   assert.ok(snapshot.testFixtures.every(fixture => fixture.testOnly === true));
   assert.ok(snapshot.testFixtures.every(fixture => fixture.available === true || fixture.available === false));
+});
+
+
+test('changing a player world seed resets to the requested starting coordinates', () => {
+  const a = makeGameSnapshot({ seed: 'seed-a', x: 111, y: 222, playerId: 'seed-switch' });
+  const b = makeGameSnapshot({ seed: 'seed-b', x: 333, y: 444, playerId: 'seed-switch' });
+  assert.deepEqual(a.center, { x: 111, y: 222 });
+  assert.deepEqual(b.center, { x: 333, y: 444 });
+});
+
+
+test('game snapshot preview can target a non-persistent destination position', () => {
+  const snapshot = makeGameSnapshot({
+    seed: 'map-preview',
+    x: 10,
+    y: 20,
+    playerId: 'map-preview-player',
+    positionOverride: { x: 300, y: 400 }
+  });
+  assert.deepEqual(snapshot.center, { x: 300, y: 400 });
+  assert.deepEqual(snapshot.player.position, { x: 300, y: 400 });
 });

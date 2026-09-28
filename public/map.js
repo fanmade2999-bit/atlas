@@ -11,6 +11,20 @@ function biomeColor(b){
   const colors={Ocean:'#155fa3',Alpine:'#e4e9ed',Highlands:'#8d795e',Tundra:'#91b9bb','Cold Steppe':'#7d987e',Desert:'#d0ad5a','Tropical Forest':'#187c48',Wetland:'#3c8c73',Grassland:'#88a944','Temperate Forest':'#397540'};
   return colors[b]||'#65705c';
 }
+function surfaceColor(surface,waterform){
+  const w=waterform||'None';
+  const colors={
+    'water-deep':'#1e659c','water-shallow':'#5aaec5','water-lake':'#3d9bc2','water-river':'#55bdd0',
+    swamp:'#5d826c',sand:'#d7b86b',snow:'#e8eff0',tundra:'#9bb8af','cold-grass':'#849f73',
+    'wet-ground':'#71976f',grass:'#83aa52','rocky-grass':'#78915b',meadow:'#91af60',
+    'forest-floor':'#638b50','scorched-dirt':'#594b3a','stone-wall':'#777c80',
+    'water-pond':'#3d9bc2',ice:'#dceff5'
+  };
+  if(colors[surface])return colors[surface];
+  if(colors['water-'+String(w).toLowerCase()])return colors['water-'+String(w).toLowerCase()];
+  return biomeColor(surface);
+}
+
 function mapGlyph(c,zoom){
   if(zoom<4)return '';
   const water=c.waterform||'None';
@@ -23,11 +37,64 @@ function mapGlyph(c,zoom){
   return '·';
 }
 function layerColor(c,layer){
-  if(layer==='normal') return 'linear-gradient(135deg,'+biomeColor(c.biome)+','+biomeColor(c.biome)+'cc)';
+  if(layer==='normal'){
+    const base=surfaceColor(c.surface,c.waterform);
+    return 'linear-gradient(135deg,'+base+','+base+'cc)';
+  }
   if(layer==='elevation') return ramp(c.elevation,[[28,76,45],[110,150,65],[205,190,100],[150,105,65],[235,235,235]]);
   if(layer==='temperature') return ramp(c.temperature,[[42,75,170],[55,170,210],[110,205,125],[240,205,70],[235,75,45]]);
   return ramp(c.moisture,[[122,92,55],[178,150,78],[105,180,120],[45,150,205],[25,80,170]]);
 }
+function layerBaseColor(c,layer){
+  if(layer==='normal') return biomeColor(c.biome);
+  if(layer==='elevation') return '#6e9641';
+  if(layer==='temperature') return '#6ecf7d';
+  return '#69b478';
+}
+
+function formatScale(scale){
+  if(scale>=1000000)return (scale/1000000).toFixed(1)+'M';
+  if(scale>=1000)return Math.round(scale/1000)+'k';
+  return String(scale);
+}
+function wrappedDelta(value,origin){
+  let d=value-origin;
+  if(Math.abs(d)>WORLD_WIDTH/2)d+=d>0?-WORLD_WIDTH:WORLD_WIDTH;
+  return d;
+}
+function mapRegionLabel(zoom){
+  return ['WORLD','CONTINENTAL','REGIONAL','LOCAL','TERRAIN','TILE'][zoom]||'MAP';
+}
+function distanceTiles(x,y,px,py){
+  return Math.abs(wrappedDelta(x,px))+Math.abs(y-py);
+}
+
+function tileFeatureMarkup(cell,zoom){
+  if(zoom<5 || !Array.isArray(cell.details))return '';
+  const details=cell.details.slice(0,3);
+  return details.map(d=>{
+    const x=Math.round(clamp(Number(d.x)||.5,.05,.95)*100),y=Math.round(clamp(Number(d.y)||.5,.05,.95)*100);
+    const glyph={tree:'♟',shrub:'●',grass:'⌁',rock:'◆',flower:'✦',shore:'≈',dune:'⌒',snowcap:'▲'}[d.type]||'·';
+    return '<span class="map-feature map-feature-'+d.type+'" style="left:'+x+'%;top:'+y+'%">'+glyph+'</span>';
+  }).join('');
+}
+
+function mapLabelCandidates(cells,zoom){
+  if(zoom>=5)return [];
+  const byName=new Map();
+  for(let i=0;i<cells.length;i++){
+    const c=cells[i],label=c.label;
+    if(!label||!label.name)continue;
+    const key=label.tier+'|'+label.name;
+    if(!byName.has(key))byName.set(key,{...label,index:i,x:c.x,y:c.y});
+  }
+  return [...byName.values()].slice(0,14);
+}
+function labelPosition(index,width,height){
+  const col=index%width,row=Math.floor(index/width);
+  return {left:((col+.5)/width*100),top:((row+.5)/height*100)};
+}
+
 function ramp(value,stops){
   const x=clamp(Number(value)||0,0,1)*(stops.length-1),i=Math.min(stops.length-2,Math.floor(x)),f=x-i,a=stops[i],b=stops[i+1];
   const rgb=a.map((v,k)=>Math.round(v+(b[k]-v)*f)).join(',');
@@ -42,7 +109,8 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
     centerX:renderWorldMap.centerX??state.gameX,
     centerY:renderWorldMap.centerY??state.gameY,
     layer:renderWorldMap.layer??'normal',
-    data:null,target:null,drag:false,moved:false,startX:0,startY:0,startCenterX:0,startCenterY:0
+    data:null,target:null,preparedGame:null,preparedKey:null,preparedPromise:null,preparedController:null,
+    drag:false,moved:false,startX:0,startY:0,startCenterX:0,startCenterY:0
   };
   renderWorldMap.zoom=map.zoom;renderWorldMap.centerX=map.centerX;renderWorldMap.centerY=map.centerY;renderWorldMap.layer=map.layer;
 
@@ -53,38 +121,105 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
     renderWorldMap.centerX=map.centerX;renderWorldMap.centerY=map.centerY;draw();
   };
 
+  const prepareDestination=async target=>{
+    if(!target)return;
+    const key=state.seed+'|'+target.x+'|'+target.y;
+    if(map.preparedKey===key && map.preparedGame)return map.preparedGame;
+    map.preparedController?.abort();
+    const controller=new AbortController();
+    map.preparedController=controller;
+    map.preparedKey=key;
+    map.preparedGame=null;
+    const p=new URLSearchParams({
+      seed:state.seed,playerId:state.playerId,x:target.x,y:target.y,preview:'1'
+    });
+    map.preparedPromise=fetch('/api/game?'+p,{cache:'no-store',signal:controller.signal})
+      .then(async r=>{if(!r.ok)throw Error('Destination preview '+r.status);return r.json();})
+      .then(snapshot=>{
+        if(map.preparedKey===key)map.preparedGame=snapshot;
+        return snapshot;
+      })
+      .catch(error=>{
+        if(error.name!=='AbortError')console.warn(error);
+        return null;
+      });
+    return map.preparedPromise;
+  };
+
   const draw=()=>{
     const d=map.data;
     if(!d){
-      root.innerHTML=layout('World Map','big-picture navigation','<section class="card"><div class="muted small">Loading world map…</div></section>');
+      root.innerHTML=layout('World Map','navigation & exploration','<section class="card"><div class="muted small">Loading world map…</div></section>');
       fetchMap().catch(e=>root.innerHTML=layout('World Map','diagnostic','<section class="card"><div class="muted small">'+esc(e.message)+'</div></section>'));
       return;
     }
-    const layerButtons=['normal','elevation','moisture','temperature'];
+
+    const playerX=wrapX(state.gameX),playerY=capY(state.gameY);
+    const scale=d.scale;
+    const playerDx=wrappedDelta(playerX,d.center.x);
+    const playerDy=playerY-d.center.y;
+    const playerVisible=Math.abs(playerDx)<=((d.width-1)/2)*scale && Math.abs(playerDy)<=((d.height-1)/2)*scale;
+    const pxPct=50+(playerDx/(d.width*scale))*100;
+    const pyPct=50+(playerDy/(d.height*scale))*100;
+    const target=map.target;
+    const targetDx=target?wrappedDelta(target.x,d.center.x):0;
+    const targetDy=target?(target.y-d.center.y):0;
+    const targetVisible=!!target && Math.abs(targetDx)<=((d.width-1)/2)*scale && Math.abs(targetDy)<=((d.height-1)/2)*scale;
+    const txPct=target?50+(targetDx/(d.width*scale))*100:50;
+    const tyPct=target?50+(targetDy/(d.height*scale))*100:50;
+
+    const layerButtons=[['normal','TERRAIN'],['elevation','HEIGHT'],['moisture','MOISTURE'],['temperature','TEMP']];
     let cells='';
     for(let i=0;i<d.cells.length;i++){
-      const c=d.cells[i];
-      cells+='<div class="world-map-cell" data-index="'+i+'" style="background:'+layerColor(c,map.layer)+'" title="X '+c.x+' · Y '+c.y+' · '+esc(c.biome)+' · '+esc(c.landform||'???')+' · '+esc(c.waterform||'???')+'"><span class="map-glyph">'+mapGlyph(c,d.zoom)+'</span></div>';
+      const cell=d.cells[i];
+      const terrainInfo=(cell.landform||cell.waterform||cell.surface)?' · '+(cell.landform||'')+' · '+(cell.waterform||'')+(cell.surface?' · '+cell.surface:''):'';
+      cells+='<div class="world-map-cell" data-index="'+i+'" style="background-color:'+layerBaseColor(cell,map.layer)+';background-image:'+layerColor(cell,map.layer)+'" title="X '+cell.x+' · Y '+cell.y+' · '+esc(cell.biome)+' '+esc(terrainInfo)+'"><span class="map-glyph">'+mapGlyph(cell,d.zoom)+'</span>'+tileFeatureMarkup(cell,d.zoom)+'</div>';
     }
-    const target=map.target;
-    root.innerHTML=layout('World Map','big-picture navigation',
+    const labels=mapLabelCandidates(d.cells,d.zoom);
+    const labelMarkup=labels.map(label=>{
+      const p=labelPosition(label.index,d.width,d.height);
+      return '<div class="map-region-label map-region-'+label.tier+'" style="left:'+p.left.toFixed(2)+'%;top:'+p.top.toFixed(2)+'%" title="'+esc(label.name)+'">'+esc(label.name)+'</div>';
+    }).join('');
+
+    const currentTile=(d.zoom>=5&&target&&target.x===playerX&&target.y===playerY)?target:null;
+    const targetDistance=target?distanceTiles(target.x,target.y,playerX,playerY):null;
+    const targetTravel=target&&targetDistance!=null?(targetDistance===0?'HERE':targetDistance.toLocaleString()+' tiles away'):'';
+
+    root.innerHTML=layout('World Map','navigation & exploration',
       '<section class="card world-map-card">'+
+      '<div class="map-head">'+
+      '<div><div class="map-kicker">'+mapRegionLabel(map.zoom)+'</div><h2>Explore the world</h2><span>Pan the map, inspect a location, then choose what to do.</span></div>'+
+      '<button class="map-tool map-center-button" id="map-center-player">CENTER ON ME</button>'+
+      '</div>'+
       '<div class="map-toolbar">'+
-      '<div class="map-toolbar-group"><button class="map-tool" id="map-zoom-out">−</button><strong class="small">ZOOM '+(map.zoom+1)+'/6</strong><button class="map-tool" id="map-zoom-in">+</button></div>'+
-      '<div class="map-toolbar-group">'+layerButtons.map(x=>'<button class="map-tool '+(map.layer===x?'active':'')+'" data-map-layer="'+x+'">'+x.toUpperCase()+'</button>').join('')+'</div></div>'+
-      '<div id="world-map-viewport" class="world-map-viewport"><div class="world-map-grid">'+cells+'</div><div class="map-center-cross"></div><div class="map-you">◆</div></div>'+
-      '<div class="map-hud"><div><strong>X '+d.center.x+' · Y '+d.center.y+' · CHUNK '+Math.floor(d.center.x/16)+','+Math.floor(d.center.y/16)+'</strong><span>1 cell = '+d.scale.toLocaleString()+' tile'+(d.scale===1?'':'s')+' · swipe to pan · tap to select</span></div><span>YOU ARE HERE</span></div>'+
-      (target?'<div class="map-target-card"><div class="target-coords">TARGET · X '+target.x+' · Y '+target.y+'</div><div class="target-meta"><span>Chunk '+Math.floor(target.x/16)+','+Math.floor(target.y/16)+'</span><span>'+esc(target.biome||'???')+'</span><span>'+esc(target.terrain?.waterform||'???')+'</span></div><div class="map-toolbar-group"><button class="map-tool" id="map-clear-target">CLEAR</button><button class="map-tool active" id="map-teleport">TELEPORT HERE</button></div></div>':'')+
-      '<div class="map-legend"><span><i style="background:#155fa3"></i>water/low</span><span><i style="background:#397540"></i>forest</span><span><i style="background:#d0ad5a"></i>dry</span><span><i style="background:#e4e9ed"></i>high/cold</span></div>'+
-      '<div class="map-help">This is a navigation map, not the playable screen. Tap a location, review its exact coordinates and terrain, then confirm before Atlas teleports the player.</div>'+
+      '<div class="map-toolbar-group"><button class="map-tool" id="map-zoom-out">−</button><strong class="map-zoom-label">'+(map.zoom+1)+'/6 · '+formatScale(scale)+'</strong><button class="map-tool" id="map-zoom-in">+</button></div>'+
+      '<div class="map-toolbar-group">'+layerButtons.map(x=>'<button class="map-tool '+(map.layer===x[0]?'active':'')+'" data-map-layer="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
+      '</div>'+
+      '<div id="world-map-viewport" class="world-map-viewport"><div class="world-map-stage"><div class="world-map-grid">'+cells+'</div><div class="world-map-labels">'+labelMarkup+'</div>'+
+      (playerVisible?'<div class="map-player-marker" style="left:'+clamp(pxPct,2,98)+'%;top:'+clamp(pyPct,2,98)+'%"><span>◆</span></div>':'<div class="map-offscreen-note">YOU ARE OFF SCREEN</div>')+
+      (targetVisible?'<div class="map-target-marker" style="left:'+clamp(txPct,2,98)+'%;top:'+clamp(tyPct,2,98)+'%"><span>⌖</span></div>':'')+
+      '<div class="map-center-cross"></div></div>'+
+      '<div class="map-map-note">DRAG TO EXPLORE · SCROLL OR PINCH TO ZOOM</div>'+
+      '</div>'+
+      '<div class="map-coordinates"><div><span>CENTER</span><strong>X '+d.center.x+' · Y '+d.center.y+'</strong></div><div><span>YOU</span><strong>X '+playerX+' · Y '+playerY+'</strong></div><div><span>SCALE</span><strong>1 cell = '+formatScale(scale)+' tile'+(scale===1?'':'s')+'</strong></div></div>'+
+      (target?'<div class="map-target-card">'+
+        '<div class="map-target-head"><div><div class="map-kicker">SELECTED DESTINATION</div><strong>X '+target.x+' · Y '+target.y+'</strong></div><button class="map-tool" id="map-clear-target">CLEAR</button></div>'+
+        '<div class="target-meta"><span>'+esc(target.biome||'???')+'</span><span>'+esc(target.terrain?.landform||'???')+'</span><span>'+esc(target.terrain?.waterform||'???')+'</span><span class="'+(target.tile?.passable===false?'target-blocked':'')+'">'+(target.tile?.passable===false?'NON-PASSABLE':'PASSABLE / UNKNOWN')+'</span></div>'+
+        '<div class="target-stats"><div><span>DISTANCE</span><strong>'+esc(targetTravel)+'</strong></div><div><span>ELEVATION</span><strong>'+Number(target.climate?.elevation??0).toFixed(3)+'</strong></div><div><span>MOISTURE</span><strong>'+Number(target.climate?.moisture??0).toFixed(3)+'</strong></div></div>'+
+        '<div class="map-toolbar-group target-actions"><button class="map-tool" id="map-recenter-target">SHOW TARGET</button><button class="map-tool active" id="map-teleport">TELEPORT HERE</button></div>'+
+      '</div>':'<div class="map-empty-card"><strong>Tap a location</strong><span>Atlas will inspect the exact tile before you decide whether to teleport.</span></div>')+
+      '<div class="map-legend">'+
+        '<span><i style="background:#88a944"></i>land</span><span><i style="background:#155fa3"></i>water</span><span><i style="background:#d0ad5a"></i>dry</span><span><i style="background:#e4e9ed"></i>high</span><span><b>◆</b> you</span><span><b>⌖</b> target</span>'+
+      '</div>'+
+      '<div class="map-help"><b>TIP</b> Zoom in to TILE view for exact terrain. The map is for finding places; the game screen is where you explore them.</div>'+
       '</section>'
     );
     bind();
   };
 
   const bind=()=>{
-    const v=root.querySelector('#world-map-viewport'),grid=root.querySelector('.world-map-grid');
-    if(!v)return;
+    const v=root.querySelector('#world-map-viewport'),grid=root.querySelector('.world-map-grid'),stage=root.querySelector('.world-map-stage');
+    if(!v||!stage)return;
     const begin=e=>{
       map.drag=true;map.moved=false;map.startX=e.clientX;map.startY=e.clientY;map.startCenterX=map.centerX;map.startCenterY=map.centerY;v.classList.add('dragging');v.setPointerCapture?.(e.pointerId);
     };
@@ -95,12 +230,12 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
       const scale=map.data.scale,rect=v.getBoundingClientRect();
       map.centerX=wrapX(map.startCenterX-Math.round(dx/Math.max(1,rect.width)*25*scale));
       map.centerY=capY(map.startCenterY-Math.round(dy/Math.max(1,rect.height)*17*scale));
-      grid.style.transform='translate('+dx+'px,'+dy+'px)';
+      stage.style.transform='translate('+dx+'px,'+dy+'px)';
       const h=root.querySelector('.map-hud strong');if(h)h.textContent='X '+map.centerX+' · Y '+map.centerY+' · CHUNK '+Math.floor(map.centerX/16)+','+Math.floor(map.centerY/16);
     };
     const end=async e=>{
       if(!map.drag)return;
-      map.drag=false;v.classList.remove('dragging');grid.style.transform='';
+      map.drag=false;v.classList.remove('dragging');
       if(map.moved){renderWorldMap.centerX=map.centerX;renderWorldMap.centerY=map.centerY;fetchMap().catch(()=>{});return;}
       const rect=v.getBoundingClientRect();
       const fx=clamp((e.clientX-rect.left)/rect.width,0,1),fy=clamp((e.clientY-rect.top)/rect.height,0,1);
@@ -109,14 +244,36 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
       const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x,y});
       try{
         const r=await fetch('/api/game/inspect?'+p,{cache:'no-store'});if(!r.ok)throw Error('Inspect API '+r.status);
-        const z=await r.json();map.target={x,y,biome:z.inspection.climate.biome,terrain:z.inspection.terrain,climate:z.inspection.climate};draw();
+        const z=await r.json();
+        map.target={x,y,biome:z.inspection.climate.biome,terrain:z.inspection.terrain,climate:z.inspection.climate,tile:z.inspection.tile||null};
+        draw();
+        prepareDestination(map.target);
       }catch(err){console.warn(err);}
     };
-    v.addEventListener('pointerdown',begin);v.addEventListener('pointermove',move);v.addEventListener('pointerup',end);v.addEventListener('pointercancel',end);
+    v.addEventListener('wheel',e=>{
+      e.preventDefault();
+      const next=map.zoom+(e.deltaY<0?1:-1);
+      const bounded=Math.max(0,Math.min(SCALES.length-1,next));
+      if(bounded===map.zoom)return;
+      const rect=v.getBoundingClientRect();
+      const fx=clamp((e.clientX-rect.left)/rect.width,0,1),fy=clamp((e.clientY-rect.top)/rect.height,0,1);
+      const scale=map.data.scale;
+      const anchorX=wrapX(map.centerX+Math.round((fx-.5)*25*scale));
+      const anchorY=capY(map.centerY+Math.round((fy-.5)*17*scale));
+      map.zoom=bounded;renderWorldMap.zoom=bounded;
+      const nextScale=SCALES[bounded];
+      map.centerX=wrapX(anchorX-Math.round((fx-.5)*25*nextScale));
+      map.centerY=capY(anchorY-Math.round((fy-.5)*17*nextScale));
+      renderWorldMap.centerX=map.centerX;renderWorldMap.centerY=map.centerY;
+      fetchMap().catch(()=>{});
+    },{passive:false});
+    v.addEventListener('pointerdown',begin);v.addEventListener('pointermove',move);v.addEventListener('pointerup',end);v.addEventListener('pointercancel',end);v.addEventListener('lostpointercapture',end);
     root.querySelector('#map-zoom-out').onclick=()=>{map.zoom=Math.max(0,map.zoom-1);renderWorldMap.zoom=map.zoom;fetchMap().catch(()=>{})};
     root.querySelector('#map-zoom-in').onclick=()=>{map.zoom=Math.min(SCALES.length-1,map.zoom+1);renderWorldMap.zoom=map.zoom;fetchMap().catch(()=>{})};
     root.querySelectorAll('[data-map-layer]').forEach(b=>b.onclick=()=>{map.layer=b.dataset.mapLayer;renderWorldMap.layer=map.layer;draw()});
     root.querySelector('#map-clear-target')?.addEventListener('click',()=>{map.target=null;draw()});
+    root.querySelector('#map-center-player')?.addEventListener('click',()=>{map.centerX=playerX;map.centerY=playerY;renderWorldMap.centerX=playerX;renderWorldMap.centerY=playerY;fetchMap().catch(()=>{})});
+    root.querySelector('#map-recenter-target')?.addEventListener('click',()=>{if(!map.target)return;map.centerX=map.target.x;map.centerY=map.target.y;renderWorldMap.centerX=map.centerX;renderWorldMap.centerY=map.centerY;fetchMap().catch(()=>{})});
     root.querySelector('#map-teleport')?.addEventListener('click',()=>confirmTeleport(map.target));
   };
 
@@ -146,8 +303,12 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
       try{
         const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:target.x,y:target.y}),r=await fetch('/api/game/teleport?'+p);
         if(!r.ok)throw Error('Teleport API '+r.status);
-        const z=await r.json();state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;state.gameSnapshot=null;close();
-        if(onTeleported)await onTeleported(z.player);
+        const z=await r.json();
+        let prepared=map.preparedGame;
+        if(!prepared && map.preparedKey===state.seed+'|'+target.x+'|'+target.y && map.preparedPromise)prepared=await map.preparedPromise;
+        state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;
+        close();
+        if(onTeleported)await onTeleported(z.player,target,prepared||null);
       }catch(e){ok.disabled=false;ok.textContent='TELEPORT';console.warn(e);}
     };
   };

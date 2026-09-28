@@ -852,6 +852,93 @@ input{
   border:0;
   border-radius:1px;
 }
+.world-map-stage{
+  position:absolute;
+  inset:0;
+  will-change:transform;
+}
+.map-map-note{
+  position:absolute;
+  left:50%;
+  bottom:5px;
+  z-index:12;
+  transform:translateX(-50%);
+  padding:3px 6px;
+  border:1px solid #ffffff1e;
+  border-radius:6px;
+  background:#06100de6;
+  color:#b4c2b7;
+  font:750 6px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  pointer-events:none;
+  white-space:nowrap;
+}
+.map-feature{
+  position:absolute;
+  z-index:3;
+  transform:translate(-50%,-50%);
+  font-size:clamp(5px,1.1vw,10px);
+  line-height:1;
+  color:#eff7e9;
+  text-shadow:0 1px 2px #000c;
+  pointer-events:none;
+}
+.map-feature-tree{color:#214e2d}
+.map-feature-shrub{color:#42763a}
+.map-feature-grass{color:#b8d06f}
+.map-feature-rock{color:#d3d4cf}
+.map-feature-flower{color:#f3c2d7}
+.map-feature-shore{color:#e1f5f4}
+.map-feature-dune{color:#f4d48b}
+.map-feature-snowcap{color:#fff}
+
+.world-map-labels{
+  position:absolute;
+  inset:5px;
+  z-index:4;
+  pointer-events:none;
+}
+.map-region-label{
+  position:absolute;
+  transform:translate(-50%,-50%);
+  max-width:34%;
+  padding:3px 5px;
+  border:1px solid #ffffff2e;
+  border-radius:5px;
+  background:#07100bd9;
+  color:#eef3e8;
+  font-size:7px;
+  font-weight:850;
+  line-height:1.15;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow:0 2px 6px #0008;
+  text-shadow:0 1px 2px #000;
+}
+.map-region-continent{
+  max-width:42%;
+  padding:5px 8px;
+  color:#ffffff;
+  font-size:10px;
+  letter-spacing:.04em;
+  background:#09150ee8;
+}
+.map-region-territory{
+  max-width:38%;
+  font-size:8px;
+}
+.map-region-region{
+  max-width:34%;
+  font-size:7px;
+}
+.map-region-tract,.map-region-area{
+  max-width:30%;
+  padding:2px 4px;
+  font-size:6px;
+  background:#07100bc4;
+}
+
 .map-center-cross{
   position:absolute;
   left:50%;
@@ -931,6 +1018,185 @@ input{
   margin-right:2px;
   border-radius:2px;
   vertical-align:-1px;
+}
+
+.map-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:9px;
+  padding-bottom:2px;
+}
+.map-head h2{margin:2px 0 3px;font-size:18px;letter-spacing:-.02em}
+.map-head span{display:block;color:var(--muted);font-size:8px;line-height:1.45;max-width:340px}
+.map-kicker{
+  color:var(--accent);
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+.map-center-button{flex:none}
+.map-zoom-label{
+  min-width:56px;
+  text-align:center;
+  font:800 8px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.world-map-viewport{
+  aspect-ratio:25/17;
+  height:auto;
+  min-height:220px;
+  max-height:430px;
+  background:#0a1110;
+  border-color:#26362f;
+  box-shadow:inset 0 0 0 1px #0a0d0c;
+}
+.world-map-grid{
+  inset:5px;
+  gap:0;
+  border:1px solid #1b2924;
+}
+.world-map-cell{
+  border-right:1px solid #ffffff0b;
+  border-bottom:1px solid #00000018;
+}
+.world-map-cell:nth-child(25n){border-right:0}
+.map-center-cross{
+  width:18px;
+  height:18px;
+  margin:-9px;
+  border:1px dashed #ffffff55;
+  border-radius:50%;
+}
+.map-player-marker,.map-target-marker{
+  position:absolute;
+  z-index:9;
+  width:22px;
+  height:22px;
+  margin:-11px;
+  display:grid;
+  place-items:center;
+  pointer-events:none;
+  border-radius:50%;
+  box-shadow:0 2px 8px #0009;
+}
+.map-player-marker{
+  background:#f0c84a;
+  color:#14171a;
+  border:2px solid #15181c;
+}
+.map-player-marker span{font-size:11px;font-weight:900}
+.map-target-marker{
+  width:24px;
+  height:24px;
+  margin:-12px;
+  background:#f4f7f2;
+  color:#161b20;
+  border:2px solid #6b7fff;
+}
+.map-target-marker span{font-size:15px;font-weight:900}
+.map-offscreen-note{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  z-index:8;
+  padding:5px 7px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:#10161dcc;
+  color:var(--muted);
+  font:800 7px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  pointer-events:none;
+}
+.map-coordinates{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:5px;
+}
+.map-coordinates>div{
+  min-width:0;
+  padding:7px 8px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface-2);
+}
+.map-coordinates span,.target-stats span{
+  display:block;
+  color:var(--muted);
+  font-size:6px;
+  font-weight:850;
+  letter-spacing:.08em;
+}
+.map-coordinates strong{
+  display:block;
+  margin-top:3px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font:800 8px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.map-target-card{gap:8px}
+.map-target-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+}
+.map-target-head>div{min-width:0}
+.map-target-head>div>strong{
+  display:block;
+  margin-top:2px;
+  font:850 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.target-meta span{
+  padding:3px 5px;
+  border-radius:5px;
+  background:var(--surface-2);
+}
+.target-meta .target-blocked{
+  color:#ffb8b8;
+  background:#3a1f25;
+}
+.target-stats{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:5px;
+}
+.target-stats>div{
+  padding:6px 7px;
+  border-radius:7px;
+  background:#0c1116;
+}
+.target-stats strong{
+  display:block;
+  margin-top:3px;
+  font-size:8px;
+}
+.target-actions{justify-content:flex-end}
+.map-empty-card{
+  display:grid;
+  gap:2px;
+  padding:8px;
+  border:1px dashed var(--border);
+  border-radius:9px;
+  color:var(--muted);
+}
+.map-empty-card strong{color:var(--text);font-size:9px}
+.map-empty-card span{font-size:7px;line-height:1.45}
+.map-help{
+  padding-top:1px;
+  font-size:7px;
+  line-height:1.45;
+}
+.map-help b{color:var(--accent)}
+@media(max-width:699px){
+  .map-head h2{font-size:15px}
+  .map-head span{max-width:230px}
+  .map-center-button{font-size:8px;padding:5px 6px}
+  .world-map-viewport{min-height:190px}
+  .map-coordinates strong{font-size:7px}
+  .target-stats strong{font-size:7px}
 }
 
 /* Map modal */

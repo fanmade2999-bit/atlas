@@ -12,56 +12,178 @@ function lerp(a,b,t){return Math.round(a+(b-a)*t)}
 function rgb(hex){return {r:(hex>>16)&255,g:(hex>>8)&255,b:hex&255}}
 function shade(hex,f){const c=rgb(hex);return (lerp(c.r,255,f)<<16)|(lerp(c.g,255,f)<<8)|lerp(c.b,255,f)}
 
+function surfaceColor(t){
+  const s=t.surface||t.detail?.surface||'';
+  const e=clamp(Number(t.elevation)||0);
+  const palette={
+    'water-deep':0x246fa8,'water-shallow':0x4aa7bd,'water-lake':0x358fbd,'water-river':0x43a9c7,
+    swamp:0x557f68,sand:0xd7b86b,snow:0xdce8e8,tundra:0x9eb8ad,'cold-grass':0x829d72,
+    'wet-ground':0x6f9b70,grass:0x7da64f,'rocky-grass':0x778f58,meadow:0x8cae5d,
+    'forest-floor':0x668b4c,'scorched-dirt':0x514235,'stone-wall':0x72777b,'water-pond':0x358fbd,ice:0xdceff5
+  };
+  let base=palette[s]||0x788d5a;
+  if((t.waterform||'None')!=='None' && !palette[s]) base=0x358fbd;
+  const shadeFactor=s.startsWith('water-') ? 0 : (e-.5)*.16;
+  if(shadeFactor<0) base=shade(base,-shadeFactor);
+  else if(shadeFactor>0) base=shade(base,shadeFactor);
+  return base;
+}
 function tileColor(t,mode){
   const e=clamp(Number(t.elevation)||0),m=clamp(Number(t.moisture)||0),temp=clamp(Number(t.temperature)||0);
-  const water=t.waterform||t.hydrology?.waterform||'None';
-  const biome=t.biome||'???',land=t.landform||'Plains';
-  const surface=t.surface||t.detail?.surface||'';
-  if(mode==='normal'&&surface==='scorched-dirt')return 0x514235;
-  if(mode==='normal'&&surface==='stone-wall')return 0x72777b;
-  if(mode==='normal'&&surface==='water-pond')return 0x258ac2;
-  if(mode==='normal'&&surface==='ice')return 0xdceff5;
+  const water=t.waterform||t.hydrology?.waterform||'None',biome=t.biome||'???',land=t.landform||'Plains';
+  if(mode==='normal')return surfaceColor(t);
   if(mode==='elevation'){
-    const stops=[0x1c4c2d,0x6e9641,0xcdbf64,0x966941,0xebebeb],p=e*(stops.length-1),i=Math.min(stops.length-2,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
+    const stops=[0x315b39,0x71934b,0xc8b86b,0x9a7449,0xe7e9e5],p=e*(stops.length-1),i=Math.min(stops.length-2,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
     return (lerp(a.r,b.r,f)<<16)|(lerp(a.g,b.g,f)<<8)|lerp(a.b,b.b,f);
   }
   if(mode==='temperature'){
-    const stops=[0x2a4baa,0x37aad2,0x6ecf7d,0xf0cd46,0xeb4b2d],p=temp*4,i=Math.min(3,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
+    const stops=[0x3554a5,0x3e9fc1,0x72c778,0xe0c957,0xd9533d],p=temp*4,i=Math.min(3,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
     return (lerp(a.r,b.r,f)<<16)|(lerp(a.g,b.g,f)<<8)|lerp(a.b,b.b,f);
   }
   if(mode==='moisture'){
-    const stops=[0x7a5c37,0xb2964e,0x69b478,0x2d96cd,0x1950aa],p=m*4,i=Math.min(3,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
+    const stops=[0x87633e,0xb39551,0x70ae76,0x4298bc,0x2864a5],p=m*4,i=Math.min(3,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
     return (lerp(a.r,b.r,f)<<16)|(lerp(a.g,b.g,f)<<8)|lerp(a.b,b.b,f);
   }
   if(mode==='biome')return BIOME_COLORS[biome]||0x68737d;
   if(mode==='landform')return LAND_COLORS[land]||0x68737d;
   if(mode==='waterform')return WATER_COLORS[water]||0x71804b;
-  if(WATER_COLORS[water])return WATER_COLORS[water];
-  return BIOME_COLORS[biome]||0x65705c;
+  return surfaceColor(t);
+}
+
+function rotatePoint(px,py,angle,cx=.5,cy=.5){
+  const dx=px-cx,dy=py-cy,rad=angle*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
+  return {x:cx+dx*cos-dy*sin,y:cy+dx*sin+dy*cos};
+}
+function drawTextureMark(g,x,y,size,texture,index,base){
+  const tone=(texture?.tone??0)-1,variant=texture?.variant??0,angle=texture?.orientation??0;
+  const patterns=[
+    [[.16,.25,.34,.07],[.62,.18,.18,.05],[.45,.72,.28,.06],[.80,.58,.10,.05]],
+    [[.18,.18,.09,.09],[.52,.36,.34,.07],[.27,.76,.22,.05],[.72,.80,.12,.04]],
+    [[.08,.46,.30,.06],[.40,.16,.10,.10],[.70,.34,.22,.05],[.62,.74,.28,.05]],
+    [[.24,.30,.24,.05],[.70,.16,.08,.10],[.46,.58,.34,.05],[.16,.82,.14,.04]]
+  ][variant%4];
+  const color=rgb(base);
+  const mark=Math.max(1,Math.min(255,color.r+tone*9))<<16 | Math.max(1,Math.min(255,color.g+tone*9))<<8 | Math.max(1,Math.min(255,color.b+tone*9));
+  g.lineStyle(Math.max(1,size*.014),mark,.16);
+  patterns.forEach((q,k)=>{
+    const a=rotatePoint(q[0],q[1],angle),b=rotatePoint(q[0]+q[2],q[1]+(k%2?.02:-.02),angle);
+    g.lineBetween(x+a.x*size,y+a.y*size,x+b.x*size,y+b.y*size);
+  });
+}
+function drawTileTexture(g,t,x,y,size,mode){
+  if(mode!=='normal')return;
+  const texture=t.texture;
+  const base=tileColor(t,mode);
+  drawTextureMark(g,x,y,size,texture,0,base);
+  const local=t.detail?.local;
+  if(local){
+    const strength=.04+local.relief*.08;
+    g.fillStyle(0x101a12,strength);
+    g.fillRect(x+size*(.06+local.clearing*.08),y+size*(.72-local.coverage*.12),size*.20,size*.07);
+    g.fillStyle(0xffffff,.018+local.roughness*.045);
+    g.fillRect(x+size*.58,y+size*(.10+local.relief*.30),size*.22,size*.05);
+  }
+}
+
+const TERRAIN_ROWS={
+  grass:0,'forest-floor':1,dirt:2,sand:3,'rocky-grass':4,snow:5,
+  'water-shallow':6,'water-deep':7,'wet-ground':8,stone:9
+};
+const NATURE_TREE_FRAMES=[
+  {x:0,y:0,w:54,h:50},{x:58,y:0,w:60,h:48},{x:121,y:0,w:59,h:48},
+  {x:0,y:51,w:52,h:45},{x:54,y:51,w:64,h:47},{x:121,y:52,w:61,h:44}
+];
+function assetSurfaceFamily(t){
+  const s=t.surface||t.detail?.surface||'grass';
+  if(s==='water-lake'||s==='water-river'||s==='water-pond'||s==='ice')return 'water-deep';
+  if(s==='swamp')return 'wet-ground';
+  if(s==='tundra'||s==='cold-grass')return 'snow';
+  if(s==='meadow')return 'grass';
+  if(s==='stone-wall')return 'stone';
+  if(s==='scorched-dirt')return 'dirt';
+  return TERRAIN_ROWS[s]!=null?s:'grass';
+}
+function terrainAssetFrame(t){
+  const row=TERRAIN_ROWS[assetSurfaceFamily(t)]??0;
+  const tex=t.texture||{};
+  return row*8+(((tex.variant??0)*2+(tex.tone??0)+(Number(tex.pattern)||0))%8);
+}
+function useAssetTile(scene,t,x,y,size,mode){
+  if(mode!=='normal'||!scene.textures.exists('atlas-terrain'))return false;
+  if(!scene.tileSprites)scene.tileSprites=[];
+  const idx=scene.tileSpriteCursor++;
+  let sprite=scene.tileSprites[idx];
+  const water=/^water-/.test(t.surface||'')||['water-pond','ice'].includes(t.surface||'');
+  const key=water&&scene.textures.exists('atlas-water')?'atlas-water':'atlas-terrain';
+  const frame=key==='atlas-water'
+    ? Number(t.texture?.pattern||0)%16
+    : terrainAssetFrame(t);
+  if(!sprite){
+    sprite=scene.add.image(0,0,key,frame).setOrigin(.5);
+    sprite.setDepth(-10);
+    scene.tileSprites[idx]=sprite;
+  }else sprite.setTexture(key,frame);
+  sprite.setPosition(x+size*.5,y+size*.5);
+  sprite.setDisplaySize(size+1,size+1);
+  sprite.setRotation(((t.texture?.orientation||0)*Math.PI)/180);
+  sprite.setVisible(true);
+  return true;
+}
+function hideUnusedTileSprites(scene){
+  if(!scene.tileSprites)return;
+  for(let i=scene.tileSpriteCursor;i<scene.tileSprites.length;i++)scene.tileSprites[i].setVisible(false);
+}
+function useNatureTree(scene,d,x,y,size){
+  if(!scene.textures.exists('atlas-nature'))return false;
+  const idx=(d.variant||0)%NATURE_TREE_FRAMES.length;
+  const f=NATURE_TREE_FRAMES[idx];
+  if(!scene.natureSprites)scene.natureSprites=[];
+  const slot=scene.natureSpriteCursor++;
+  let sprite=scene.natureSprites[slot];
+  if(!sprite){
+    sprite=scene.add.image(0,0,'atlas-nature').setOrigin(.5,1);
+    sprite.setDepth(2);
+    scene.natureSprites[slot]=sprite;
+  }
+  sprite.setCrop(f.x,f.y,f.w,f.h);
+  sprite.setPosition(x,y+size*.18);
+  sprite.setDisplaySize(Math.max(size*.7,f.w/16*size*.72),Math.max(size*.7,f.h/16*size*.72));
+  sprite.setVisible(true);
+  return true;
+}
+function hideUnusedNatureSprites(scene){
+  if(!scene.natureSprites)return;
+  for(let i=scene.natureSpriteCursor;i<scene.natureSprites.length;i++)scene.natureSprites[i].setVisible(false);
 }
 
 function detailColor(type){
-  return {tree:0x163f1b,shrub:0x397c39,grass:0xd6e86d,rock:0x9ba19d,flower:0xf0d5e8,shore:0xd9f6ff,dune:0xf0d08a,snowcap:0xffffff}[type]||0xffffff;
+  return {tree:0x285d2e,shrub:0x4f8239,grass:0xb9cb62,rock:0x7b8584,flower:0xe9b7d4,shore:0xd9d39a,dune:0xe7c67d,snowcap:0xf8fbff}[type]||0xffffff;
 }
-function drawDetail(g,d,ox,oy,size){
-  const x=ox+d.x*size,y=oy+d.y*size,s=size*(d.size||.5),c=detailColor(d.type);
-  g.fillStyle(c,1);g.lineStyle(Math.max(1,size*.025),0x102010,.45);
+function drawDetail(scene,d,ox,oy,size){
+  const g=scene.g,x=ox+d.x*size,y=oy+d.y*size,s=size*(d.size||.5),c=detailColor(d.type);
+  if(d.type==='tree'&&useNatureTree(scene,d,x,y,size))return;
+  g.fillStyle(c,1);g.lineStyle(Math.max(1,size*.018),0x1a2119,.45);
   if(d.type==='tree'){
-    g.fillRect(x-s*.08,y+s*.15,s*.16,s*.42);
-    g.fillTriangle(x-s*.48,y+s*.20,x,y-s*.58,x+s*.48,y+s*.20);
-    g.fillTriangle(x-s*.36,y-s*.02,x,y-s*.68,x+s*.36,y-s*.02);
+    const trunk=Math.max(1,s*.11);
+    g.fillStyle(0x5a4329,1);g.fillRect(x-trunk*.5,y+s*.05,trunk,s*.42);
+    g.fillStyle(c,1);
+    g.fillTriangle(x-s*.40,y+s*.17,x,y-s*.50,x+s*.40,y+s*.17);
+    g.fillTriangle(x-s*.30,y-s*.05,x,y-s*.60,x+s*.30,y-s*.05);
+    g.fillTriangle(x-s*.22,y-s*.22,x,y-s*.67,x+s*.22,y-s*.22);
   }else if(d.type==='shrub'){
-    g.fillCircle(x-s*.18,y+s*.08,s*.24);g.fillCircle(x+s*.15,y,s*.26);g.fillCircle(x,y-s*.12,s*.23);
+    g.fillCircle(x-s*.20,y+s*.08,s*.22);g.fillCircle(x+s*.14,y,s*.25);g.fillCircle(x,y-s*.10,s*.21);
   }else if(d.type==='grass'){
-    for(let i=-1;i<=1;i++)g.lineBetween(x+i*s*.16,y+s*.22,x+i*s*.05,y-s*.22);
+    g.lineStyle(Math.max(1,size*.018),c,.9);
+    for(let i=-1;i<=1;i++)g.lineBetween(x+i*s*.18,y+s*.20,x+i*s*.06,y-s*.22);
   }else if(d.type==='rock'){
-    g.fillTriangle(x-s*.45,y+s*.30,x-s*.05,y-s*.40,x+s*.48,y+s*.18);
+    g.fillStyle(c,1);g.fillTriangle(x-s*.44,y+s*.27,x-s*.10,y-s*.32,x+s*.46,y+s*.20);
+    g.fillStyle(0xb0b6ae,.35);g.fillTriangle(x-s*.08,y-s*.28,x+s*.10,y-s*.10,x+s*.34,y+s*.16);
   }else if(d.type==='flower'){
-    g.fillCircle(x,y,s*.10);for(let i=0;i<4;i++){const a=i*Math.PI/2;g.fillCircle(x+Math.cos(a)*s*.16,y+Math.sin(a)*s*.16,s*.10)}
+    g.fillStyle(c,1);g.fillCircle(x,y,s*.10);for(let i=0;i<4;i++){const a=i*Math.PI/2;g.fillCircle(x+Math.cos(a)*s*.16,y+Math.sin(a)*s*.16,s*.09)}
   }else if(d.type==='shore'){
-    g.lineStyle(Math.max(1,size*.035),c,.9);g.arc(x,y,s*.34,0.1,Math.PI-.1,false);
+    g.lineStyle(Math.max(1,size*.035),c,.85);g.arc(x,y,s*.34,0.1,Math.PI-.1,false);
   }else if(d.type==='dune'){
-    g.lineStyle(Math.max(1,size*.035),c,.9);g.arc(x,y,s*.35,Math.PI,Math.PI*2,false);
+    g.lineStyle(Math.max(1,size*.035),c,.65);g.arc(x,y,s*.35,Math.PI,Math.PI*2,false);
   }else if(d.type==='snowcap'){
     g.fillTriangle(x-s*.4,y+s*.15,x,y-s*.35,x+s*.4,y+s*.15);
   }
@@ -99,30 +221,54 @@ function drawTransform(g,t,x,y,size){
 }
 
 function drawTile(scene,t,dx,dy,size,mode){
-  const x=dx*size,y=dy*size;
-  const g=scene.g;
-  g.fillStyle(tileColor(t,mode),1);g.fillRect(x,y,size-1,size-1);
-  const water=t.waterform||t.hydrology?.waterform||'None';
-  if(mode==='normal'&&water==='None'){
-    const e=clamp(Number(t.elevation)||0);
-    g.fillStyle(0xffffff,0.035+e*.08);g.fillRect(x,y,size-1,size*.18);
+  const x=dx*size,y=dy*size,g=scene.g;
+  const base=tileColor(t,mode);
+  const assetTile=useAssetTile(scene,t,x,y,size,mode);
+  if(!assetTile){g.fillStyle(base,1);g.fillRect(Math.floor(x),Math.floor(y),Math.ceil(size)+1,Math.ceil(size)+1);}
+
+  if(mode==='normal'){
+    const e=clamp(Number(t.elevation)||0),surface=t.surface||t.detail?.surface||'',water=t.waterform||'None';
+    if(water!=='None'){
+      g.fillStyle(0xffffff,.055+e*.025);
+      g.fillRect(x,y+size*.10,size,size*.08);
+      if(water==='River'||water==='Shallows'){
+        g.lineStyle(Math.max(1,size*.025),0xbbeaf2,.45);
+        g.lineBetween(x+size*.08,y+size*.30,x+size*.82,y+size*.25);
+        g.lineBetween(x+size*.28,y+size*.62,x+size*.92,y+size*.57);
+      }
+    }else{
+      g.fillStyle(0xffffff,.025+e*.07);g.fillRect(x,y,size,size*.13);
+      g.fillStyle(0x25351f,.035);g.fillRect(x+size*.08,y+size*.72,size*.25,size*.08);
+      if(surface==='forest-floor'||surface==='meadow'||surface==='grass'){
+        g.fillStyle(0x334d29,.035);g.fillRect(x+size*.55,y+size*.48,size*.18,size*.06);
+      }
+    }
   }
-  (t.detail?.details||[]).forEach(d=>drawDetail(g,d,x,y,size));
+  (t.detail?.details||[]).forEach(d=>drawDetail(scene,d,x,y,size));
+  if(!assetTile)drawTileTexture(g,t,x,y,size,mode);
   if(mode==='normal')drawTransform(g,t,x,y,size);
-  if(Number(t.x)%16===0)g.lineStyle(2,0xd8df68,.8),g.lineBetween(x,y,x,y+size);
-  if(Number(t.y)%16===0)g.lineStyle(2,0xd8df68,.8),g.lineBetween(x,y,x+size,y);
 }
 
 function drawPlayer(scene,x,y,size,step=0){
-  const g=scene.player;
-  g.clear();
-  const bob=Math.sin(step*Math.PI*2)*size*.035;
-  const cx=x*size+size/2,cy=y*size+size/2+bob;
-  const pulse=1+Math.sin(step*Math.PI)*.035;
-  g.fillStyle(0xf7d34a,1);g.fillCircle(cx,cy,size*.30*pulse);
-  g.lineStyle(Math.max(2,size*.07),0x11151b,.9);g.strokeCircle(cx,cy,size*.34*pulse);
+  if(scene.playerSprite&&scene.textures.exists('atlas-player')){
+    const frame=Math.floor((step%1)*5)%5;
+    scene.playerSprite.setFrame(frame,false,false);
+    scene.playerSprite.setPosition(x*size+size*.5,y*size+size*.5);
+    scene.playerSprite.setDisplaySize(size*.95,size*.95);
+    scene.playerSprite.setVisible(true);
+    scene.player.setVisible(false);
+    return;
+  }
+  scene.player.setVisible(true);
+  const g=scene.player,bob=Math.sin(step*Math.PI*2)*size*.035;
+  const cx=x*size+size/2,cy=y*size+size/2+bob,s=size*.82;
+  g.clear();g.fillStyle(0x000000,.22);g.fillEllipse(cx,cy+s*.28,s*.48,s*.20);
+  g.fillStyle(0x315d8f,1);g.fillRoundedRect(cx-s*.24,cy-s*.02,s*.48,s*.48,s*.10);
+  g.fillStyle(0xd8a477,1);g.fillCircle(cx,cy-s*.22,s*.20);
+  g.fillStyle(0x5b3b2b,1);g.fillRect(cx-s*.19,cy-s*.40,s*.38,s*.11);
+  g.fillStyle(0xe7c04f,1);g.fillRect(cx-s*.30,cy+s*.05,s*.60,s*.09);
+  g.lineStyle(Math.max(1,size*.045),0x10151b,.9);g.strokeRoundedRect(cx-s*.27,cy-s*.08,s*.54,s*.62,s*.10);
 }
-
 function worldDelta(value,center,size){
   let d=value-center;
   if(size>0&&Math.abs(d)>size/2)d+=d>0?-size:size;
@@ -131,9 +277,17 @@ function worldDelta(value,center,size){
 
 class AtlasScene extends PhaserLib.Scene{
   constructor(){super('AtlasWorld')}
+  preload(){
+    this.load.spritesheet('atlas-terrain','/assets/tiles/terrain-atlas.png',{frameWidth:16,frameHeight:16});
+    this.load.spritesheet('atlas-water','/assets/objects/water-atlas.png',{frameWidth:16,frameHeight:16});
+    this.load.image('atlas-nature','/assets/objects/nature-atlas.png');
+    this.load.spritesheet('atlas-player','/assets/characters/player-atlas.png',{frameWidth:32,frameHeight:32});
+  }
   create(){
     this.g=this.add.graphics();
     this.player=this.add.graphics();
+    this.playerSprite=this.add.sprite(0,0,'atlas-player',0).setVisible(false).setDepth(5).setOrigin(.5,.5);
+    this.tileSprites=[];this.tileSpriteCursor=0;this.natureSprites=[];this.natureSpriteCursor=0;
     this.snapshot=null;
     this.mode='normal';
     this.onTap=null;
@@ -161,6 +315,7 @@ class AtlasScene extends PhaserLib.Scene{
       const wx=Math.round(center.x+(sx-Math.floor(cols/2)));
       const wy=Math.round(center.y+(sy-Math.floor(rows/2)));
       const fixture=(this.snapshot.testFixtures||[]).find(f=>{
+        if(!f.available||f.testOnly!==true)return false;
         const fx=worldDelta(f.x,center.x,40075000)+Math.floor(cols/2);
         const fy=(f.y-center.y)+Math.floor(rows/2);
         return Math.round(fx)===sx&&Math.round(fy)===sy;
@@ -193,6 +348,7 @@ class AtlasScene extends PhaserLib.Scene{
     const {cols,rows,size,ox,oy}=this.lastLayout;
     const center=this.cameraNow();
     this.g.clear();
+    this.tileSpriteCursor=0;this.natureSpriteCursor=0;
     this.snapshot.tiles.forEach(t=>{
       const dx=worldDelta(t.x,center.x,40075000);
       const dy=t.y-center.y;
@@ -200,6 +356,7 @@ class AtlasScene extends PhaserLib.Scene{
       const sy=Math.floor(rows/2)+dy+oy/size;
       if(sx>-1&&sx<cols&&sy>-1&&sy<rows)drawTile(this,t,sx,sy,size,this.mode);
     });
+    hideUnusedTileSprites(this);hideUnusedNatureSprites(this);
   }
   updateWorld(snapshot,mode,onTap){
     const previousTarget=this.lastTarget;

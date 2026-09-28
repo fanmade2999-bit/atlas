@@ -28,6 +28,9 @@ Physical screen + Observer/Game application layer + deterministic root climate +
   - watershed identity
 - Interaction & Move
   - one input = one tile transition
+  - deterministic passable / non-passable terrain
+  - server-enforced movement collision
+  - blocked movement leaves player position unchanged
   - X wrapping
   - Y capping
   - in-memory player state

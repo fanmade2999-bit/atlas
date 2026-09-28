@@ -7,6 +7,24 @@ test('tile generation is deterministic', () => {
   assert.deepEqual(getTile('test-seed', 12345, 67890), getTile('test-seed', 12345, 67890));
 });
 
+test('tile texture identity is deterministic and coordinate-derived', () => {
+  const a=getTile('texture-seed',12345,67890).texture;
+  const b=getTile('texture-seed',12345,67890).texture;
+  const c=getTile('texture-seed',12346,67890).texture;
+  assert.deepEqual(a,b);
+  assert.ok([0,90,180,270].includes(a.orientation));
+  assert.notDeepEqual(a,c);
+});
+
+test('tile detail contains coherent local terrain channels', () => {
+  const tile=getTile('local-terrain-test',500,500);
+  assert.ok(tile.detail?.local);
+  for(const key of ['relief','roughness','clearing','coverage']){
+    assert.equal(typeof tile.detail.local[key],'number');
+    assert.ok(tile.detail.local[key]>=0&&tile.detail.local[key]<=1);
+  }
+});
+
 test('chunk generation is deterministic', () => {
   assert.deepEqual(getChunk('test-seed', 7, 8), getChunk('test-seed', 7, 8));
 });

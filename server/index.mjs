@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { makeGameSnapshot, makeObserverSnapshot, makeRealtimeSnapshot } from './observer/snapshot.mjs';
 import { movePlayer, inspectPlayer, teleportPlayer, transformTile, transformPlayerTile, getTileState, recoverTile } from './systems-state.mjs';
 import { normalizeCoordinates, sampleClimate, classifyTerrain } from './root/climate.mjs';
-import { prefetchChunks } from './root/tile.mjs';
+import { getLocationNames } from './root/naming.mjs';
+import { prefetchChunks, getTile } from './root/tile.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, '../public');
@@ -43,7 +44,18 @@ const server = http.createServer(async (req, res) => {
       for (let row = 0; row < height; row += 1) for (let col = 0; col < width; col += 1) {
         const p = normalizeCoordinates(startX + col * scale, startY + row * scale), c = sampleClimate(seed, p.x, p.y);
         const terrain = zoom >= 4 ? classifyTerrain(seed, p.x, p.y) : null;
-        cells.push({x:p.x,y:p.y,chunkX:Math.floor(p.x/16),chunkY:Math.floor(p.y/16),elevation:c.elevation,temperature:c.temperature,moisture:c.moisture,biome:c.biome,landform:terrain?.landform ?? null,waterform:terrain?.waterform ?? null,surface:terrain?.surface ?? null});
+        const tile = zoom >= 5 ? getTile(seed, p.x, p.y) : null;
+        const names = getLocationNames(seed, p.x, p.y);
+        const labelTier = zoom <= 0 ? 'continent' : zoom === 1 ? 'territory' : zoom === 2 ? 'region' : zoom === 3 ? 'tract' : 'area';
+        const label = names[labelTier];
+        cells.push({
+          x:p.x,y:p.y,chunkX:Math.floor(p.x/16),chunkY:Math.floor(p.y/16),
+          elevation:c.elevation,temperature:c.temperature,moisture:c.moisture,biome:c.biome,
+          landform:terrain?.landform ?? null,waterform:terrain?.waterform ?? null,
+          surface:tile?.surface ?? terrain?.surface ?? null,passable:tile?.passable ?? null,details:zoom >= 5 ? (tile?.detail?.details ?? []) : [],
+          location:{continent:names.continent,territory:names.territory,region:names.region,tract:names.tract,area:names.area},
+          label:label?.active ? {tier:labelTier,name:label.name,physicalType:label.physicalType} : null
+        });
       }
       res.writeHead(200,{ 'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*' });
       res.end(JSON.stringify({seed,center,zoom,scale,width,height,cells})); return;
@@ -108,7 +120,15 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname === '/api/game') {
       const started = performance.now();
-      const snapshot = makeGameSnapshot({ seed: url.searchParams.get('seed') || 'atlas-root', x: Number(url.searchParams.get('x') || 0), y: Number(url.searchParams.get('y') || 10001500), playerId: url.searchParams.get('playerId') || 'local-player' });
+      const previewX = Number(url.searchParams.get('x') || 0);
+      const previewY = Number(url.searchParams.get('y') || 10001500);
+      const snapshot = makeGameSnapshot({
+        seed: url.searchParams.get('seed') || 'atlas-root',
+        x: previewX,
+        y: previewY,
+        playerId: url.searchParams.get('playerId') || 'local-player',
+        positionOverride: url.searchParams.get('preview') === '1' ? { x: previewX, y: previewY } : null
+      });
       const body = JSON.stringify(snapshot);
       const elapsed = performance.now() - started;
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*', 'X-Atlas-Game-Ms': elapsed.toFixed(1), 'X-Atlas-Game-Bytes': String(Buffer.byteLength(body)) });

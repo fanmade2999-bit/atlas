@@ -5,6 +5,8 @@
  * transition. Coordinate normalization remains owned by Root Climate.
  */
 import { normalizeCoordinates, sampleClimate, classifyTerrain, WORLD_HEIGHT, WORLD_WIDTH } from './climate.mjs';
+import { isTilePassable } from './passability.mjs';
+import { getTile } from './tile.mjs';
 
 export const MOVE_ACTIONS = Object.freeze({
   up: [0, -1],
@@ -23,9 +25,30 @@ export function movePosition(x, y, direction) {
     cappedY: delta[1] !== 0 && to.y !== from.y + delta[1] };
 }
 
+export function resolveMove(x, y, direction, seed = 'atlas-root', tileReader = getTile) {
+  const result = movePosition(x, y, direction);
+  if (!result.ok) return result;
+  const destinationTile = tileReader(seed, result.to.x, result.to.y);
+  if (!isTilePassable(destinationTile)) {
+    return {
+      ...result,
+      ok: false,
+      reason: 'blocked-tile',
+      tile: destinationTile,
+      passable: false
+    };
+  }
+  return {
+    ...result,
+    tile: destinationTile,
+    passable: true
+  };
+}
+
 export function inspectPosition(x, y, seed = 'atlas-root') {
   const position = normalizeCoordinates(x, y);
   const climate = sampleClimate(seed, position.x, position.y);
   const terrain = classifyTerrain(seed, position.x, position.y);
-  return { position, climate, terrain, world: { width: WORLD_WIDTH, height: WORLD_HEIGHT, xWraps: true, yWraps: false } };
+  const tile = getTile(seed, position.x, position.y);
+  return { position, climate, terrain, tile: { x: tile.x, y: tile.y, surface: tile.surface, waterform: tile.waterform, landform: tile.landform, passable: tile.passable }, world: { width: WORLD_WIDTH, height: WORLD_HEIGHT, xWraps: true, yWraps: false } };
 }

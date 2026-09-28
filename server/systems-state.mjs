@@ -18,7 +18,12 @@ export function getPlayerState({ playerId = 'local-player', seed = 'atlas-root',
     players.set(key, { id: key, seed, position: normalizeCoordinates(x, y), startedAt: Date.now(), tick: 0, lastAction: null, lastInspection: null });
   }
   const player = players.get(key);
-  if (player.seed !== seed) player.seed = seed;
+  if (player.seed !== seed) {
+    player.seed = seed;
+    player.position = normalizeCoordinates(x, y);
+    player.lastAction = null;
+    player.lastInspection = null;
+  }
   player.tick = Math.floor((Date.now() - player.startedAt) / TICK_MS);
   player.simulationTime = (Date.now() - player.startedAt) / 1000;
   player.tickRate = TICK_RATE;
