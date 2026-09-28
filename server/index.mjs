@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { makeGameSnapshot, makeObserverSnapshot, makeRealtimeSnapshot } from './observer/snapshot.mjs';
 import { movePlayer, inspectPlayer, teleportPlayer, transformTile, transformPlayerTile, getTileState, recoverTile } from './systems-state.mjs';
 import { normalizeCoordinates, sampleClimate, classifyTerrain } from './root/climate.mjs';
-import { prefetchChunks } from './root/tile.mjs';
+import { prefetchChunks, getTile } from './root/tile.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, '../public');
@@ -43,7 +43,8 @@ const server = http.createServer(async (req, res) => {
       for (let row = 0; row < height; row += 1) for (let col = 0; col < width; col += 1) {
         const p = normalizeCoordinates(startX + col * scale, startY + row * scale), c = sampleClimate(seed, p.x, p.y);
         const terrain = zoom >= 4 ? classifyTerrain(seed, p.x, p.y) : null;
-        cells.push({x:p.x,y:p.y,chunkX:Math.floor(p.x/16),chunkY:Math.floor(p.y/16),elevation:c.elevation,temperature:c.temperature,moisture:c.moisture,biome:c.biome,landform:terrain?.landform ?? null,waterform:terrain?.waterform ?? null,surface:terrain?.surface ?? null});
+        const tile = zoom >= 5 ? getTile(seed, p.x, p.y) : null;
+        cells.push({x:p.x,y:p.y,chunkX:Math.floor(p.x/16),chunkY:Math.floor(p.y/16),elevation:c.elevation,temperature:c.temperature,moisture:c.moisture,biome:c.biome,landform:terrain?.landform ?? null,waterform:terrain?.waterform ?? null,surface:tile?.surface ?? terrain?.surface ?? null,passable:tile?.passable ?? null});
       }
       res.writeHead(200,{ 'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*' });
       res.end(JSON.stringify({seed,center,zoom,scale,width,height,cells})); return;
