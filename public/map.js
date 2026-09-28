@@ -52,6 +52,21 @@ function distanceTiles(x,y,px,py){
   return Math.abs(wrappedDelta(x,px))+Math.abs(y-py);
 }
 
+function mapLabelCandidates(cells){
+  const byName=new Map();
+  for(let i=0;i<cells.length;i++){
+    const c=cells[i],label=c.label;
+    if(!label||!label.name)continue;
+    const key=label.tier+'|'+label.name;
+    if(!byName.has(key))byName.set(key,{...label,index:i,x:c.x,y:c.y});
+  }
+  return [...byName.values()].slice(0,14);
+}
+function labelPosition(index,width,height){
+  const col=index%width,row=Math.floor(index/width);
+  return {left:((col+.5)/width*100),top:((row+.5)/height*100)};
+}
+
 function ramp(value,stops){
   const x=clamp(Number(value)||0,0,1)*(stops.length-1),i=Math.min(stops.length-2,Math.floor(x)),f=x-i,a=stops[i],b=stops[i+1];
   const rgb=a.map((v,k)=>Math.round(v+(b[k]-v)*f)).join(',');
@@ -129,9 +144,14 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
     let cells='';
     for(let i=0;i<d.cells.length;i++){
       const cell=d.cells[i];
-      const terrainInfo=(cell.landform||cell.waterform||cell.surface)?' · '+(cell.landform||'')+' · '+(cell.waterform||'')+(cell.surface?' · '+cell.surface:''):'';
+      const terrainInfo=(cell.landform||cell.waterform||cell.surface)?' · '+(cell.landform||'')+' · '+(cell.waterform||'')+(cell.surface?' · '+cell.surface):'';
       cells+='<div class="world-map-cell" data-index="'+i+'" style="background-color:'+layerBaseColor(cell,map.layer)+';background-image:'+layerColor(cell,map.layer)+'" title="X '+cell.x+' · Y '+cell.y+' · '+esc(cell.biome)+' '+esc(terrainInfo)+'"><span class="map-glyph">'+mapGlyph(cell,d.zoom)+'</span></div>';
     }
+    const labels=mapLabelCandidates(d.cells);
+    const labelMarkup=labels.map(label=>{
+      const p=labelPosition(label.index,d.width,d.height);
+      return '<div class="map-region-label map-region-'+label.tier+'" style="left:'+p.left.toFixed(2)+'%;top:'+p.top.toFixed(2)+'%" title="'+esc(label.name)+'">'+esc(label.name)+'</div>';
+    }).join('');
 
     const currentTile=(d.zoom>=5&&target&&target.x===playerX&&target.y===playerY)?target:null;
     const targetDistance=target?distanceTiles(target.x,target.y,playerX,playerY):null;
@@ -147,7 +167,7 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
       '<div class="map-toolbar-group"><button class="map-tool" id="map-zoom-out">−</button><strong class="map-zoom-label">'+(map.zoom+1)+'/6 · '+formatScale(scale)+'</strong><button class="map-tool" id="map-zoom-in">+</button></div>'+
       '<div class="map-toolbar-group">'+layerButtons.map(x=>'<button class="map-tool '+(map.layer===x[0]?'active':'')+'" data-map-layer="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
       '</div>'+
-      '<div id="world-map-viewport" class="world-map-viewport"><div class="world-map-grid">'+cells+'</div>'+
+      '<div id="world-map-viewport" class="world-map-viewport"><div class="world-map-grid">'+cells+'</div><div class="world-map-labels">'+labelMarkup+'</div>'+
       (playerVisible?'<div class="map-player-marker" style="left:'+clamp(pxPct,2,98)+'%;top:'+clamp(pyPct,2,98)+'%"><span>◆</span></div>':'<div class="map-offscreen-note">YOU ARE OFF SCREEN</div>')+
       (targetVisible?'<div class="map-target-marker" style="left:'+clamp(txPct,2,98)+'%;top:'+clamp(tyPct,2,98)+'%"><span>⌖</span></div>':'')+
       '<div class="map-center-cross"></div>'+
@@ -201,6 +221,23 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
         prepareDestination(map.target);
       }catch(err){console.warn(err);}
     };
+    v.addEventListener('wheel',e=>{
+      e.preventDefault();
+      const next=map.zoom+(e.deltaY<0?1:-1);
+      const bounded=Math.max(0,Math.min(SCALES.length-1,next));
+      if(bounded===map.zoom)return;
+      const rect=v.getBoundingClientRect();
+      const fx=clamp((e.clientX-rect.left)/rect.width,0,1),fy=clamp((e.clientY-rect.top)/rect.height,0,1);
+      const scale=map.data.scale;
+      const anchorX=wrapX(map.centerX+Math.round((fx-.5)*25*scale));
+      const anchorY=capY(map.centerY+Math.round((fy-.5)*17*scale));
+      map.zoom=bounded;renderWorldMap.zoom=bounded;
+      const nextScale=SCALES[bounded];
+      map.centerX=wrapX(anchorX-Math.round((fx-.5)*25*nextScale));
+      map.centerY=capY(anchorY-Math.round((fy-.5)*17*nextScale));
+      renderWorldMap.centerX=map.centerX;renderWorldMap.centerY=map.centerY;
+      fetchMap().catch(()=>{});
+    },{passive:false});
     v.addEventListener('pointerdown',begin);v.addEventListener('pointermove',move);v.addEventListener('pointerup',end);v.addEventListener('pointercancel',end);
     root.querySelector('#map-zoom-out').onclick=()=>{map.zoom=Math.max(0,map.zoom-1);renderWorldMap.zoom=map.zoom;fetchMap().catch(()=>{})};
     root.querySelector('#map-zoom-in').onclick=()=>{map.zoom=Math.min(SCALES.length-1,map.zoom+1);renderWorldMap.zoom=map.zoom;fetchMap().catch(()=>{})};
