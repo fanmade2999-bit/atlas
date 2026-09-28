@@ -52,7 +52,7 @@ const server = http.createServer(async (req, res) => {
           x:p.x,y:p.y,chunkX:Math.floor(p.x/16),chunkY:Math.floor(p.y/16),
           elevation:c.elevation,temperature:c.temperature,moisture:c.moisture,biome:c.biome,
           landform:terrain?.landform ?? null,waterform:terrain?.waterform ?? null,
-          surface:tile?.surface ?? terrain?.surface ?? null,passable:tile?.passable ?? null,
+          surface:tile?.surface ?? terrain?.surface ?? null,passable:tile?.passable ?? null,details:zoom >= 5 ? (tile?.detail?.details ?? []) : [],
           location:{continent:names.continent,territory:names.territory,region:names.region,tract:names.tract,area:names.area},
           label:label?.active ? {tier:labelTier,name:label.name,physicalType:label.physicalType} : null
         });
