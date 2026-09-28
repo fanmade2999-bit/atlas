@@ -28,6 +28,13 @@ function layerColor(c,layer){
   if(layer==='temperature') return ramp(c.temperature,[[42,75,170],[55,170,210],[110,205,125],[240,205,70],[235,75,45]]);
   return ramp(c.moisture,[[122,92,55],[178,150,78],[105,180,120],[45,150,205],[25,80,170]]);
 }
+function layerBaseColor(c,layer){
+  if(layer==='normal') return biomeColor(c.biome);
+  if(layer==='elevation') return '#6e9641';
+  if(layer==='temperature') return '#6ecf7d';
+  return '#69b478';
+}
+
 function formatScale(scale){
   if(scale>=1000000)return (scale/1000000).toFixed(1)+'M';
   if(scale>=1000)return Math.round(scale/1000)+'k';
@@ -59,7 +66,8 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
     centerX:renderWorldMap.centerX??state.gameX,
     centerY:renderWorldMap.centerY??state.gameY,
     layer:renderWorldMap.layer??'normal',
-    data:null,target:null,drag:false,moved:false,startX:0,startY:0,startCenterX:0,startCenterY:0
+    data:null,target:null,preparedGame:null,preparedKey:null,preparedPromise:null,preparedController:null,
+    drag:false,moved:false,startX:0,startY:0,startCenterX:0,startCenterY:0
   };
   renderWorldMap.zoom=map.zoom;renderWorldMap.centerX=map.centerX;renderWorldMap.centerY=map.centerY;renderWorldMap.layer=map.layer;
 
@@ -68,6 +76,31 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
     const r=await fetch('/api/world-map?'+p,{cache:'no-store'});if(!r.ok)throw Error('World Map API '+r.status);
     map.data=await r.json();map.centerX=map.data.center.x;map.centerY=map.data.center.y;
     renderWorldMap.centerX=map.centerX;renderWorldMap.centerY=map.centerY;draw();
+  };
+
+  const prepareDestination=async target=>{
+    if(!target)return;
+    const key=state.seed+'|'+target.x+'|'+target.y;
+    if(map.preparedKey===key && map.preparedGame)return map.preparedGame;
+    map.preparedController?.abort();
+    const controller=new AbortController();
+    map.preparedController=controller;
+    map.preparedKey=key;
+    map.preparedGame=null;
+    const p=new URLSearchParams({
+      seed:state.seed,playerId:state.playerId,x:target.x,y:target.y,preview:'1'
+    });
+    map.preparedPromise=fetch('/api/game?'+p,{cache:'no-store',signal:controller.signal})
+      .then(async r=>{if(!r.ok)throw Error('Destination preview '+r.status);return r.json();})
+      .then(snapshot=>{
+        if(map.preparedKey===key)map.preparedGame=snapshot;
+        return snapshot;
+      })
+      .catch(error=>{
+        if(error.name!=='AbortError')console.warn(error);
+        return null;
+      });
+    return map.preparedPromise;
   };
 
   const draw=()=>{
@@ -97,7 +130,7 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
     for(let i=0;i<d.cells.length;i++){
       const cell=d.cells[i];
       const terrainInfo=(cell.landform||cell.waterform||cell.surface)?' · '+(cell.landform||'')+' · '+(cell.waterform||'')+(cell.surface?' · '+cell.surface:''):'';
-      cells+='<div class="world-map-cell" data-index="'+i+'" title="X '+cell.x+' · Y '+cell.y+' · '+esc(cell.biome)+' '+esc(terrainInfo)+'"><span class="map-glyph">'+mapGlyph(cell,d.zoom)+'</span></div>';
+      cells+='<div class="world-map-cell" data-index="'+i+'" style="background-color:'+layerBaseColor(cell,map.layer)+';background-image:'+layerColor(cell,map.layer)+'" title="X '+cell.x+' · Y '+cell.y+' · '+esc(cell.biome)+' '+esc(terrainInfo)+'"><span class="map-glyph">'+mapGlyph(cell,d.zoom)+'</span></div>';
     }
 
     const currentTile=(d.zoom>=5&&target&&target.x===playerX&&target.y===playerY)?target:null;
@@ -165,6 +198,7 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
         const z=await r.json();
         map.target={x,y,biome:z.inspection.climate.biome,terrain:z.inspection.terrain,climate:z.inspection.climate,tile:z.inspection.tile||null};
         draw();
+        prepareDestination(map.target);
       }catch(err){console.warn(err);}
     };
     v.addEventListener('pointerdown',begin);v.addEventListener('pointermove',move);v.addEventListener('pointerup',end);v.addEventListener('pointercancel',end);
@@ -204,9 +238,11 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
         const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:target.x,y:target.y}),r=await fetch('/api/game/teleport?'+p);
         if(!r.ok)throw Error('Teleport API '+r.status);
         const z=await r.json();
+        let prepared=map.preparedGame;
+        if(!prepared && map.preparedKey===state.seed+'|'+target.x+'|'+target.y && map.preparedPromise)prepared=await map.preparedPromise;
         state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;
         close();
-        if(onTeleported)await onTeleported(z.player,target);
+        if(onTeleported)await onTeleported(z.player,target,prepared||null);
       }catch(e){ok.disabled=false;ok.textContent='TELEPORT';console.warn(e);}
     };
   };
