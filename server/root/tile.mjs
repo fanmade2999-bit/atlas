@@ -8,6 +8,7 @@
 import { normalizeCoordinates, sampleClimate, classifyTerrain, WORLD_HEIGHT, WORLD_WIDTH } from './climate.mjs';
 import { getTileDetail } from './detail.mjs';
 import { createTransformStore, applyTransform, recoverTransform, getEffectiveTile, getActiveTransform, terrainTransformSelfTest, transformStoreStats } from './terrain-transform.mjs';
+import { isTilePassable } from './passability.mjs';
 
 export const CHUNK_SIZE = 16;
 
@@ -44,13 +45,14 @@ export function getTile(seed, x, y, overrides = null) {
   const position = normalizeCoordinates(x, y);
   const baseline = getBaselineTile(seed, position.x, position.y, overrides);
   recoverTileTransform(seed, position.x, position.y, { tile: baseline, now: Date.now() });
-  return getEffectiveTile(
+  const effective = getEffectiveTile(
     terrainTransformStore,
     seed,
     position.x,
     position.y,
     baseline
   );
+  return { ...effective, passable: isTilePassable(effective) };
 }
 
 export function applyTileTransform({
