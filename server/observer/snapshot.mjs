@@ -129,6 +129,7 @@ export function makeGameSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WO
   const tiles = [];
   const generated = new Set();
   const reused = new Set();
+  const seenChunks = new Set();
   for (let dy = -radiusY; dy <= radiusY; dy += 1) {
     for (let dx = -radiusX; dx <= radiusX; dx += 1) {
       const p = normalizeCoordinates(center.x + dx, center.y + dy);
@@ -136,7 +137,10 @@ export function makeGameSnapshot({ seed = 'atlas-root', x = 0, y = Math.floor(WO
       const cy = Math.floor(p.y / CHUNK_SIZE);
       const cached = getCachedChunk(seed, cx, cy);
       const key = cx + ',' + cy;
-      (cached.cacheHit ? reused : generated).add(key);
+      if (!seenChunks.has(key)) {
+        (cached.cacheHit ? reused : generated).add(key);
+        seenChunks.add(key);
+      }
       const localX = p.x - cached.chunk.origin.x;
       const localY = p.y - cached.chunk.origin.y;
       const tile = cached.chunk.tiles[localY * CHUNK_SIZE + localX] || getTile(seed, p.x, p.y);
