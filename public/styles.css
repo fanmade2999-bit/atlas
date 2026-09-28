@@ -852,6 +852,54 @@ input{
   border:0;
   border-radius:1px;
 }
+.world-map-labels{
+  position:absolute;
+  inset:5px;
+  z-index:4;
+  pointer-events:none;
+}
+.map-region-label{
+  position:absolute;
+  transform:translate(-50%,-50%);
+  max-width:34%;
+  padding:3px 5px;
+  border:1px solid #ffffff2e;
+  border-radius:5px;
+  background:#07100bd9;
+  color:#eef3e8;
+  font-size:7px;
+  font-weight:850;
+  line-height:1.15;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow:0 2px 6px #0008;
+  text-shadow:0 1px 2px #000;
+}
+.map-region-continent{
+  max-width:42%;
+  padding:5px 8px;
+  color:#ffffff;
+  font-size:10px;
+  letter-spacing:.04em;
+  background:#09150ee8;
+}
+.map-region-territory{
+  max-width:38%;
+  font-size:8px;
+}
+.map-region-region{
+  max-width:34%;
+  font-size:7px;
+}
+.map-region-tract,.map-region-area{
+  max-width:30%;
+  padding:2px 4px;
+  font-size:6px;
+  background:#07100bc4;
+}
+
 .map-center-cross{
   position:absolute;
   left:50%;
