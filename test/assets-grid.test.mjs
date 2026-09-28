@@ -1,5 +1,6 @@
 import test from 'node:test';
 import fs from 'node:fs';
+import zlib from 'node:zlib';
 
 function decodePng(file){
   const b=fs.readFileSync(file);
@@ -11,11 +12,9 @@ function decodePng(file){
     if(kind==='IDAT')raw.push(data);
     off+=12+len;
   }
-  const zlib=(await import('node:zlib')).default;
   const bytes=zlib.inflateSync(Buffer.concat(raw)),stride=w*4,out=Buffer.alloc(h*stride);
   let p=0;
-  const pa=(i)=>(i<0?0:out[i]);
-  for(let y=0;y<h;y++){
+    for(let y=0;y<h;y++){
     const filter=bytes[p++],row=y*stride;
     for(let x=0;x<stride;x++){
       const a=x>=4?out[row+x-4]:0,bp=y?out[row-stride+x]:0,cp=(y&&x>=4)?out[row-stride+x-4]:0,v=bytes[p++];
