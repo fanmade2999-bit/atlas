@@ -47,6 +47,8 @@ test('applying a transform does not mutate the deterministic baseline tile', () 
 
   assert.equal(result.ok, true);
   assert.equal(result.record.appliedAt, 1000);
+  assert.equal(result.tile.surface, 'scorched-dirt');
+  assert.equal(result.tile.transform.id, 'fire-grass-scorch');
   assert.equal(baseline.surface, 'grass');
 
   const effective = getEffectiveTile(store, 'test-seed', 10, 20, baseline);
