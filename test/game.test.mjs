@@ -77,7 +77,7 @@ test('game and map use the same deterministic world vocabulary', () => {
 
 test('game snapshot carries an active Layer 4 transform to the graphical renderer', () => {
   const seed = 'l4-graphics-link';
-  const base = makeGameSnapshot({ seed, x: 0, y: 2524000, playerId: 'l4-graphics' });
+  const base = makeGameSnapshot({ seed, x: 0, y: 17430000, playerId: 'l4-graphics' });
   const target = base.tiles.find(tile => tile.dx === 0 && tile.dy === 0);
   assert.equal(target?.surface, 'grass');
 
@@ -91,7 +91,7 @@ test('game snapshot carries an active Layer 4 transform to the graphical rendere
   });
   assert.equal(applied.ok, true);
 
-  const next = makeGameSnapshot({ seed, x: 0, y: 2524000, playerId: 'l4-graphics' });
+  const next = makeGameSnapshot({ seed, x: 0, y: 17430000, playerId: 'l4-graphics' });
   const transformed = next.tiles.find(tile => tile.x === target.x && tile.y === target.y);
   assert.equal(transformed?.surface, 'scorched-dirt');
   assert.equal(transformed?.transform?.id, 'fire-grass-scorch');
