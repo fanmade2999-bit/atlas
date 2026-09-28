@@ -44,6 +44,24 @@ function grid(file){
   }
   return rowsOut;
 }
+
+function components(file){
+  const {w,h,pixels}=decodePng(file),seen=new Uint8Array(w*h),out=[];
+  const opaque=(x,y)=>pixels[(y*w+x)*4+3]>8;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const idx=y*w+x;if(seen[idx]||!opaque(x,y))continue;
+    const q=[idx];seen[idx]=1;let minX=x,maxX=x,minY=y,maxY=y,area=0;
+    while(q.length){const at=q.pop(),cy=Math.floor(at/w),cx=at-cy*w;area++;minX=Math.min(minX,cx);maxX=Math.max(maxX,cx);minY=Math.min(minY,cy);maxY=Math.max(maxY,cy);
+      for(const [nx,ny] of [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]]){
+        if(nx<0||ny<0||nx>=w||ny>=h)continue;const ni=ny*w+nx;
+        if(!seen[ni]&&opaque(nx,ny)){seen[ni]=1;q.push(ni);}
+      }
+    }
+    if(area>12)out.push({x:minX,y:minY,w:maxX-minX+1,h:maxY-minY+1,area});
+  }
+  return out.sort((a,b)=>b.area-a.area);
+}
+
 test('inspect generated sprite-sheet occupancy',async()=>{
   for(const file of [
     'public/assets/objects/nature-atlas.png',
@@ -52,5 +70,6 @@ test('inspect generated sprite-sheet occupancy',async()=>{
   ]){
     console.log('ASSET_GRID '+file);
     console.log(grid(file).join('|'));
+    console.log('ASSET_COMPONENTS '+JSON.stringify(components(file)));
   }
 });
