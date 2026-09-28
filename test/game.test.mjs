@@ -126,3 +126,16 @@ test('changing a player world seed resets to the requested starting coordinates'
   assert.deepEqual(a.center, { x: 111, y: 222 });
   assert.deepEqual(b.center, { x: 333, y: 444 });
 });
+
+
+test('game snapshot preview can target a non-persistent destination position', () => {
+  const snapshot = makeGameSnapshot({
+    seed: 'map-preview',
+    x: 10,
+    y: 20,
+    playerId: 'map-preview-player',
+    positionOverride: { x: 300, y: 400 }
+  });
+  assert.deepEqual(snapshot.center, { x: 300, y: 400 });
+  assert.deepEqual(snapshot.player.position, { x: 300, y: 400 });
+});
