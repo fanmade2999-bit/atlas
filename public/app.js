@@ -176,8 +176,10 @@ function renderGamePanel(){
   status.textContent=g.width+'×'+g.height+' WORLD · '+(modeName==='normal'?'PHASER TERRAIN':'VIEW '+modeName.toUpperCase())+' · CHUNK '+Math.floor(g.center.x/16)+','+Math.floor(g.center.y/16)+' · '+(g.stream?.reused?.length??0)+' cached';
   const inspected=g.player?.lastInspection?.climate;
   const terrain=g.player?.lastInspection?.terrain;
+  const centerTile=g.tiles.find(t=>t.dx===0&&t.dy===0);
   const inspectText=inspected?'<div class="inspect-hud"><b>'+esc(inspected.biome)+' · '+esc(terrain?.landform||'???')+' · '+esc(terrain?.waterform||'???')+'</b><span>E '+inspected.elevation.toFixed(3)+'</span><span>T '+inspected.temperature.toFixed(3)+'</span><span>M '+inspected.moisture.toFixed(3)+'</span></div>':'';
-  stats.innerHTML='<div class="xyz-hud"><span>X '+g.player.position.x+'</span><span>Y '+g.player.position.y+'</span><span>T '+(g.player?.tick??'???')+'</span></div>'+inspectText;
+  const walkability=centerTile?('<div class="walkability-hud"><b>'+(centerTile.passable?'PASSABLE':'BLOCKED')+'</b><span>'+esc(centerTile.surface||'terrain')+'</span></div>'):'';
+  stats.innerHTML='<div class="xyz-hud"><span>X '+g.player.position.x+'</span><span>Y '+g.player.position.y+'</span><span>T '+(g.player?.tick??'???')+'</span></div>'+walkability+inspectText;
   visionEl.innerHTML=renderVisionControls();
   visionEl.querySelectorAll('[data-vision]').forEach(b=>b.onclick=()=>{state.vision=b.dataset.vision;renderGamePanel()});
 }
@@ -244,6 +246,15 @@ async function move(dx,dy){
     const r=await fetch('/api/game/move?'+p,{cache:'no-store'});
     if(!r.ok)throw Error('Move API '+r.status);
     const z=await r.json();
+    if(!r.ok){
+      if(z.result?.reason==='blocked-tile'){
+        const surface=z.result.tile?.surface||'terrain';
+        const status=document.querySelector('#game-status');
+        if(status)status.textContent='BLOCKED · '+surface.replaceAll('-',' ').toUpperCase();
+        return;
+      }
+      throw Error(z.result?.reason||'Move rejected');
+    }
     const to=z.player.position;
     gameRequestSerial++;
     state.motion={direction,from,to,startedAt:performance.now(),duration:110};
