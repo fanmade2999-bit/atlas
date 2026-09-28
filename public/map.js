@@ -28,6 +28,23 @@ function layerColor(c,layer){
   if(layer==='temperature') return ramp(c.temperature,[[42,75,170],[55,170,210],[110,205,125],[240,205,70],[235,75,45]]);
   return ramp(c.moisture,[[122,92,55],[178,150,78],[105,180,120],[45,150,205],[25,80,170]]);
 }
+function formatScale(scale){
+  if(scale>=1000000)return (scale/1000000).toFixed(1)+'M';
+  if(scale>=1000)return Math.round(scale/1000)+'k';
+  return String(scale);
+}
+function wrappedDelta(value,origin){
+  let d=value-origin;
+  if(Math.abs(d)>WORLD_WIDTH/2)d+=d>0?-WORLD_WIDTH:WORLD_WIDTH;
+  return d;
+}
+function mapRegionLabel(zoom){
+  return ['WORLD','CONTINENTAL','REGIONAL','LOCAL','TERRAIN','TILE'][zoom]||'MAP';
+}
+function distanceTiles(x,y,px,py){
+  return Math.abs(wrappedDelta(x,px))+Math.abs(y-py);
+}
+
 function ramp(value,stops){
   const x=clamp(Number(value)||0,0,1)*(stops.length-1),i=Math.min(stops.length-2,Math.floor(x)),f=x-i,a=stops[i],b=stops[i+1];
   const rgb=a.map((v,k)=>Math.round(v+(b[k]-v)*f)).join(',');
@@ -56,27 +73,65 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
   const draw=()=>{
     const d=map.data;
     if(!d){
-      root.innerHTML=layout('World Map','big-picture navigation','<section class="card"><div class="muted small">Loading world map…</div></section>');
+      root.innerHTML=layout('World Map','navigation & exploration','<section class="card"><div class="muted small">Loading world map…</div></section>');
       fetchMap().catch(e=>root.innerHTML=layout('World Map','diagnostic','<section class="card"><div class="muted small">'+esc(e.message)+'</div></section>'));
       return;
     }
-    const layerButtons=['normal','elevation','moisture','temperature'];
+
+    const playerX=wrapX(state.gameX),playerY=capY(state.gameY);
+    const scale=d.scale;
+    const mapLeft=Math.floor(d.center.x-(d.width/2)*scale);
+    const mapTop=d.center.y-(Math.floor(d.height/2)*scale);
+    const playerDx=wrappedDelta(playerX,d.center.x);
+    const playerDy=playerY-d.center.y;
+    const playerVisible=Math.abs(playerDx)<=((d.width-1)/2)*scale && Math.abs(playerDy)<=((d.height-1)/2)*scale;
+    const pxPct=50+(playerDx/(d.width*scale))*100;
+    const pyPct=50+(playerDy/(d.height*scale))*100;
+    const target=map.target;
+    const targetDx=target?wrappedDelta(target.x,d.center.x):0;
+    const targetDy=target?(target.y-d.center.y):0;
+    const targetVisible=!!target && Math.abs(targetDx)<=((d.width-1)/2)*scale && Math.abs(targetDy)<=((d.height-1)/2)*scale;
+    const txPct=target?50+(targetDx/(d.width*scale))*100:50;
+    const tyPct=target?50+(targetDy/(d.height*scale))*100:50;
+
+    const layerButtons=[['normal','TERRAIN'],['elevation','HEIGHT'],['moisture','MOISTURE'],['temperature','TEMP']];
     let cells='';
     for(let i=0;i<d.cells.length;i++){
-      const c=d.cells[i];
-      cells+='<div class="world-map-cell" data-index="'+i+'" style="background:'+layerColor(c,map.layer)+'" title="X '+c.x+' · Y '+c.y+' · '+esc(c.biome)+' · '+esc(c.landform||'???')+' · '+esc(c.waterform||'???')+'"><span class="map-glyph">'+mapGlyph(c,d.zoom)+'</span></div>';
+      const cell=d.cells[i];
+      const terrainInfo=(cell.landform||cell.waterform||cell.surface)?' · '+(cell.landform||'')+' · '+(cell.waterform||'')+(cell.surface?' · '+cell.surface:''):'';
+      cells+='<div class="world-map-cell" data-index="'+i+'" title="X '+cell.x+' · Y '+cell.y+' · '+esc(cell.biome)+' '+esc(terrainInfo)+'"><span class="map-glyph">'+mapGlyph(cell,d.zoom)+'</span></div>';
     }
-    const target=map.target;
-    root.innerHTML=layout('World Map','big-picture navigation',
+
+    const currentTile=(d.zoom>=5&&target&&target.x===playerX&&target.y===playerY)?target:null;
+    const targetDistance=target?distanceTiles(target.x,target.y,playerX,playerY):null;
+    const targetTravel=target&&targetDistance!=null?(targetDistance===0?'HERE':targetDistance.toLocaleString()+' tiles away'):'';
+
+    root.innerHTML=layout('World Map','navigation & exploration',
       '<section class="card world-map-card">'+
+      '<div class="map-head">'+
+      '<div><div class="map-kicker">'+mapRegionLabel(map.zoom)+'</div><h2>Explore the world</h2><span>Pan the map, inspect a location, then choose what to do.</span></div>'+
+      '<button class="map-tool map-center-button" id="map-center-player">CENTER ON ME</button>'+
+      '</div>'+
       '<div class="map-toolbar">'+
-      '<div class="map-toolbar-group"><button class="map-tool" id="map-zoom-out">−</button><strong class="small">ZOOM '+(map.zoom+1)+'/6</strong><button class="map-tool" id="map-zoom-in">+</button></div>'+
-      '<div class="map-toolbar-group">'+layerButtons.map(x=>'<button class="map-tool '+(map.layer===x?'active':'')+'" data-map-layer="'+x+'">'+x.toUpperCase()+'</button>').join('')+'</div></div>'+
-      '<div id="world-map-viewport" class="world-map-viewport"><div class="world-map-grid">'+cells+'</div><div class="map-center-cross"></div><div class="map-you">◆</div></div>'+
-      '<div class="map-hud"><div><strong>X '+d.center.x+' · Y '+d.center.y+' · CHUNK '+Math.floor(d.center.x/16)+','+Math.floor(d.center.y/16)+'</strong><span>1 cell = '+d.scale.toLocaleString()+' tile'+(d.scale===1?'':'s')+' · swipe to pan · tap to select</span></div><span>YOU ARE HERE</span></div>'+
-      (target?'<div class="map-target-card"><div class="target-coords">TARGET · X '+target.x+' · Y '+target.y+'</div><div class="target-meta"><span>Chunk '+Math.floor(target.x/16)+','+Math.floor(target.y/16)+'</span><span>'+esc(target.biome||'???')+'</span><span>'+esc(target.terrain?.waterform||'???')+'</span></div><div class="map-toolbar-group"><button class="map-tool" id="map-clear-target">CLEAR</button><button class="map-tool active" id="map-teleport">TELEPORT HERE</button></div></div>':'')+
-      '<div class="map-legend"><span><i style="background:#155fa3"></i>water/low</span><span><i style="background:#397540"></i>forest</span><span><i style="background:#d0ad5a"></i>dry</span><span><i style="background:#e4e9ed"></i>high/cold</span></div>'+
-      '<div class="map-help">This is a navigation map, not the playable screen. Tap a location, review its exact coordinates and terrain, then confirm before Atlas teleports the player.</div>'+
+      '<div class="map-toolbar-group"><button class="map-tool" id="map-zoom-out">−</button><strong class="map-zoom-label">'+(map.zoom+1)+'/6 · '+formatScale(scale)+'</strong><button class="map-tool" id="map-zoom-in">+</button></div>'+
+      '<div class="map-toolbar-group">'+layerButtons.map(x=>'<button class="map-tool '+(map.layer===x[0]?'active':'')+'" data-map-layer="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
+      '</div>'+
+      '<div id="world-map-viewport" class="world-map-viewport"><div class="world-map-grid">'+cells+'</div>'+
+      (playerVisible?'<div class="map-player-marker" style="left:'+clamp(pxPct,2,98)+'%;top:'+clamp(pyPct,2,98)+'%"><span>◆</span></div>':'<div class="map-offscreen-note">YOU ARE OFF SCREEN</div>')+
+      (targetVisible?'<div class="map-target-marker" style="left:'+clamp(txPct,2,98)+'%;top:'+clamp(tyPct,2,98)+'"><span>⌖</span></div>':'')+
+      '<div class="map-center-cross"></div>'+
+      '</div>'+
+      '<div class="map-coordinates"><div><span>CENTER</span><strong>X '+d.center.x+' · Y '+d.center.y+'</strong></div><div><span>YOU</span><strong>X '+playerX+' · Y '+playerY+'</strong></div><div><span>SCALE</span><strong>1 cell = '+formatScale(scale)+' tile'+(scale===1?'':'s')+'</strong></div></div>'+
+      (target?'<div class="map-target-card">'+
+        '<div class="map-target-head"><div><div class="map-kicker">SELECTED DESTINATION</div><strong>X '+target.x+' · Y '+target.y+'</strong></div><button class="map-tool" id="map-clear-target">CLEAR</button></div>'+
+        '<div class="target-meta"><span>'+esc(target.biome||'???')+'</span><span>'+esc(target.terrain?.landform||'???')+'</span><span>'+esc(target.terrain?.waterform||'???')+'</span><span class="'+(target.tile?.passable===false?'target-blocked':'')+'">'+(target.tile?.passable===false?'NON-PASSABLE':'PASSABLE / UNKNOWN')+'</span></div>'+
+        '<div class="target-stats"><div><span>DISTANCE</span><strong>'+esc(targetTravel)+'</strong></div><div><span>ELEVATION</span><strong>'+Number(target.climate?.elevation??0).toFixed(3)+'</strong></div><div><span>MOISTURE</span><strong>'+Number(target.climate?.moisture??0).toFixed(3)+'</strong></div></div>'+
+        '<div class="map-toolbar-group target-actions"><button class="map-tool" id="map-recenter-target">SHOW TARGET</button><button class="map-tool active" id="map-teleport">TELEPORT HERE</button></div>'+
+      '</div>':'<div class="map-empty-card"><strong>Tap a location</strong><span>Atlas will inspect the exact tile before you decide whether to teleport.</span></div>')+
+      '<div class="map-legend">'+
+        '<span><i style="background:#88a944"></i>land</span><span><i style="background:#155fa3"></i>water</span><span><i style="background:#d0ad5a"></i>dry</span><span><i style="background:#e4e9ed"></i>high</span><span><b>◆</b> you</span><span><b>⌖</b> target</span>'+
+      '</div>'+
+      '<div class="map-help"><b>TIP</b> Zoom in to TILE view for exact terrain. The map is for finding places; the game screen is where you explore them.</div>'+
       '</section>'
     );
     bind();
@@ -109,7 +164,9 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
       const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x,y});
       try{
         const r=await fetch('/api/game/inspect?'+p,{cache:'no-store'});if(!r.ok)throw Error('Inspect API '+r.status);
-        const z=await r.json();map.target={x,y,biome:z.inspection.climate.biome,terrain:z.inspection.terrain,climate:z.inspection.climate};draw();
+        const z=await r.json();
+        map.target={x,y,biome:z.inspection.climate.biome,terrain:z.inspection.terrain,climate:z.inspection.climate,tile:z.inspection.tile||null};
+        draw();
       }catch(err){console.warn(err);}
     };
     v.addEventListener('pointerdown',begin);v.addEventListener('pointermove',move);v.addEventListener('pointerup',end);v.addEventListener('pointercancel',end);
@@ -117,6 +174,8 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
     root.querySelector('#map-zoom-in').onclick=()=>{map.zoom=Math.min(SCALES.length-1,map.zoom+1);renderWorldMap.zoom=map.zoom;fetchMap().catch(()=>{})};
     root.querySelectorAll('[data-map-layer]').forEach(b=>b.onclick=()=>{map.layer=b.dataset.mapLayer;renderWorldMap.layer=map.layer;draw()});
     root.querySelector('#map-clear-target')?.addEventListener('click',()=>{map.target=null;draw()});
+    root.querySelector('#map-center-player')?.addEventListener('click',()=>{map.centerX=playerX;map.centerY=playerY;renderWorldMap.centerX=playerX;renderWorldMap.centerY=playerY;fetchMap().catch(()=>{})});
+    root.querySelector('#map-recenter-target')?.addEventListener('click',()=>{if(!map.target)return;map.centerX=map.target.x;map.centerY=map.target.y;renderWorldMap.centerX=map.centerX;renderWorldMap.centerY=map.centerY;fetchMap().catch(()=>{})});
     root.querySelector('#map-teleport')?.addEventListener('click',()=>confirmTeleport(map.target));
   };
 
@@ -146,8 +205,10 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
       try{
         const p=new URLSearchParams({playerId:state.playerId,seed:state.seed,x:target.x,y:target.y}),r=await fetch('/api/game/teleport?'+p);
         if(!r.ok)throw Error('Teleport API '+r.status);
-        const z=await r.json();state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;state.gameSnapshot=null;close();
-        if(onTeleported)await onTeleported(z.player);
+        const z=await r.json();
+        state.gameX=z.player.position.x;state.gameY=z.player.position.y;state.x=state.gameX;state.y=state.gameY;
+        close();
+        if(onTeleported)await onTeleported(z.player,target);
       }catch(e){ok.disabled=false;ok.textContent='TELEPORT';console.warn(e);}
     };
   };
