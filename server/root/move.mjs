@@ -5,6 +5,8 @@
  * transition. Coordinate normalization remains owned by Root Climate.
  */
 import { normalizeCoordinates, sampleClimate, classifyTerrain, WORLD_HEIGHT, WORLD_WIDTH } from './climate.mjs';
+import { isTilePassable } from './passability.mjs';
+import { getTile } from './tile.mjs';
 
 export const MOVE_ACTIONS = Object.freeze({
   up: [0, -1],
