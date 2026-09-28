@@ -11,6 +11,20 @@ function biomeColor(b){
   const colors={Ocean:'#155fa3',Alpine:'#e4e9ed',Highlands:'#8d795e',Tundra:'#91b9bb','Cold Steppe':'#7d987e',Desert:'#d0ad5a','Tropical Forest':'#187c48',Wetland:'#3c8c73',Grassland:'#88a944','Temperate Forest':'#397540'};
   return colors[b]||'#65705c';
 }
+function surfaceColor(surface,waterform){
+  const w=waterform||'None';
+  const colors={
+    'water-deep':'#1e659c','water-shallow':'#5aaec5','water-lake':'#3d9bc2','water-river':'#55bdd0',
+    swamp:'#5d826c',sand:'#d7b86b',snow:'#e8eff0',tundra:'#9bb8af','cold-grass':'#849f73',
+    'wet-ground':'#71976f',grass:'#83aa52','rocky-grass':'#78915b',meadow:'#91af60',
+    'forest-floor':'#638b50','scorched-dirt':'#594b3a','stone-wall':'#777c80',
+    'water-pond':'#3d9bc2',ice:'#dceff5'
+  };
+  if(colors[surface])return colors[surface];
+  if(colors['water-'+String(w).toLowerCase()])return colors['water-'+String(w).toLowerCase()];
+  return biomeColor(surface);
+}
+
 function mapGlyph(c,zoom){
   if(zoom<4)return '';
   const water=c.waterform||'None';
@@ -23,7 +37,10 @@ function mapGlyph(c,zoom){
   return '·';
 }
 function layerColor(c,layer){
-  if(layer==='normal') return 'linear-gradient(135deg,'+biomeColor(c.biome)+','+biomeColor(c.biome)+'cc)';
+  if(layer==='normal'){
+    const base=surfaceColor(c.surface,c.waterform);
+    return 'linear-gradient(135deg,'+base+','+base+'cc)';
+  }
   if(layer==='elevation') return ramp(c.elevation,[[28,76,45],[110,150,65],[205,190,100],[150,105,65],[235,235,235]]);
   if(layer==='temperature') return ramp(c.temperature,[[42,75,170],[55,170,210],[110,205,125],[240,205,70],[235,75,45]]);
   return ramp(c.moisture,[[122,92,55],[178,150,78],[105,180,120],[45,150,205],[25,80,170]]);
@@ -52,7 +69,18 @@ function distanceTiles(x,y,px,py){
   return Math.abs(wrappedDelta(x,px))+Math.abs(y-py);
 }
 
-function mapLabelCandidates(cells){
+function tileFeatureMarkup(cell,zoom){
+  if(zoom<5 || !Array.isArray(cell.details))return '';
+  const details=cell.details.slice(0,3);
+  return details.map(d=>{
+    const x=Math.round(clamp(Number(d.x)||.5,.05,.95)*100),y=Math.round(clamp(Number(d.y)||.5,.05,.95)*100);
+    const glyph={tree:'♟',shrub:'●',grass:'⌁',rock:'◆',flower:'✦',shore:'≈',dune:'⌒',snowcap:'▲'}[d.type]||'·';
+    return '<span class="map-feature map-feature-'+d.type+'" style="left:'+x+'%;top:'+y+'%">'+glyph+'</span>';
+  }).join('');
+}
+
+function mapLabelCandidates(cells,zoom){
+  if(zoom>=5)return [];
   const byName=new Map();
   for(let i=0;i<cells.length;i++){
     const c=cells[i],label=c.label;
@@ -145,9 +173,9 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
     for(let i=0;i<d.cells.length;i++){
       const cell=d.cells[i];
       const terrainInfo=(cell.landform||cell.waterform||cell.surface)?' · '+(cell.landform||'')+' · '+(cell.waterform||'')+(cell.surface?' · '+cell.surface:''):'';
-      cells+='<div class="world-map-cell" data-index="'+i+'" style="background-color:'+layerBaseColor(cell,map.layer)+';background-image:'+layerColor(cell,map.layer)+'" title="X '+cell.x+' · Y '+cell.y+' · '+esc(cell.biome)+' '+esc(terrainInfo)+'"><span class="map-glyph">'+mapGlyph(cell,d.zoom)+'</span></div>';
+      cells+='<div class="world-map-cell" data-index="'+i+'" style="background-color:'+layerBaseColor(cell,map.layer)+';background-image:'+layerColor(cell,map.layer)+'" title="X '+cell.x+' · Y '+cell.y+' · '+esc(cell.biome)+' '+esc(terrainInfo)+'"><span class="map-glyph">'+mapGlyph(cell,d.zoom)+'</span>'+tileFeatureMarkup(cell,d.zoom)+'</div>';
     }
-    const labels=mapLabelCandidates(d.cells);
+    const labels=mapLabelCandidates(d.cells,d.zoom);
     const labelMarkup=labels.map(label=>{
       const p=labelPosition(label.index,d.width,d.height);
       return '<div class="map-region-label map-region-'+label.tier+'" style="left:'+p.left.toFixed(2)+'%;top:'+p.top.toFixed(2)+'%" title="'+esc(label.name)+'">'+esc(label.name)+'</div>';
@@ -167,10 +195,11 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
       '<div class="map-toolbar-group"><button class="map-tool" id="map-zoom-out">−</button><strong class="map-zoom-label">'+(map.zoom+1)+'/6 · '+formatScale(scale)+'</strong><button class="map-tool" id="map-zoom-in">+</button></div>'+
       '<div class="map-toolbar-group">'+layerButtons.map(x=>'<button class="map-tool '+(map.layer===x[0]?'active':'')+'" data-map-layer="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
       '</div>'+
-      '<div id="world-map-viewport" class="world-map-viewport"><div class="world-map-grid">'+cells+'</div><div class="world-map-labels">'+labelMarkup+'</div>'+
+      '<div id="world-map-viewport" class="world-map-viewport"><div class="world-map-stage"><div class="world-map-grid">'+cells+'</div><div class="world-map-labels">'+labelMarkup+'</div>'+
       (playerVisible?'<div class="map-player-marker" style="left:'+clamp(pxPct,2,98)+'%;top:'+clamp(pyPct,2,98)+'%"><span>◆</span></div>':'<div class="map-offscreen-note">YOU ARE OFF SCREEN</div>')+
       (targetVisible?'<div class="map-target-marker" style="left:'+clamp(txPct,2,98)+'%;top:'+clamp(tyPct,2,98)+'%"><span>⌖</span></div>':'')+
-      '<div class="map-center-cross"></div>'+
+      '<div class="map-center-cross"></div></div>'+
+      '<div class="map-map-note">DRAG TO EXPLORE · SCROLL OR PINCH TO ZOOM</div>'+
       '</div>'+
       '<div class="map-coordinates"><div><span>CENTER</span><strong>X '+d.center.x+' · Y '+d.center.y+'</strong></div><div><span>YOU</span><strong>X '+playerX+' · Y '+playerY+'</strong></div><div><span>SCALE</span><strong>1 cell = '+formatScale(scale)+' tile'+(scale===1?'':'s')+'</strong></div></div>'+
       (target?'<div class="map-target-card">'+
@@ -189,8 +218,8 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
   };
 
   const bind=()=>{
-    const v=root.querySelector('#world-map-viewport'),grid=root.querySelector('.world-map-grid');
-    if(!v)return;
+    const v=root.querySelector('#world-map-viewport'),grid=root.querySelector('.world-map-grid'),stage=root.querySelector('.world-map-stage');
+    if(!v||!stage)return;
     const begin=e=>{
       map.drag=true;map.moved=false;map.startX=e.clientX;map.startY=e.clientY;map.startCenterX=map.centerX;map.startCenterY=map.centerY;v.classList.add('dragging');v.setPointerCapture?.(e.pointerId);
     };
@@ -201,12 +230,12 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
       const scale=map.data.scale,rect=v.getBoundingClientRect();
       map.centerX=wrapX(map.startCenterX-Math.round(dx/Math.max(1,rect.width)*25*scale));
       map.centerY=capY(map.startCenterY-Math.round(dy/Math.max(1,rect.height)*17*scale));
-      grid.style.transform='translate('+dx+'px,'+dy+'px)';
+      stage.style.transform='translate('+dx+'px,'+dy+'px)';
       const h=root.querySelector('.map-hud strong');if(h)h.textContent='X '+map.centerX+' · Y '+map.centerY+' · CHUNK '+Math.floor(map.centerX/16)+','+Math.floor(map.centerY/16);
     };
     const end=async e=>{
       if(!map.drag)return;
-      map.drag=false;v.classList.remove('dragging');grid.style.transform='';
+      map.drag=false;v.classList.remove('dragging');
       if(map.moved){renderWorldMap.centerX=map.centerX;renderWorldMap.centerY=map.centerY;fetchMap().catch(()=>{});return;}
       const rect=v.getBoundingClientRect();
       const fx=clamp((e.clientX-rect.left)/rect.width,0,1),fy=clamp((e.clientY-rect.top)/rect.height,0,1);
@@ -238,7 +267,7 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
       renderWorldMap.centerX=map.centerX;renderWorldMap.centerY=map.centerY;
       fetchMap().catch(()=>{});
     },{passive:false});
-    v.addEventListener('pointerdown',begin);v.addEventListener('pointermove',move);v.addEventListener('pointerup',end);v.addEventListener('pointercancel',end);
+    v.addEventListener('pointerdown',begin);v.addEventListener('pointermove',move);v.addEventListener('pointerup',end);v.addEventListener('pointercancel',end);v.addEventListener('lostpointercapture',end);
     root.querySelector('#map-zoom-out').onclick=()=>{map.zoom=Math.max(0,map.zoom-1);renderWorldMap.zoom=map.zoom;fetchMap().catch(()=>{})};
     root.querySelector('#map-zoom-in').onclick=()=>{map.zoom=Math.min(SCALES.length-1,map.zoom+1);renderWorldMap.zoom=map.zoom;fetchMap().catch(()=>{})};
     root.querySelectorAll('[data-map-layer]').forEach(b=>b.onclick=()=>{map.layer=b.dataset.mapLayer;renderWorldMap.layer=map.layer;draw()});
