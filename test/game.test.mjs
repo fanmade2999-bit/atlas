@@ -43,6 +43,7 @@ test('inspect system reports normalized position without inventing terrain', () 
   assert.ok(result.terrain);
   assert.equal(typeof result.terrain.landform, 'string');
   assert.equal(typeof result.terrain.waterform, 'string');
+  assert.equal(typeof result.tile.passable, 'boolean');
 });
 
 test('game snapshot exposes persistent player state', () => {
