@@ -85,11 +85,83 @@ function drawTileTexture(g,t,x,y,size,mode){
   }
 }
 
+const TERRAIN_ROWS={
+  grass:0,'forest-floor':1,dirt:2,sand:3,'rocky-grass':4,snow:5,
+  'water-shallow':6,'water-deep':7,'wet-ground':8,stone:9
+};
+const NATURE_TREE_FRAMES=[
+  {x:0,y:0,w:54,h:50},{x:58,y:0,w:60,h:48},{x:121,y:0,w:59,h:48},
+  {x:0,y:51,w:52,h:45},{x:54,y:51,w:64,h:47},{x:121,y:52,w:61,h:44}
+];
+function assetSurfaceFamily(t){
+  const s=t.surface||t.detail?.surface||'grass';
+  if(s==='water-lake'||s==='water-river'||s==='water-pond'||s==='ice')return 'water-deep';
+  if(s==='swamp')return 'wet-ground';
+  if(s==='tundra'||s==='cold-grass')return 'snow';
+  if(s==='meadow')return 'grass';
+  if(s==='stone-wall')return 'stone';
+  if(s==='scorched-dirt')return 'dirt';
+  return TERRAIN_ROWS[s]!=null?s:'grass';
+}
+function terrainAssetFrame(t){
+  const row=TERRAIN_ROWS[assetSurfaceFamily(t)]??0;
+  const tex=t.texture||{};
+  return row*8+(((tex.variant??0)*2+(tex.tone??0)+(Number(tex.pattern)||0))%8);
+}
+function useAssetTile(scene,t,x,y,size,mode){
+  if(mode!=='normal'||!scene.textures.exists('atlas-terrain'))return false;
+  if(!scene.tileSprites)scene.tileSprites=[];
+  const idx=scene.tileSpriteCursor++;
+  let sprite=scene.tileSprites[idx];
+  const water=/^water-/.test(t.surface||'')||['water-pond','ice'].includes(t.surface||'');
+  const key=water&&scene.textures.exists('atlas-water')?'atlas-water':'atlas-terrain';
+  const frame=key==='atlas-water'
+    ? Number(t.texture?.pattern||0)%16
+    : terrainAssetFrame(t);
+  if(!sprite){
+    sprite=scene.add.image(0,0,key,frame).setOrigin(.5);
+    sprite.setDepth(-10);
+    scene.tileSprites[idx]=sprite;
+  }else sprite.setTexture(key,frame);
+  sprite.setPosition(x+size*.5,y+size*.5);
+  sprite.setDisplaySize(size+1,size+1);
+  sprite.setRotation(((t.texture?.orientation||0)*Math.PI)/180);
+  sprite.setVisible(true);
+  return true;
+}
+function hideUnusedTileSprites(scene){
+  if(!scene.tileSprites)return;
+  for(let i=scene.tileSpriteCursor;i<scene.tileSprites.length;i++)scene.tileSprites[i].setVisible(false);
+}
+function useNatureTree(scene,d,x,y,size){
+  if(!scene.textures.exists('atlas-nature'))return false;
+  const idx=(d.variant||0)%NATURE_TREE_FRAMES.length;
+  const f=NATURE_TREE_FRAMES[idx];
+  if(!scene.natureSprites)scene.natureSprites=[];
+  const slot=scene.natureSpriteCursor++;
+  let sprite=scene.natureSprites[slot];
+  if(!sprite){
+    sprite=scene.add.image(0,0,'atlas-nature').setOrigin(.5,1);
+    sprite.setDepth(2);
+    scene.natureSprites[slot]=sprite;
+  }
+  sprite.setCrop(f.x,f.y,f.w,f.h);
+  sprite.setPosition(x,y+size*.18);
+  sprite.setDisplaySize(Math.max(size*.7,f.w/16*size*.72),Math.max(size*.7,f.h/16*size*.72));
+  sprite.setVisible(true);
+  return true;
+}
+function hideUnusedNatureSprites(scene){
+  if(!scene.natureSprites)return;
+  for(let i=scene.natureSpriteCursor;i<scene.natureSprites.length;i++)scene.natureSprites[i].setVisible(false);
+}
+
 function detailColor(type){
   return {tree:0x285d2e,shrub:0x4f8239,grass:0xb9cb62,rock:0x7b8584,flower:0xe9b7d4,shore:0xd9d39a,dune:0xe7c67d,snowcap:0xf8fbff}[type]||0xffffff;
 }
-function drawDetail(g,d,ox,oy,size){
-  const x=ox+d.x*size,y=oy+d.y*size,s=size*(d.size||.5),c=detailColor(d.type);
+function drawDetail(scene,d,ox,oy,size){
+  const g=scene.g,x=ox+d.x*size,y=oy+d.y*size,s=size*(d.size||.5),c=detailColor(d.type);
+  if(d.type==='tree'&&useNatureTree(scene,d,x,y,size))return;
   g.fillStyle(c,1);g.lineStyle(Math.max(1,size*.018),0x1a2119,.45);
   if(d.type==='tree'){
     const trunk=Math.max(1,s*.11);
@@ -151,7 +223,8 @@ function drawTransform(g,t,x,y,size){
 function drawTile(scene,t,dx,dy,size,mode){
   const x=dx*size,y=dy*size,g=scene.g;
   const base=tileColor(t,mode);
-  g.fillStyle(base,1);g.fillRect(Math.floor(x),Math.floor(y),Math.ceil(size)+1,Math.ceil(size)+1);
+  const assetTile=useAssetTile(scene,t,x,y,size,mode);
+  if(!assetTile){g.fillStyle(base,1);g.fillRect(Math.floor(x),Math.floor(y),Math.ceil(size)+1,Math.ceil(size)+1);}
 
   if(mode==='normal'){
     const e=clamp(Number(t.elevation)||0),surface=t.surface||t.detail?.surface||'',water=t.waterform||'None';
@@ -171,24 +244,31 @@ function drawTile(scene,t,dx,dy,size,mode){
       }
     }
   }
-  (t.detail?.details||[]).forEach(d=>drawDetail(g,d,x,y,size));
-  drawTileTexture(g,t,x,y,size,mode);
+  (t.detail?.details||[]).forEach(d=>drawDetail(scene,d,x,y,size));
+  if(!assetTile)drawTileTexture(g,t,x,y,size,mode);
   if(mode==='normal')drawTransform(g,t,x,y,size);
 }
 
 function drawPlayer(scene,x,y,size,step=0){
-  const g=scene.player;g.clear();
-  const bob=Math.sin(step*Math.PI*2)*size*.035;
-  const cx=x*size+size/2,cy=y*size+size/2+bob;
-  const s=size*.82;
-  g.fillStyle(0x000000,.22);g.fillEllipse(cx,cy+s*.28,s*.48,s*.20);
+  if(scene.playerSprite&&scene.textures.exists('atlas-player')){
+    const frame=Math.floor((step%1)*5)%5;
+    scene.playerSprite.setFrame(frame,false,false);
+    scene.playerSprite.setPosition(x*size+size*.5,y*size+size*.5);
+    scene.playerSprite.setDisplaySize(size*.95,size*.95);
+    scene.playerSprite.setVisible(true);
+    scene.player.setVisible(false);
+    return;
+  }
+  scene.player.setVisible(true);
+  const g=scene.player,bob=Math.sin(step*Math.PI*2)*size*.035;
+  const cx=x*size+size/2,cy=y*size+size/2+bob,s=size*.82;
+  g.clear();g.fillStyle(0x000000,.22);g.fillEllipse(cx,cy+s*.28,s*.48,s*.20);
   g.fillStyle(0x315d8f,1);g.fillRoundedRect(cx-s*.24,cy-s*.02,s*.48,s*.48,s*.10);
   g.fillStyle(0xd8a477,1);g.fillCircle(cx,cy-s*.22,s*.20);
   g.fillStyle(0x5b3b2b,1);g.fillRect(cx-s*.19,cy-s*.40,s*.38,s*.11);
   g.fillStyle(0xe7c04f,1);g.fillRect(cx-s*.30,cy+s*.05,s*.60,s*.09);
   g.lineStyle(Math.max(1,size*.045),0x10151b,.9);g.strokeRoundedRect(cx-s*.27,cy-s*.08,s*.54,s*.62,s*.10);
 }
-
 function worldDelta(value,center,size){
   let d=value-center;
   if(size>0&&Math.abs(d)>size/2)d+=d>0?-size:size;
@@ -197,9 +277,17 @@ function worldDelta(value,center,size){
 
 class AtlasScene extends PhaserLib.Scene{
   constructor(){super('AtlasWorld')}
+  preload(){
+    this.load.spritesheet('atlas-terrain','/assets/tiles/terrain-atlas.png',{frameWidth:16,frameHeight:16});
+    this.load.spritesheet('atlas-water','/assets/objects/water-atlas.png',{frameWidth:16,frameHeight:16});
+    this.load.image('atlas-nature','/assets/objects/nature-atlas.png');
+    this.load.spritesheet('atlas-player','/assets/characters/player-atlas.png',{frameWidth:32,frameHeight:32});
+  }
   create(){
     this.g=this.add.graphics();
     this.player=this.add.graphics();
+    this.playerSprite=this.add.sprite(0,0,'atlas-player',0).setVisible(false).setDepth(5).setOrigin(.5,.5);
+    this.tileSprites=[];this.tileSpriteCursor=0;this.natureSprites=[];this.natureSpriteCursor=0;
     this.snapshot=null;
     this.mode='normal';
     this.onTap=null;
@@ -260,6 +348,7 @@ class AtlasScene extends PhaserLib.Scene{
     const {cols,rows,size,ox,oy}=this.lastLayout;
     const center=this.cameraNow();
     this.g.clear();
+    this.tileSpriteCursor=0;this.natureSpriteCursor=0;
     this.snapshot.tiles.forEach(t=>{
       const dx=worldDelta(t.x,center.x,40075000);
       const dy=t.y-center.y;
@@ -267,6 +356,7 @@ class AtlasScene extends PhaserLib.Scene{
       const sy=Math.floor(rows/2)+dy+oy/size;
       if(sx>-1&&sx<cols&&sy>-1&&sy<rows)drawTile(this,t,sx,sy,size,this.mode);
     });
+    hideUnusedTileSprites(this);hideUnusedNatureSprites(this);
   }
   updateWorld(snapshot,mode,onTap){
     const previousTarget=this.lastTarget;
