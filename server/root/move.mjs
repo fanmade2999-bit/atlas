@@ -49,5 +49,6 @@ export function inspectPosition(x, y, seed = 'atlas-root') {
   const position = normalizeCoordinates(x, y);
   const climate = sampleClimate(seed, position.x, position.y);
   const terrain = classifyTerrain(seed, position.x, position.y);
-  return { position, climate, terrain, world: { width: WORLD_WIDTH, height: WORLD_HEIGHT, xWraps: true, yWraps: false } };
+  const tile = getTile(seed, position.x, position.y);
+  return { position, climate, terrain, tile: { x: tile.x, y: tile.y, surface: tile.surface, waterform: tile.waterform, landform: tile.landform, passable: tile.passable }, world: { width: WORLD_WIDTH, height: WORLD_HEIGHT, xWraps: true, yWraps: false } };
 }
