@@ -13,13 +13,13 @@ function decode(file){
     if(type==='IDAT') chunks.push(b.subarray(o+8,o+8+n));
     o += 12+n;
   }
-  const bpp=ct===6?4:3, stride=w*bpp, out=Buffer.alloc(w*h*bpp);
+  const bpp=ct===6?4:3, stride=w*bpp, out=Buffer.alloc(w*h*bpp), raw=zlib.inflateSync(Buffer.concat(chunks));
   let prev=Buffer.alloc(stride), pos=0;
   const paeth=(a,b,c)=>{const q=a+b-c,pa=Math.abs(q-a),pb=Math.abs(q-b),pc=Math.abs(q-c);return pa<=pb? a:pb<=pc? b:c};
   for(let y=0;y<h;y++){
     const f=raw[pos++], row=Buffer.alloc(stride);
     for(let x=0;x<stride;x++){
-      const a=x>=4?row[x-4]:0,b=prev[x]||0,c=x>=4?prev[x-4]||0:0,v=raw[pos++];
+      const a=x>=bpp?row[x-bpp]:0,b=prev[x]||0,c=x>=bpp?prev[x-bpp]||0:0,v=raw[pos++];
       row[x]=f===0?v:f===1?(v+a)&255:f===2?(v+b)&255:f===3?(v+Math.floor((a+b)/2))&255:f===4?(v+paeth(a,b,c))&255:v;
     }
     row.copy(out,y*stride); prev=row;
@@ -36,6 +36,7 @@ function cells(file){
       const a=d.bpp===4?d.out[i+3]:255;
       nonzero += a>0; opaque += a===255;
       const rr=d.out[i], gg=d.out[i+1], bb=d.out[i+2];
+      if(rr<18&&gg<18&&bb<18) black++;
       if(bb>rr+20 && bb>=gg-5) blue++;
       if(gg>rr+10 && gg>=bb-10) green++;
     }
