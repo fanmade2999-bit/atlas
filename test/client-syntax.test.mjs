@@ -17,7 +17,7 @@ test('browser clients parse as JavaScript', () => {
   assert.equal(/data-action="a"/.test(html), true);
   assert.equal(/data-action="b"/.test(html), true);
   assert.match(app, /function action\(a\)/);
-  assert.match(app, /data-direction="up"/);
+  assert.match(html, /data-direction="up"/);
   assert.match(app, /pointermove/);
   assert.match(app, /elementFromPoint/);
   assert.equal(/setPointerCapture/.test(app), false);
