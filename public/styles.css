@@ -852,6 +852,45 @@ input{
   border:0;
   border-radius:1px;
 }
+.world-map-stage{
+  position:absolute;
+  inset:0;
+  will-change:transform;
+}
+.map-map-note{
+  position:absolute;
+  left:50%;
+  bottom:5px;
+  z-index:12;
+  transform:translateX(-50%);
+  padding:3px 6px;
+  border:1px solid #ffffff1e;
+  border-radius:6px;
+  background:#06100de6;
+  color:#b4c2b7;
+  font:750 6px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  pointer-events:none;
+  white-space:nowrap;
+}
+.map-feature{
+  position:absolute;
+  z-index:3;
+  transform:translate(-50%,-50%);
+  font-size:clamp(5px,1.1vw,10px);
+  line-height:1;
+  color:#eff7e9;
+  text-shadow:0 1px 2px #000c;
+  pointer-events:none;
+}
+.map-feature-tree{color:#214e2d}
+.map-feature-shrub{color:#42763a}
+.map-feature-grass{color:#b8d06f}
+.map-feature-rock{color:#d3d4cf}
+.map-feature-flower{color:#f3c2d7}
+.map-feature-shore{color:#e1f5f4}
+.map-feature-dune{color:#f4d48b}
+.map-feature-snowcap{color:#fff}
+
 .world-map-labels{
   position:absolute;
   inset:5px;
