@@ -9,6 +9,7 @@ import { normalizeCoordinates, sampleClimate, classifyTerrain, WORLD_HEIGHT, WOR
 import { getTileDetail } from './detail.mjs';
 import { createTransformStore, applyTransform, recoverTransform, getEffectiveTile, getActiveTransform, terrainTransformSelfTest, transformStoreStats } from './terrain-transform.mjs';
 import { isTilePassable } from './passability.mjs';
+import { getTileTexture } from './texture.mjs';
 
 export const CHUNK_SIZE = 16;
 
@@ -52,7 +53,7 @@ export function getTile(seed, x, y, overrides = null) {
     position.y,
     baseline
   );
-  return { ...effective, passable: isTilePassable(effective) };
+  return { ...effective, texture: getTileTexture(seed, position.x, position.y, effective.surface), passable: isTilePassable(effective) };
 }
 
 export function applyTileTransform({
