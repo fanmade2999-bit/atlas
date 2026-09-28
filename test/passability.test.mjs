@@ -22,8 +22,8 @@ test('generated tiles expose a deterministic passable flag', () => {
 
 function findAdjacentPair() {
   const seed = 'movement-passability';
-  for (let y = 0; y <= 4096; y += 17) {
-    for (let x = 0; x <= 4096; x += 17) {
+  for (let y = 0; y <= 4096; y += 128) {
+    for (let x = 0; x <= 4096; x += 128) {
       const origin = getTile(seed, x, y);
       for (const direction of ['right', 'down']) {
         const dx = direction === 'right' ? 1 : 0;
