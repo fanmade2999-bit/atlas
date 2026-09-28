@@ -25,6 +25,7 @@ test('browser clients parse as JavaScript', () => {
   assert.match(styles, /\.controller\{[\s\S]*touch-action:none/);
   assert.match(styles, /\.dpad button,\.dpad span\{[\s\S]*user-select:none/);
   assert.doesNotThrow(() => new vm.Script(map.replace(/^export /gm, ''), { filename: 'public/map.js' }));
+  assert.doesNotThrow(() => new vm.Script(phaser.replace(/^export /gm, ''), { filename: 'public/phaser-world.js' }));
   assert.match(app, /const MOVE_REPEAT_MS=125/);
   assert.match(app, /pointerdown/);
   assert.match(app, /document\.onkeyup/);
@@ -32,5 +33,4 @@ test('browser clients parse as JavaScript', () => {
   assert.match(app, /holdDirection\('gamepad',gamepadDirection\)/);
   assert.match(phaser, /visualPlayer/);
   assert.match(phaser, /cameraTarget/);
-  assert.doesNotThrow(() => new vm.Script(phaser, { filename: 'public/phaser-world.js' }));
 });
