@@ -144,7 +144,7 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
     let cells='';
     for(let i=0;i<d.cells.length;i++){
       const cell=d.cells[i];
-      const terrainInfo=(cell.landform||cell.waterform||cell.surface)?' · '+(cell.landform||'')+' · '+(cell.waterform||'')+(cell.surface?' · '+cell.surface):'';
+      const terrainInfo=(cell.landform||cell.waterform||cell.surface)?' · '+(cell.landform||'')+' · '+(cell.waterform||'')+(cell.surface?' · '+cell.surface:''):'';
       cells+='<div class="world-map-cell" data-index="'+i+'" style="background-color:'+layerBaseColor(cell,map.layer)+';background-image:'+layerColor(cell,map.layer)+'" title="X '+cell.x+' · Y '+cell.y+' · '+esc(cell.biome)+' '+esc(terrainInfo)+'"><span class="map-glyph">'+mapGlyph(cell,d.zoom)+'</span></div>';
     }
     const labels=mapLabelCandidates(d.cells);
