@@ -50,6 +50,41 @@ function tileColor(t,mode){
   return surfaceColor(t);
 }
 
+function rotatePoint(px,py,angle,cx=.5,cy=.5){
+  const dx=px-cx,dy=py-cy,rad=angle*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
+  return {x:cx+dx*cos-dy*sin,y:cy+dx*sin+dy*cos};
+}
+function drawTextureMark(g,x,y,size,texture,index,base){
+  const tone=(texture?.tone??0)-1,variant=texture?.variant??0,angle=texture?.orientation??0;
+  const patterns=[
+    [[.16,.25,.34,.07],[.62,.18,.18,.05],[.45,.72,.28,.06],[.80,.58,.10,.05]],
+    [[.18,.18,.09,.09],[.52,.36,.34,.07],[.27,.76,.22,.05],[.72,.80,.12,.04]],
+    [[.08,.46,.30,.06],[.40,.16,.10,.10],[.70,.34,.22,.05],[.62,.74,.28,.05]],
+    [[.24,.30,.24,.05],[.70,.16,.08,.10],[.46,.58,.34,.05],[.16,.82,.14,.04]]
+  ][variant%4];
+  const color=rgb(base);
+  const mark=Math.max(1,Math.min(255,color.r+tone*9))<<16 | Math.max(1,Math.min(255,color.g+tone*9))<<8 | Math.max(1,Math.min(255,color.b+tone*9));
+  g.lineStyle(Math.max(1,size*.014),mark,.16);
+  patterns.forEach((q,k)=>{
+    const a=rotatePoint(q[0],q[1],angle),b=rotatePoint(q[0]+q[2],q[1]+(k%2?.02:-.02),angle);
+    g.lineBetween(x+a.x*size,y+a.y*size,x+b.x*size,y+b.y*size);
+  });
+}
+function drawTileTexture(g,t,x,y,size,mode){
+  if(mode!=='normal')return;
+  const texture=t.texture;
+  const base=tileColor(t,mode);
+  drawTextureMark(g,x,y,size,texture,0,base);
+  const local=t.detail?.local;
+  if(local){
+    const strength=.04+local.relief*.08;
+    g.fillStyle(0x101a12,strength);
+    g.fillRect(x+size*(.06+local.clearing*.08),y+size*(.72-local.coverage*.12),size*.20,size*.07);
+    g.fillStyle(0xffffff,.018+local.roughness*.045);
+    g.fillRect(x+size*.58,y+size*(.10+local.relief*.30),size*.22,size*.05);
+  }
+}
+
 function detailColor(type){
   return {tree:0x285d2e,shrub:0x4f8239,grass:0xb9cb62,rock:0x7b8584,flower:0xe9b7d4,shore:0xd9d39a,dune:0xe7c67d,snowcap:0xf8fbff}[type]||0xffffff;
 }
@@ -137,6 +172,7 @@ function drawTile(scene,t,dx,dy,size,mode){
     }
   }
   (t.detail?.details||[]).forEach(d=>drawDetail(g,d,x,y,size));
+  drawTileTexture(g,t,x,y,size,mode);
   if(mode==='normal')drawTransform(g,t,x,y,size);
 }
 
