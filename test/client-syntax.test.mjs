@@ -35,5 +35,7 @@ test('browser clients parse as JavaScript', () => {
   assert.match(phaser, /cameraTarget/);
   assert.match(app, /await game\(false\)/);
   assert.match(map, /map-region-label/);
+  assert.match(map, /tileFeatureMarkup/);
+  assert.match(map, /world-map-stage/);
   assert.equal(/state\.gameSnapshot=null/.test(map), false);
 });
