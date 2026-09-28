@@ -12,56 +12,71 @@ function lerp(a,b,t){return Math.round(a+(b-a)*t)}
 function rgb(hex){return {r:(hex>>16)&255,g:(hex>>8)&255,b:hex&255}}
 function shade(hex,f){const c=rgb(hex);return (lerp(c.r,255,f)<<16)|(lerp(c.g,255,f)<<8)|lerp(c.b,255,f)}
 
+function surfaceColor(t){
+  const s=t.surface||t.detail?.surface||'';
+  const e=clamp(Number(t.elevation)||0);
+  const palette={
+    'water-deep':0x246fa8,'water-shallow':0x4aa7bd,'water-lake':0x358fbd,'water-river':0x43a9c7,
+    swamp:0x557f68,sand:0xd7b86b,snow:0xdce8e8,tundra:0x9eb8ad,'cold-grass':0x829d72,
+    'wet-ground':0x6f9b70,grass:0x7da64f,'rocky-grass':0x778f58,meadow:0x8cae5d,
+    'forest-floor':0x668b4c,'scorched-dirt':0x514235,'stone-wall':0x72777b,'water-pond':0x358fbd,ice:0xdceff5
+  };
+  let base=palette[s]||0x788d5a;
+  if((t.waterform||'None')!=='None' && !palette[s]) base=0x358fbd;
+  const shadeFactor=s.startsWith('water-') ? 0 : (e-.5)*.16;
+  if(shadeFactor<0) base=shade(base,-shadeFactor);
+  else if(shadeFactor>0) base=shade(base,shadeFactor);
+  return base;
+}
 function tileColor(t,mode){
   const e=clamp(Number(t.elevation)||0),m=clamp(Number(t.moisture)||0),temp=clamp(Number(t.temperature)||0);
-  const water=t.waterform||t.hydrology?.waterform||'None';
-  const biome=t.biome||'???',land=t.landform||'Plains';
-  const surface=t.surface||t.detail?.surface||'';
-  if(mode==='normal'&&surface==='scorched-dirt')return 0x514235;
-  if(mode==='normal'&&surface==='stone-wall')return 0x72777b;
-  if(mode==='normal'&&surface==='water-pond')return 0x258ac2;
-  if(mode==='normal'&&surface==='ice')return 0xdceff5;
+  const water=t.waterform||t.hydrology?.waterform||'None',biome=t.biome||'???',land=t.landform||'Plains';
+  if(mode==='normal')return surfaceColor(t);
   if(mode==='elevation'){
-    const stops=[0x1c4c2d,0x6e9641,0xcdbf64,0x966941,0xebebeb],p=e*(stops.length-1),i=Math.min(stops.length-2,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
+    const stops=[0x315b39,0x71934b,0xc8b86b,0x9a7449,0xe7e9e5],p=e*(stops.length-1),i=Math.min(stops.length-2,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
     return (lerp(a.r,b.r,f)<<16)|(lerp(a.g,b.g,f)<<8)|lerp(a.b,b.b,f);
   }
   if(mode==='temperature'){
-    const stops=[0x2a4baa,0x37aad2,0x6ecf7d,0xf0cd46,0xeb4b2d],p=temp*4,i=Math.min(3,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
+    const stops=[0x3554a5,0x3e9fc1,0x72c778,0xe0c957,0xd9533d],p=temp*4,i=Math.min(3,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
     return (lerp(a.r,b.r,f)<<16)|(lerp(a.g,b.g,f)<<8)|lerp(a.b,b.b,f);
   }
   if(mode==='moisture'){
-    const stops=[0x7a5c37,0xb2964e,0x69b478,0x2d96cd,0x1950aa],p=m*4,i=Math.min(3,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
+    const stops=[0x87633e,0xb39551,0x70ae76,0x4298bc,0x2864a5],p=m*4,i=Math.min(3,Math.floor(p)),f=p-i,a=rgb(stops[i]),b=rgb(stops[i+1]);
     return (lerp(a.r,b.r,f)<<16)|(lerp(a.g,b.g,f)<<8)|lerp(a.b,b.b,f);
   }
   if(mode==='biome')return BIOME_COLORS[biome]||0x68737d;
   if(mode==='landform')return LAND_COLORS[land]||0x68737d;
   if(mode==='waterform')return WATER_COLORS[water]||0x71804b;
-  if(WATER_COLORS[water])return WATER_COLORS[water];
-  return BIOME_COLORS[biome]||0x65705c;
+  return surfaceColor(t);
 }
 
 function detailColor(type){
-  return {tree:0x163f1b,shrub:0x397c39,grass:0xd6e86d,rock:0x9ba19d,flower:0xf0d5e8,shore:0xd9f6ff,dune:0xf0d08a,snowcap:0xffffff}[type]||0xffffff;
+  return {tree:0x285d2e,shrub:0x4f8239,grass:0xb9cb62,rock:0x7b8584,flower:0xe9b7d4,shore:0xd9d39a,dune:0xe7c67d,snowcap:0xf8fbff}[type]||0xffffff;
 }
 function drawDetail(g,d,ox,oy,size){
   const x=ox+d.x*size,y=oy+d.y*size,s=size*(d.size||.5),c=detailColor(d.type);
-  g.fillStyle(c,1);g.lineStyle(Math.max(1,size*.025),0x102010,.45);
+  g.fillStyle(c,1);g.lineStyle(Math.max(1,size*.018),0x1a2119,.45);
   if(d.type==='tree'){
-    g.fillRect(x-s*.08,y+s*.15,s*.16,s*.42);
-    g.fillTriangle(x-s*.48,y+s*.20,x,y-s*.58,x+s*.48,y+s*.20);
-    g.fillTriangle(x-s*.36,y-s*.02,x,y-s*.68,x+s*.36,y-s*.02);
+    const trunk=Math.max(1,s*.11);
+    g.fillStyle(0x5a4329,1);g.fillRect(x-trunk*.5,y+s*.05,trunk,s*.42);
+    g.fillStyle(c,1);
+    g.fillTriangle(x-s*.40,y+s*.17,x,y-s*.50,x+s*.40,y+s*.17);
+    g.fillTriangle(x-s*.30,y-s*.05,x,y-s*.60,x+s*.30,y-s*.05);
+    g.fillTriangle(x-s*.22,y-s*.22,x,y-s*.67,x+s*.22,y-s*.22);
   }else if(d.type==='shrub'){
-    g.fillCircle(x-s*.18,y+s*.08,s*.24);g.fillCircle(x+s*.15,y,s*.26);g.fillCircle(x,y-s*.12,s*.23);
+    g.fillCircle(x-s*.20,y+s*.08,s*.22);g.fillCircle(x+s*.14,y,s*.25);g.fillCircle(x,y-s*.10,s*.21);
   }else if(d.type==='grass'){
-    for(let i=-1;i<=1;i++)g.lineBetween(x+i*s*.16,y+s*.22,x+i*s*.05,y-s*.22);
+    g.lineStyle(Math.max(1,size*.018),c,.9);
+    for(let i=-1;i<=1;i++)g.lineBetween(x+i*s*.18,y+s*.20,x+i*s*.06,y-s*.22);
   }else if(d.type==='rock'){
-    g.fillTriangle(x-s*.45,y+s*.30,x-s*.05,y-s*.40,x+s*.48,y+s*.18);
+    g.fillStyle(c,1);g.fillTriangle(x-s*.44,y+s*.27,x-s*.10,y-s*.32,x+s*.46,y+s*.20);
+    g.fillStyle(0xb0b6ae,.35);g.fillTriangle(x-s*.08,y-s*.28,x+s*.10,y-s*.10,x+s*.34,y+s*.16);
   }else if(d.type==='flower'){
-    g.fillCircle(x,y,s*.10);for(let i=0;i<4;i++){const a=i*Math.PI/2;g.fillCircle(x+Math.cos(a)*s*.16,y+Math.sin(a)*s*.16,s*.10)}
+    g.fillStyle(c,1);g.fillCircle(x,y,s*.10);for(let i=0;i<4;i++){const a=i*Math.PI/2;g.fillCircle(x+Math.cos(a)*s*.16,y+Math.sin(a)*s*.16,s*.09)}
   }else if(d.type==='shore'){
-    g.lineStyle(Math.max(1,size*.035),c,.9);g.arc(x,y,s*.34,0.1,Math.PI-.1,false);
+    g.lineStyle(Math.max(1,size*.035),c,.85);g.arc(x,y,s*.34,0.1,Math.PI-.1,false);
   }else if(d.type==='dune'){
-    g.lineStyle(Math.max(1,size*.035),c,.9);g.arc(x,y,s*.35,Math.PI,Math.PI*2,false);
+    g.lineStyle(Math.max(1,size*.035),c,.65);g.arc(x,y,s*.35,Math.PI,Math.PI*2,false);
   }else if(d.type==='snowcap'){
     g.fillTriangle(x-s*.4,y+s*.15,x,y-s*.35,x+s*.4,y+s*.15);
   }
@@ -99,28 +114,43 @@ function drawTransform(g,t,x,y,size){
 }
 
 function drawTile(scene,t,dx,dy,size,mode){
-  const x=dx*size,y=dy*size;
-  const g=scene.g;
-  g.fillStyle(tileColor(t,mode),1);g.fillRect(x,y,size-1,size-1);
-  const water=t.waterform||t.hydrology?.waterform||'None';
-  if(mode==='normal'&&water==='None'){
-    const e=clamp(Number(t.elevation)||0);
-    g.fillStyle(0xffffff,0.035+e*.08);g.fillRect(x,y,size-1,size*.18);
+  const x=dx*size,y=dy*size,g=scene.g;
+  const base=tileColor(t,mode);
+  g.fillStyle(base,1);g.fillRect(Math.floor(x),Math.floor(y),Math.ceil(size)+1,Math.ceil(size)+1);
+
+  if(mode==='normal'){
+    const e=clamp(Number(t.elevation)||0),surface=t.surface||t.detail?.surface||'',water=t.waterform||'None';
+    if(water!=='None'){
+      g.fillStyle(0xffffff,.055+e*.025);
+      g.fillRect(x,y+size*.10,size,size*.08);
+      if(water==='River'||water==='Shallows'){
+        g.lineStyle(Math.max(1,size*.025),0xbbeaf2,.45);
+        g.lineBetween(x+size*.08,y+size*.30,x+size*.82,y+size*.25);
+        g.lineBetween(x+size*.28,y+size*.62,x+size*.92,y+size*.57);
+      }
+    }else{
+      g.fillStyle(0xffffff,.025+e*.07);g.fillRect(x,y,size,size*.13);
+      g.fillStyle(0x25351f,.035);g.fillRect(x+size*.08,y+size*.72,size*.25,size*.08);
+      if(surface==='forest-floor'||surface==='meadow'||surface==='grass'){
+        g.fillStyle(0x334d29,.035);g.fillRect(x+size*.55,y+size*.48,size*.18,size*.06);
+      }
+    }
   }
   (t.detail?.details||[]).forEach(d=>drawDetail(g,d,x,y,size));
   if(mode==='normal')drawTransform(g,t,x,y,size);
-  if(Number(t.x)%16===0)g.lineStyle(2,0xd8df68,.8),g.lineBetween(x,y,x,y+size);
-  if(Number(t.y)%16===0)g.lineStyle(2,0xd8df68,.8),g.lineBetween(x,y,x+size,y);
 }
 
 function drawPlayer(scene,x,y,size,step=0){
-  const g=scene.player;
-  g.clear();
+  const g=scene.player;g.clear();
   const bob=Math.sin(step*Math.PI*2)*size*.035;
   const cx=x*size+size/2,cy=y*size+size/2+bob;
-  const pulse=1+Math.sin(step*Math.PI)*.035;
-  g.fillStyle(0xf7d34a,1);g.fillCircle(cx,cy,size*.30*pulse);
-  g.lineStyle(Math.max(2,size*.07),0x11151b,.9);g.strokeCircle(cx,cy,size*.34*pulse);
+  const s=size*.82;
+  g.fillStyle(0x000000,.22);g.fillEllipse(cx,cy+s*.28,s*.48,s*.20);
+  g.fillStyle(0x315d8f,1);g.fillRoundedRect(cx-s*.24,cy-s*.02,s*.48,s*.48,s*.10);
+  g.fillStyle(0xd8a477,1);g.fillCircle(cx,cy-s*.22,s*.20);
+  g.fillStyle(0x5b3b2b,1);g.fillRect(cx-s*.19,cy-s*.40,s*.38,s*.11);
+  g.fillStyle(0xe7c04f,1);g.fillRect(cx-s*.30,cy+s*.05,s*.60,s*.09);
+  g.lineStyle(Math.max(1,size*.045),0x10151b,.9);g.strokeRoundedRect(cx-s*.27,cy-s*.08,s*.54,s*.62,s*.10);
 }
 
 function worldDelta(value,center,size){
