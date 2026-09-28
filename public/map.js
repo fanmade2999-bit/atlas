@@ -80,8 +80,6 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
 
     const playerX=wrapX(state.gameX),playerY=capY(state.gameY);
     const scale=d.scale;
-    const mapLeft=Math.floor(d.center.x-(d.width/2)*scale);
-    const mapTop=d.center.y-(Math.floor(d.height/2)*scale);
     const playerDx=wrappedDelta(playerX,d.center.x);
     const playerDy=playerY-d.center.y;
     const playerVisible=Math.abs(playerDx)<=((d.width-1)/2)*scale && Math.abs(playerDy)<=((d.height-1)/2)*scale;
@@ -118,7 +116,7 @@ export function renderWorldMap({siteRoot,layout,state,onTeleported}){
       '</div>'+
       '<div id="world-map-viewport" class="world-map-viewport"><div class="world-map-grid">'+cells+'</div>'+
       (playerVisible?'<div class="map-player-marker" style="left:'+clamp(pxPct,2,98)+'%;top:'+clamp(pyPct,2,98)+'%"><span>◆</span></div>':'<div class="map-offscreen-note">YOU ARE OFF SCREEN</div>')+
-      (targetVisible?'<div class="map-target-marker" style="left:'+clamp(txPct,2,98)+'%;top:'+clamp(tyPct,2,98)+'"><span>⌖</span></div>':'')+
+      (targetVisible?'<div class="map-target-marker" style="left:'+clamp(txPct,2,98)+'%;top:'+clamp(tyPct,2,98)+'%"><span>⌖</span></div>':'')+
       '<div class="map-center-cross"></div>'+
       '</div>'+
       '<div class="map-coordinates"><div><span>CENTER</span><strong>X '+d.center.x+' · Y '+d.center.y+'</strong></div><div><span>YOU</span><strong>X '+playerX+' · Y '+playerY+'</strong></div><div><span>SCALE</span><strong>1 cell = '+formatScale(scale)+' tile'+(scale===1?'':'s')+'</strong></div></div>'+
