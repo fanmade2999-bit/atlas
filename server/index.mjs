@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { makeGameSnapshot, makeObserverSnapshot, makeRealtimeSnapshot } from './observer/snapshot.mjs';
 import { movePlayer, inspectPlayer, teleportPlayer, transformTile, transformPlayerTile, getTileState, recoverTile } from './systems-state.mjs';
 import { normalizeCoordinates, sampleClimate, classifyTerrain } from './root/climate.mjs';
+import { getLocationNames } from './root/naming.mjs';
 import { prefetchChunks, getTile } from './root/tile.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -44,7 +45,17 @@ const server = http.createServer(async (req, res) => {
         const p = normalizeCoordinates(startX + col * scale, startY + row * scale), c = sampleClimate(seed, p.x, p.y);
         const terrain = zoom >= 4 ? classifyTerrain(seed, p.x, p.y) : null;
         const tile = zoom >= 5 ? getTile(seed, p.x, p.y) : null;
-        cells.push({x:p.x,y:p.y,chunkX:Math.floor(p.x/16),chunkY:Math.floor(p.y/16),elevation:c.elevation,temperature:c.temperature,moisture:c.moisture,biome:c.biome,landform:terrain?.landform ?? null,waterform:terrain?.waterform ?? null,surface:tile?.surface ?? terrain?.surface ?? null,passable:tile?.passable ?? null});
+        const names = getLocationNames(seed, p.x, p.y);
+        const labelTier = zoom <= 0 ? 'continent' : zoom === 1 ? 'territory' : zoom === 2 ? 'region' : zoom === 3 ? 'tract' : 'area';
+        const label = names[labelTier];
+        cells.push({
+          x:p.x,y:p.y,chunkX:Math.floor(p.x/16),chunkY:Math.floor(p.y/16),
+          elevation:c.elevation,temperature:c.temperature,moisture:c.moisture,biome:c.biome,
+          landform:terrain?.landform ?? null,waterform:terrain?.waterform ?? null,
+          surface:tile?.surface ?? terrain?.surface ?? null,passable:tile?.passable ?? null,
+          location:{continent:names.continent,territory:names.territory,region:names.region,tract:names.tract,area:names.area},
+          label:label?.active ? {tier:labelTier,name:label.name,physicalType:label.physicalType} : null
+        });
       }
       res.writeHead(200,{ 'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*' });
       res.end(JSON.stringify({seed,center,zoom,scale,width,height,cells})); return;
