@@ -32,16 +32,37 @@ export function getLocalTerrain(seed='atlas-root',x=0,y=0){
   const p=normalizeCoordinates(x,y);
   const broad=latticeNoise(seed,p.x,p.y,32,'local-broad');
   const patch=latticeNoise(seed,p.x,p.y,8,'local-patch');
-  const micro=latticeNoise(seed,p.x,p.y,2,'local-micro');
-  const relief=broad*.50+patch*.35+micro*.15;
-  const roughness=Math.abs(patch-micro);
-  const clearing=Math.max(0,1-broad*1.35);
-  const coverage=Math.min(1,broad*.60+patch*.40);
+  const fine=latticeNoise(seed,p.x,p.y,2,'local-fine');
+  const relief=broad*.45+patch*.35+fine*.20;
+  const roughness=Math.abs(patch-fine);
+  const clearing=Math.max(0,1-broad*1.30);
+  const coverage=Math.min(1,broad*.58+patch*.42);
+
+  const zoneNoise=latticeNoise(seed,p.x,p.y,16,'habitat-zone');
+  const zoneId=Math.floor(p.x/16)+','+Math.floor(p.y/16);
+  let zone='open',zoneDensity=0.5;
+  if(zoneNoise<0.16){zone='clearing';zoneDensity=0.12;}
+  else if(zoneNoise<0.34){zone='meadow';zoneDensity=0.28;}
+  else if(zoneNoise<0.54){zone='open';zoneDensity=0.46;}
+  else if(zoneNoise<0.72){zone='scrub';zoneDensity=0.68;}
+  else if(zoneNoise<0.88){zone='grove';zoneDensity=0.86;}
+  else {zone='dense';zoneDensity=1;}
+
+  const feature=hash2(seed,Math.floor(p.x/16),Math.floor(p.y/16),'habitat-feature');
+  const rockyPatch=roughness>0.10 && feature>0.48;
+  const wetPatch=patch>0.72 && fine>0.55;
+  const pathBias=latticeNoise(seed,p.x,p.y,64,'trail-field');
   return Object.freeze({
     relief:Number(relief.toFixed(4)),
     roughness:Number(roughness.toFixed(4)),
     clearing:Number(clearing.toFixed(4)),
-    coverage:Number(coverage.toFixed(4))
+    coverage:Number(coverage.toFixed(4)),
+    zone,
+    zoneId,
+    zoneDensity:Number(zoneDensity.toFixed(3)),
+    rockyPatch,
+    wetPatch,
+    trailField:Number(pathBias.toFixed(4))
   });
 }
 export function localTerrainSignature(seed='atlas-root',x=0,y=0){return JSON.stringify(getLocalTerrain(seed,x,y))}
@@ -50,7 +71,9 @@ export function localTerrainSelfTest(seed='atlas-root'){
   const checks=[
     {id:'local-determinism',ok:JSON.stringify(a)===JSON.stringify(b),note:'same local coordinate field repeats exactly'},
     {id:'bounded',ok:[a.relief,a.roughness,a.clearing,a.coverage].every(v=>v>=0&&v<=1),note:'local terrain channels stay normalized'},
-    {id:'spatial-variation',ok:JSON.stringify(a)!==JSON.stringify(c),note:'adjacent tiles can carry distinct local terrain values'}
+    {id:'spatial-variation',ok:JSON.stringify(a)!==JSON.stringify(c),note:'adjacent tiles can carry distinct local terrain values'},
+    {id:'habitat-zone',ok:['clearing','meadow','open','scrub','grove','dense'].includes(a.zone),note:'each tile belongs to a deterministic local habitat zone'}
+
   ];
   return {passed:checks.every(c=>c.ok),checks};
 }
