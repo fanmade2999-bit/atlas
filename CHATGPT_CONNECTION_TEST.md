@@ -1,1 +1,0 @@
-Temporary connectivity test.
